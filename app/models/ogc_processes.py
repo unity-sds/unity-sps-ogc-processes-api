@@ -17,21 +17,21 @@ class ConfClasses(BaseModel):
 
 class Link(BaseModel):
     href: str
-    rel: Optional[str] = Field(None, example='service')
-    type: Optional[str] = Field(None, example='application/json')
-    hreflang: Optional[str] = Field(None, example='en')
+    rel: Optional[str] = Field(None, example="service")
+    type: Optional[str] = Field(None, example="application/json")
+    hreflang: Optional[str] = Field(None, example="en")
     title: Optional[str] = None
 
 
 class LandingPage(BaseModel):
-    title: Optional[str] = Field(None, example='Example processing server')
+    title: Optional[str] = Field(None, example="Example processing server")
     description: Optional[str] = Field(
-        None, example='Example server implementing the OGC API - Processes 1.0 Standard'
+        None, example="Example server implementing the OGC API - Processes 1.0 Standard"
     )
     attribution: Optional[str] = Field(
         None,
-        description='The `attribution` should be short and intended for presentation to a user, for example, in a corner of a map. Parts of the text can be links to other resources if additional information is needed. The string can include HTML markup.',
-        title='attribution for the API',
+        description="The `attribution` should be short and intended for presentation to a user, for example, in a corner of a map. Parts of the text can be links to other resources if additional information is needed. The string can include HTML markup.",
+        title="attribution for the API",
     )
     links: List[Link]
 
@@ -48,29 +48,25 @@ class Exception(BaseModel):
 
 
 class Crs(Enum):
-    http___www_opengis_net_def_crs_OGC_1_3_CRS84 = (
-        'http://www.opengis.net/def/crs/OGC/1.3/CRS84'
-    )
-    http___www_opengis_net_def_crs_OGC_0_CRS84h = (
-        'http://www.opengis.net/def/crs/OGC/0/CRS84h'
-    )
+    http___www_opengis_net_def_crs_OGC_1_3_CRS84 = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    http___www_opengis_net_def_crs_OGC_0_CRS84h = "http://www.opengis.net/def/crs/OGC/0/CRS84h"
 
 
 class GridItem(BaseModel):
     coordinates: Optional[List[Union[str, float]]] = Field(
         None,
-        description='List of coordinates along the dimension for which data organized as an irregular grid in the collection is available\n(e.g., 2, 10, 80, 100).',
+        description="List of coordinates along the dimension for which data organized as an irregular grid in the collection is available\n(e.g., 2, 10, 80, 100).",
         example=[2, 10, 80, 100],
         min_items=1,
     )
     cellsCount: Optional[int] = Field(
         None,
-        description='Number of samples available along the dimension for data organized as a regular grid.\nFor values representing the whole area of contiguous cells spanning _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_.\nFor values representing infinitely small point cells spaced by _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_ + 1.',
+        description="Number of samples available along the dimension for data organized as a regular grid.\nFor values representing the whole area of contiguous cells spanning _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_.\nFor values representing infinitely small point cells spaced by _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_ + 1.",
         example=50,
     )
     resolution: Optional[Union[str, float]] = Field(
         None,
-        description='Resolution of regularly gridded data along the dimension in the collection',
+        description="Resolution of regularly gridded data along the dimension in the collection",
         example=0.0006866455078,
     )
 
@@ -78,16 +74,16 @@ class GridItem(BaseModel):
 class Spatial(BaseModel):
     bbox: Optional[List[List[float]]] = Field(
         None,
-        description='One or more bounding boxes that describe the spatial extent of the dataset.\nIn the Core only a single bounding box is supported.\n\nExtensions may support additional areas.\nThe first bounding box describes the overall spatial\nextent of the data. All subsequent bounding boxes describe\nmore precise bounding boxes, e.g., to identify clusters of data.\nClients only interested in the overall spatial extent will\nonly need to access the first item in each array.',
+        description="One or more bounding boxes that describe the spatial extent of the dataset.\nIn the Core only a single bounding box is supported.\n\nExtensions may support additional areas.\nThe first bounding box describes the overall spatial\nextent of the data. All subsequent bounding boxes describe\nmore precise bounding boxes, e.g., to identify clusters of data.\nClients only interested in the overall spatial extent will\nonly need to access the first item in each array.",
         min_items=1,
     )
     crs: Optional[Crs] = Field(
-        'http://www.opengis.net/def/crs/OGC/1.3/CRS84',
-        description='Coordinate reference system of the coordinates in the spatial extent\n(property `bbox`). The default reference system is WGS 84 longitude/latitude.\nIn the Core the only other supported coordinate reference system is\nWGS 84 longitude/latitude/ellipsoidal height for coordinates with height.\nExtensions may support additional coordinate reference systems and add\nadditional enum values.',
+        "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+        description="Coordinate reference system of the coordinates in the spatial extent\n(property `bbox`). The default reference system is WGS 84 longitude/latitude.\nIn the Core the only other supported coordinate reference system is\nWGS 84 longitude/latitude/ellipsoidal height for coordinates with height.\nExtensions may support additional coordinate reference systems and add\nadditional enum values.",
     )
     grid: Optional[List[GridItem]] = Field(
         None,
-        description='Provides information about the limited availability of data within the collection organized\nas a grid (regular or irregular) along each spatial dimension.',
+        description="Provides information about the limited availability of data within the collection organized\nas a grid (regular or irregular) along each spatial dimension.",
         max_items=3,
         min_items=2,
     )
@@ -96,14 +92,14 @@ class Spatial(BaseModel):
 class IntervalItem(BaseModel):
     __root__: List[Any] = Field(
         ...,
-        description='Begin and end times of the time interval. The timestamps are in the\ntemporal coordinate reference system specified in `trs`. By default\nthis is the Gregorian calendar.\n\nThe value `null` for start or end time is supported and indicates a half-bounded time interval.',
-        example=['2011-11-11T12:22:11Z', None],
+        description="Begin and end times of the time interval. The timestamps are in the\ntemporal coordinate reference system specified in `trs`. By default\nthis is the Gregorian calendar.\n\nThe value `null` for start or end time is supported and indicates a half-bounded time interval.",
+        example=["2011-11-11T12:22:11Z", None],
     )
 
 
 class Trs(Enum):
     http___www_opengis_net_def_uom_ISO_8601_0_Gregorian = (
-        'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian'
+        "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
     )
 
 
@@ -111,50 +107,48 @@ class Grid(BaseModel):
     coordinates: Optional[List[str]] = Field(
         None,
         description='List of coordinates along the temporal dimension for which data organized as an irregular grid in the collection is available\n(e.g., "2017-11-14T09:00Z","2017-11-14T12:00Z","2017-11-14T15:00Z","2017-11-14T18:00Z","2017-11-14T21:00Z").',
-        example=[['2020-11-12T12:15Z', '2020-11-12T12:30Z', '2020-11-12T12:45Z']],
+        example=[["2020-11-12T12:15Z", "2020-11-12T12:30Z", "2020-11-12T12:45Z"]],
         min_items=1,
     )
     cellsCount: Optional[int] = Field(
         None,
-        description='Number of samples available along the temporal dimension for data organized as a regular grid.\nFor values representing the whole area of contiguous cells spanning _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_.\nFor values representing infinitely small point cells spaced by _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_ + 1.',
+        description="Number of samples available along the temporal dimension for data organized as a regular grid.\nFor values representing the whole area of contiguous cells spanning _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_.\nFor values representing infinitely small point cells spaced by _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_ + 1.",
         example=50,
     )
     resolution: Optional[Union[str, float]] = Field(
         None,
-        description='Resolution of regularly gridded data along the temporal dimension in the collection',
-        example='PT1H',
+        description="Resolution of regularly gridded data along the temporal dimension in the collection",
+        example="PT1H",
     )
 
 
 class Temporal(BaseModel):
     interval: Optional[List[IntervalItem]] = Field(
         None,
-        description='One or more time intervals that describe the temporal extent of the dataset.\nIn the Core only a single time interval is supported.\n\nExtensions may support multiple intervals.\nThe first time interval describes the overall\ntemporal extent of the data. All subsequent time intervals describe\nmore precise time intervals, e.g., to identify clusters of data.\nClients only interested in the overall extent will only need\nto access the first item in each array.',
+        description="One or more time intervals that describe the temporal extent of the dataset.\nIn the Core only a single time interval is supported.\n\nExtensions may support multiple intervals.\nThe first time interval describes the overall\ntemporal extent of the data. All subsequent time intervals describe\nmore precise time intervals, e.g., to identify clusters of data.\nClients only interested in the overall extent will only need\nto access the first item in each array.",
         min_items=1,
     )
     trs: Optional[Trs] = Field(
-        'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian',
-        description='Coordinate reference system of the coordinates in the temporal extent\n(property `interval`). The default reference system is the Gregorian calendar.\nIn the Core this is the only supported temporal coordinate reference system.\nExtensions may support additional temporal coordinate reference systems and add\nadditional enum values.',
+        "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian",
+        description="Coordinate reference system of the coordinates in the temporal extent\n(property `interval`). The default reference system is the Gregorian calendar.\nIn the Core this is the only supported temporal coordinate reference system.\nExtensions may support additional temporal coordinate reference systems and add\nadditional enum values.",
     )
     grid: Optional[Grid] = Field(
         None,
-        description='Provides information about the limited availability of data within the collection organized as a grid (regular or irregular) along the temporal dimension.',
+        description="Provides information about the limited availability of data within the collection organized as a grid (regular or irregular) along the temporal dimension.",
     )
 
 
 class Extent(BaseModel):
-    spatial: Optional[Spatial] = Field(
-        None, description='The spatial extent of the data in the collection.'
-    )
+    spatial: Optional[Spatial] = Field(None, description="The spatial extent of the data in the collection.")
     temporal: Optional[Temporal] = Field(
-        None, description='The temporal extent of the features in the collection.'
+        None, description="The temporal extent of the features in the collection."
     )
 
 
 class DataTypeEnum(Enum):
-    map = 'map'
-    vector = 'vector'
-    coverage = 'coverage'
+    map = "map"
+    vector = "vector"
+    coverage = "coverage"
 
 
 class DataType(BaseModel):
@@ -162,9 +156,7 @@ class DataType(BaseModel):
 
 
 class Cr(BaseModel):
-    uri: AnyUrl = Field(
-        ..., description='Reference to one coordinate reference system (CRS)'
-    )
+    uri: AnyUrl = Field(..., description="Reference to one coordinate reference system (CRS)")
 
 
 class Wkt(BaseModel):
@@ -178,19 +170,19 @@ class Cr1(BaseModel):
 class Cr2(BaseModel):
     referenceSystem: Dict[str, Any] = Field(
         ...,
-        description='A reference system data structure as defined in the MD_ReferenceSystem of the ISO 19115',
+        description="A reference system data structure as defined in the MD_ReferenceSystem of the ISO 19115",
     )
 
 
 class CrsModel(BaseModel):
-    __root__: Union[str, Union[Cr, Cr1, Cr2]] = Field(..., title='CRS')
+    __root__: Union[str, Union[Cr, Cr1, Cr2]] = Field(..., title="CRS")
 
 
 class TimeStamp(BaseModel):
     __root__: datetime = Field(
         ...,
-        description='This property indicates the time and date when the response was generated using RFC 3339 notation.',
-        example='2017-08-17T08:05:32Z',
+        description="This property indicates the time and date when the response was generated using RFC 3339 notation.",
+        example="2017-08-17T08:05:32Z",
     )
 
 
@@ -205,13 +197,13 @@ class NumberReturned(BaseModel):
 class NumberMatched(BaseModel):
     __root__: conint(ge=0) = Field(
         ...,
-        description='The number of features of the feature type that match the selection\nparameters like `bbox`.',
+        description="The number of features of the feature type that match the selection\nparameters like `bbox`.",
         example=127,
     )
 
 
 class Type(Enum):
-    enum = 'enum'
+    enum = "enum"
 
 
 class Enumeration(BaseModel):
@@ -220,9 +212,9 @@ class Enumeration(BaseModel):
 
 
 class ProcessesList(Enum):
-    RenderMap = 'RenderMap'
-    ElevationContours = 'ElevationContours'
-    OSMERE = 'OSMERE'
+    RenderMap = "RenderMap"
+    ElevationContours = "ElevationContours"
+    OSMERE = "OSMERE"
 
 
 class Metadata(BaseModel):
@@ -232,52 +224,48 @@ class Metadata(BaseModel):
 
 
 class JobControlOptions(Enum):
-    sync_execute = 'sync-execute'
-    async_execute = 'async-execute'
-    dismiss = 'dismiss'
+    sync_execute = "sync-execute"
+    async_execute = "async-execute"
+    dismiss = "dismiss"
 
 
 class MaxOccur(Enum):
-    unbounded = 'unbounded'
+    unbounded = "unbounded"
 
 
 class Type1(Enum):
-    array = 'array'
-    boolean = 'boolean'
-    integer = 'integer'
-    number = 'number'
-    object = 'object'
-    string = 'string'
+    array = "array"
+    boolean = "boolean"
+    integer = "integer"
+    number = "number"
+    object = "object"
+    string = "string"
 
 
 class Reference(BaseModel):
-    field_ref: str = Field(..., alias='$ref')
+    field_ref: str = Field(..., alias="$ref")
 
 
 class Type2(Enum):
-    process = 'process'
+    process = "process"
 
 
 class StatusCode(Enum):
-    accepted = 'accepted'
-    running = 'running'
-    successful = 'successful'
-    failed = 'failed'
-    dismissed = 'dismissed'
+    accepted = "accepted"
+    running = "running"
+    successful = "successful"
+    failed = "failed"
+    dismissed = "dismissed"
 
 
 class Cr3(Enum):
-    http___www_opengis_net_def_crs_OGC_1_3_CRS84 = (
-        'http://www.opengis.net/def/crs/OGC/1.3/CRS84'
-    )
-    http___www_opengis_net_def_crs_OGC_0_CRS84h = (
-        'http://www.opengis.net/def/crs/OGC/0/CRS84h'
-    )
+    http___www_opengis_net_def_crs_OGC_1_3_CRS84 = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    http___www_opengis_net_def_crs_OGC_0_CRS84h = "http://www.opengis.net/def/crs/OGC/0/CRS84h"
 
 
 class Bbox(BaseModel):
     bbox: List[float]
-    crs: Optional[Union[Cr3, AnyUrl]] = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84'
+    crs: Optional[Union[Cr3, AnyUrl]] = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
 
 
 class BinaryInputValue(BaseModel):
@@ -291,7 +279,7 @@ class InputValueNoObject(BaseModel):
 class Format(BaseModel):
     mediaType: Optional[str] = None
     encoding: Optional[str] = None
-    schema_: Optional[Union[str, Dict[str, Any]]] = Field(None, alias='schema')
+    schema_: Optional[Union[str, Dict[str, Any]]] = Field(None, alias="schema")
 
 
 class InputValue(BaseModel):
@@ -313,15 +301,15 @@ class Results(BaseModel):
 
 
 class Type3(Enum):
-    docker = 'docker'
-    oci = 'oci'
+    docker = "docker"
+    oci = "oci"
 
 
 class Deployment(Enum):
-    local = 'local'
-    remote = 'remote'
-    hpc = 'hpc'
-    cloud = 'cloud'
+    local = "local"
+    remote = "remote"
+    hpc = "hpc"
+    cloud = "cloud"
 
 
 class Config(BaseModel):
@@ -330,44 +318,40 @@ class Config(BaseModel):
 
     cpuMin: Optional[confloat(ge=1.0)] = Field(
         None,
-        description='Minimum number of CPUs required to run the process (unit is CPU core).',
+        description="Minimum number of CPUs required to run the process (unit is CPU core).",
     )
     cpuMax: Optional[float] = Field(
         None,
-        description='Maximum number of CPU dedicated to the process (unit is CPU core)',
+        description="Maximum number of CPU dedicated to the process (unit is CPU core)",
     )
     memoryMin: Optional[float] = Field(
         None,
-        description='Minimum RAM memory required to run the application (unit is GB)',
+        description="Minimum RAM memory required to run the application (unit is GB)",
     )
     memoryMax: Optional[float] = Field(
-        None, description='Maximum RAM memory dedicated to the application (unit is GB)'
+        None, description="Maximum RAM memory dedicated to the application (unit is GB)"
     )
     storageTempMin: Optional[float] = Field(
-        None, description='Minimum required temporary storage size (unit is GB)'
+        None, description="Minimum required temporary storage size (unit is GB)"
     )
     storageOutputsMin: Optional[float] = Field(
-        None, description='Minimum required output storage size (unit is GB)'
+        None, description="Minimum required output storage size (unit is GB)"
     )
-    jobTimeout: Optional[float] = Field(
-        None, description='Timeout delay for a job execution (in seconds)'
-    )
+    jobTimeout: Optional[float] = Field(None, description="Timeout delay for a job execution (in seconds)")
 
 
 class ExecutionUnit(BaseModel):
     class Config:
         extra = Extra.allow
 
-    type: Type3 = Field(..., description='Type of execution unit.')
-    image: str = Field(
-        ..., description='Container image reference for the execution unit.'
-    )
+    type: Type3 = Field(..., description="Type of execution unit.")
+    image: str = Field(..., description="Container image reference for the execution unit.")
     deployment: Optional[Deployment] = Field(
-        None, description='Deployment information for the execution unit.'
+        None, description="Deployment information for the execution unit."
     )
     config: Optional[Config] = Field(
         None,
-        description='Hardware requirements and configuration properties for executing the process.',
+        description="Hardware requirements and configuration properties for executing the process.",
     )
 
 
@@ -403,7 +387,7 @@ class SchemaItem(BaseModel):
     required: Optional[List[str]] = Field(None, min_items=1, unique_items=True)
     enum: Optional[List] = Field(None, min_items=1, unique_items=False)
     type: Optional[Type1] = None
-    not_: Optional[Reference] = Field(None, alias='not')
+    not_: Optional[Reference] = Field(None, alias="not")
     allOf: Optional[List[Reference]] = None
     oneOf: Optional[List[Reference]] = None
     anyOf: Optional[List[Reference]] = None
@@ -428,7 +412,7 @@ class Schema(BaseModel):
 
 
 class OutputDescription(DescriptionType):
-    schema_: Schema = Field(..., alias='schema')
+    schema_: Schema = Field(..., alias="schema")
 
 
 class StatusInfo(BaseModel):
@@ -466,90 +450,86 @@ class OgcapppkgArray(BaseModel):
 class CollectionInfo(BaseModel):
     id: str = Field(
         ...,
-        description='identifier of the collection used, for example, in URIs',
-        example='dem',
+        description="identifier of the collection used, for example, in URIs",
+        example="dem",
     )
     title: Optional[str] = Field(
         None,
-        description='human readable title of the collection',
-        example='Digital Elevation Model',
+        description="human readable title of the collection",
+        example="Digital Elevation Model",
     )
     description: Optional[str] = Field(
         None,
-        description='a description of the data in the collection',
-        example='A Digital Elevation Model.',
+        description="a description of the data in the collection",
+        example="A Digital Elevation Model.",
     )
     links: List[Link] = Field(
         ...,
         example=[
             {
-                'href': 'http://data.example.org/collections/dem?f=json',
-                'rel': 'self',
-                'type': 'application/json',
-                'title': 'Digital Elevation Model',
+                "href": "http://data.example.org/collections/dem?f=json",
+                "rel": "self",
+                "type": "application/json",
+                "title": "Digital Elevation Model",
             },
             {
-                'href': 'http://data.example.org/collections/dem?f=html',
-                'rel': 'alternate',
-                'type': 'application/json',
-                'title': 'Digital Elevation Model',
+                "href": "http://data.example.org/collections/dem?f=html",
+                "rel": "alternate",
+                "type": "application/json",
+                "title": "Digital Elevation Model",
             },
             {
-                'href': 'http://data.example.org/collections/dem/coverage',
-                'rel': 'coverage',
-                'type': 'image/tiff; application=geotiff',
-                'title': 'Digital Elevation Model',
+                "href": "http://data.example.org/collections/dem/coverage",
+                "rel": "coverage",
+                "type": "image/tiff; application=geotiff",
+                "title": "Digital Elevation Model",
             },
             {
-                'href': 'http://data.example.org/collections/dem/coverage/domainset',
-                'rel': 'domainset',
-                'type': 'application/json',
-                'title': 'Digital Elevation Model',
+                "href": "http://data.example.org/collections/dem/coverage/domainset",
+                "rel": "domainset",
+                "type": "application/json",
+                "title": "Digital Elevation Model",
             },
             {
-                'href': 'http://data.example.org/collections/dem/coverage/rangetype',
-                'rel': 'rangetype',
-                'type': 'application/json',
-                'title': 'Digital Elevation Model',
+                "href": "http://data.example.org/collections/dem/coverage/rangetype",
+                "rel": "rangetype",
+                "type": "application/json",
+                "title": "Digital Elevation Model",
             },
             {
-                'href': 'http://data.example.org/collections/dem/coverage/metadata',
-                'rel': 'metadata',
-                'type': 'application/json',
-                'title': 'Digital Elevation Model',
+                "href": "http://data.example.org/collections/dem/coverage/metadata",
+                "rel": "metadata",
+                "type": "application/json",
+                "title": "Digital Elevation Model",
             },
         ],
     )
     extent: Optional[ExtentUad] = None
     itemType: Optional[str] = Field(
-        'unknown',
-        description='indicator about the type of the items in the collection if the collection has an accessible /collections/{collectionId}/items endpoint',
+        "unknown",
+        description="indicator about the type of the items in the collection if the collection has an accessible /collections/{collectionId}/items endpoint",
     )
     crs: Optional[List[str]] = Field(
-        ['http://www.opengis.net/def/crs/OGC/1.3/CRS84'],
-        description='the list of coordinate reference systems supported by the API; the first item is the default coordinate reference system',
+        ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
+        description="the list of coordinate reference systems supported by the API; the first item is the default coordinate reference system",
         example=[
-            'http://www.opengis.net/def/crs/OGC/1.3/CRS84',
-            'http://www.opengis.net/def/crs/EPSG/0/4326',
+            "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+            "http://www.opengis.net/def/crs/EPSG/0/4326",
         ],
     )
     dataType: Optional[DataType] = None
     geometryDimension: Optional[conint(ge=0, le=3)] = Field(
         None,
-        description='The geometry dimension of the features shown in this layer (0: points, 1: curves, 2: surfaces, 3: solids), unspecified: mixed or unknown',
+        description="The geometry dimension of the features shown in this layer (0: points, 1: curves, 2: surfaces, 3: solids), unspecified: mixed or unknown",
     )
     minScaleDenominator: Optional[float] = Field(
-        None, description='Minimum scale denominator for usage of the collection'
+        None, description="Minimum scale denominator for usage of the collection"
     )
     maxScaleDenominator: Optional[float] = Field(
-        None, description='Maximum scale denominator for usage of the collection'
+        None, description="Maximum scale denominator for usage of the collection"
     )
-    minCellSize: Optional[float] = Field(
-        None, description='Minimum cell size for usage of the collection'
-    )
-    maxCellSize: Optional[float] = Field(
-        None, description='Maximum cell size for usage of the collection'
-    )
+    minCellSize: Optional[float] = Field(None, description="Minimum cell size for usage of the collection")
+    maxCellSize: Optional[float] = Field(None, description="Maximum cell size for usage of the collection")
 
 
 class ProcessSummary(DescriptionType):
@@ -567,7 +547,7 @@ class Process(ProcessSummary):
 class InputDescription(DescriptionType):
     minOccurs: Optional[int] = 1
     maxOccurs: Optional[Union[int, MaxOccur]] = None
-    schema_: Schema = Field(..., alias='schema')
+    schema_: Schema = Field(..., alias="schema")
 
 
 class ProcessList(BaseModel):
