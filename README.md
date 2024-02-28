@@ -5,7 +5,7 @@
 
 ![logo](https://user-images.githubusercontent.com/3129134/163255685-857aa780-880f-4c09-b08c-4b53bf4af54d.png)
 
-<h1 align="center">[INSERT YOUR REPO / PROJ NAME HERE]</h1>
+<h1 align="center">Unity SDS Processing Service (U-SPS) - OGC Processes API</h1>
 <!-- ☝️ Replace with your repo name ☝️ -->
 
 </div>
@@ -15,11 +15,7 @@
 
 <!-- Header block for project -->
 
-[INSERT YOUR BADGES HERE (SEE: https://shields.io)] [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md) [![SLIM](https://img.shields.io/badge/Best%20Practices%20from-SLIM-blue)](https://nasa-ammos.github.io/slim/)
-<!-- ☝️ Add badges via: https://shields.io e.g. ![](https://img.shields.io/github/your_chosen_action/your_org/your_repo) ☝️ -->
-
-[INSERT SCREENSHOT OF YOUR SOFTWARE, IF APPLICABLE]
-<!-- ☝️ Screenshot of your software (if applicable) via ![](https://uri-to-your-screenshot) ☝️ -->
+![Version](https://img.shields.io/github/v/tag/unity-sds/unity-sps-ogc-processes-api?label=version) ![License](https://img.shields.io/github/license/unity-sds/unity-sps-ogc-processes-api) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md) [![SLIM](https://img.shields.io/badge/Best%20Practices%20from-SLIM-blue)](https://nasa-ammos.github.io/slim/)
 
 [INSERT MORE DETAILED DESCRIPTION OF YOUR REPOSITORY HERE]
 <!-- ☝️ Replace with a more detailed description of your repository, including why it was made and whom its intended for.  ☝️ -->
@@ -32,7 +28,7 @@
 ## Features
 
 * [INSERT LIST OF FEATURES IMPORTANT TO YOUR USERS HERE]
-  
+
 <!-- ☝️ Replace with a bullet-point list of your features ☝️ -->
 
 ## Contents
@@ -51,13 +47,13 @@ This guide provides a quick way to get started with our project. Please see our 
 ### Requirements
 
 * [INSERT LIST OF REQUIREMENTS HERE]
-  
+
 <!-- ☝️ Replace with a numbered list of your requirements, including hardware if applicable ☝️ -->
 
 ### Setup Instructions
 
 1. [INSERT STEP-BY-STEP SETUP INSTRUCTIONS HERE, WITH OPTIONAL SCREENSHOTS]
-   
+
 <!-- ☝️ Replace with a numbered list of how to set up your software prior to running ☝️ -->
 
 ### Run Instructions

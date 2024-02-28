@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unity-sps-ogc-processes-api"
+version = "0.0.1-beta.1"
+authors = [
+    { name = "Drew Meyers", email = "drew.meyers@jpl.nasa.gov" },
+]
+description = "The Unity science processing service area's OGC Processes API."
+classifiers = [
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+]
+
+dependencies = [
+    "fastapi==0.110.0",
+    "pydantic==1.10.14",
+    "uvicorn==0.27.1"
+]
+
+[project.license]
+text = "Apache-2.0"
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/unity-sds/unity-sps-ogc-processes-api"
+
+[project.optional-dependencies]
+develop = [
+    "fastapi-code-generator==0.4.4"
+]
+test = [
+    "pytest==8.0.2",
+    "httpx==0.23.0"
+]
+experiment = []
+
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
+namespaces = false
+
+[tool.isort]
+line_length = 110
+
+[tool.black]
+line-length = 110
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+ignore = ["E501", "E402", "E731"]
+
+[tool.bandit.assert_used]
+skips = ['*_test.py', '*/test_*.py']
