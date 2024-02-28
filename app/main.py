@@ -4,20 +4,20 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI, Body, HTTPException
+from fastapi import Body, FastAPI, HTTPException
 
 from .models.ogc_processes import (
+    ConfClasses,
+    Execute,
     JobList,
+    LandingPage,
+    Link,
+    Process,
+    ProcessList,
+    Results,
     StatusCode,
     StatusInfo,
-    LandingPage,
-    Process,
-    Execute,
-    ProcessList,
-    Link,
     Type2,
-    ConfClasses,
-    Results,
 )
 
 app = FastAPI(
@@ -60,9 +60,7 @@ async def landing_page():
 @app.get("/conformance", response_model=ConfClasses)
 async def conformance_declaration():
     return ConfClasses(
-        conformsTo=[
-            "http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/ogc-process-description"
-        ]
+        conformsTo=["http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/ogc-process-description"]
     )
 
 
@@ -73,9 +71,7 @@ async def process_list():
 
 @app.get("/processes/{process_id}", response_model=Process)
 async def process_description(process_id: str):
-    filtered_processes = [
-        process for process in processes_data if process.id == process_id
-    ]
+    filtered_processes = [process for process in processes_data if process.id == process_id]
 
     if len(filtered_processes) > 1:
         raise HTTPException(
