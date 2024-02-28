@@ -57,6 +57,11 @@ async def landing_page():
     )
 
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+
 @app.get("/conformance", response_model=ConfClasses)
 async def conformance_declaration():
     return ConfClasses(
