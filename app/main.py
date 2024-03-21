@@ -4,9 +4,16 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 from fastapi import Body, FastAPI, HTTPException
 
-from .models.ogc_processes import (
+from .config import Settings
+from .database import SessionLocal, engine, models
+
+models.Base.metadata.create_all(bind=engine)
+
+from .schemas.ogc_processes import (
     ConfClasses,
     Execute,
     JobList,
@@ -28,6 +35,20 @@ app = FastAPI(
     license={"name": "Placeholder", "url": "Placeholder"},
     servers=[],
 )
+
+
+@lru_cache
+def get_settings():
+    return Settings()
+
+
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 processes_data = [Process(id="sample-process", version="1.0")]

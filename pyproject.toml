@@ -21,7 +21,9 @@ classifiers = [
 
 dependencies = [
     "fastapi==0.110.0",
-    "pydantic==1.10.14",
+    "pydantic==2.6.4",
+    "SQLAlchemy==2.0.28",
+    "pydantic-settings==2.0.0",
     "uvicorn==0.27.1"
 ]
 
@@ -37,7 +39,7 @@ Homepage = "https://github.com/unity-sds/unity-sps-ogc-processes-api"
 
 [project.optional-dependencies]
 develop = [
-    "fastapi-code-generator==0.4.4"
+    "datamodel-code-generator==0.25.5"
 ]
 test = [
     "pytest==8.0.2",
