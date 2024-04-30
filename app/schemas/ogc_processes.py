@@ -9,13 +9,22 @@ from enum import Enum
 from typing import Any, Dict, Set, List, Optional, Union
 
 from pydantic import AnyUrl, RootModel, BaseModel, ConfigDict, Field, PositiveFloat, confloat, conint
+from pydantic.alias_generators import to_camel
 
 
-class ConfClasses(BaseModel):
+class BaseSchema(BaseModel):
+    model_config = ConfigDict(
+        use_enum_values=True,
+        from_attributes=True,
+        alias_generator=to_camel
+    )
+
+
+class ConfClasses(BaseSchema):
     conformsTo: List[str]
 
 
-class Link(BaseModel):
+class Link(BaseSchema):
     href: str
     rel: Optional[str] = Field(None, json_schema_extra={"example": "service"})
     type: Optional[str] = Field(None, json_schema_extra={"example": "application/json"})
@@ -23,7 +32,7 @@ class Link(BaseModel):
     title: Optional[str] = None
 
 
-class LandingPage(BaseModel):
+class LandingPage(BaseSchema):
     title: Optional[str] = Field(None, json_schema_extra={"example": "Example processing server"})
     description: Optional[str] = Field(
         None,
@@ -37,7 +46,7 @@ class LandingPage(BaseModel):
     links: List[Link]
 
 
-class Exception(BaseModel):
+class Exception(BaseSchema):
     model_config = ConfigDict(extra='allow')
 
     type: str
@@ -52,7 +61,7 @@ class Crs(Enum):
     http___www_opengis_net_def_crs_OGC_0_CRS84h = "http://www.opengis.net/def/crs/OGC/0/CRS84h"
 
 
-class GridItem(BaseModel):
+class GridItem(BaseSchema):
     coordinates: Optional[List[Union[str, float]]] = Field(
         None,
         description="List of coordinates along the dimension for which data organized as an irregular grid in the collection is available\n(e.g., 2, 10, 80, 100).",
@@ -71,7 +80,7 @@ class GridItem(BaseModel):
     )
 
 
-class Spatial(BaseModel):
+class Spatial(BaseSchema):
     bbox: Optional[List[List[float]]] = Field(
         None,
         description="One or more bounding boxes that describe the spatial extent of the dataset.\nIn the Core only a single bounding box is supported.\n\nExtensions may support additional areas.\nThe first bounding box describes the overall spatial\nextent of the data. All subsequent bounding boxes describe\nmore precise bounding boxes, e.g., to identify clusters of data.\nClients only interested in the overall spatial extent will\nonly need to access the first item in each array.",
@@ -103,7 +112,7 @@ class Trs(Enum):
     )
 
 
-class Grid(BaseModel):
+class Grid(BaseSchema):
     coordinates: Optional[List[str]] = Field(
         None,
         description='List of coordinates along the temporal dimension for which data organized as an irregular grid in the collection is available\n(e.g., "2017-11-14T09:00Z","2017-11-14T12:00Z","2017-11-14T15:00Z","2017-11-14T18:00Z","2017-11-14T21:00Z").',
@@ -122,7 +131,7 @@ class Grid(BaseModel):
     )
 
 
-class Temporal(BaseModel):
+class Temporal(BaseSchema):
     interval: Optional[List[IntervalItem]] = Field(
         None,
         description="One or more time intervals that describe the temporal extent of the dataset.\nIn the Core only a single time interval is supported.\n\nExtensions may support multiple intervals.\nThe first time interval describes the overall\ntemporal extent of the data. All subsequent time intervals describe\nmore precise time intervals, e.g., to identify clusters of data.\nClients only interested in the overall extent will only need\nto access the first item in each array.",
@@ -138,7 +147,7 @@ class Temporal(BaseModel):
     )
 
 
-class Extent(BaseModel):
+class Extent(BaseSchema):
     spatial: Optional[Spatial] = Field(None, description="The spatial extent of the data in the collection.")
     temporal: Optional[Temporal] = Field(
         None, description="The temporal extent of the features in the collection."
@@ -155,19 +164,19 @@ class DataType(RootModel):
     root: Union[str, DataType1]
 
 
-class Crs2(BaseModel):
+class Crs2(BaseSchema):
     uri: AnyUrl = Field(..., description="Reference to one coordinate reference system (CRS)")
 
 
-class Wkt(BaseModel):
+class Wkt(BaseSchema):
     pass
 
 
-class Crs3(BaseModel):
+class Crs3(BaseSchema):
     wkt: Wkt
 
 
-class Crs4(BaseModel):
+class Crs4(BaseSchema):
     referenceSystem: Dict[str, Any] = Field(
         ...,
         description="A reference system data structure as defined in the MD_ReferenceSystem of the ISO 19115",
@@ -206,7 +215,7 @@ class Type(Enum):
     enum = "enum"
 
 
-class Enumeration(BaseModel):
+class Enumeration(BaseSchema):
     type: Type
     enum: List[str]
 
@@ -221,7 +230,7 @@ class Metadata1(Link):
     role: Optional[str] = None
 
 
-class Metadata2(BaseModel):
+class Metadata2(BaseSchema):
     role: Optional[str] = None
     title: Optional[str] = None
     lang: Optional[str] = None
@@ -256,7 +265,7 @@ class Type1(Enum):
     string = "string"
 
 
-class Reference(BaseModel):
+class Reference(BaseSchema):
     model_config = ConfigDict(extra='forbid')
 
     field_ref: str = Field(..., alias="$ref")
@@ -279,7 +288,7 @@ class Crs5(Enum):
     http___www_opengis_net_def_crs_OGC_0_CRS84h = "http://www.opengis.net/def/crs/OGC/0/CRS84h"
 
 
-class Bbox(BaseModel):
+class Bbox(BaseSchema):
     bbox: List[float]
     crs: Optional[Union[Crs5, AnyUrl]] = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
 
@@ -292,7 +301,7 @@ class InputValueNoObject(RootModel):
     root: Union[str, float, int, bool, List, BinaryInputValue, Bbox]
 
 
-class Format(BaseModel):
+class Format(BaseSchema):
     mediaType: Optional[str] = None
     encoding: Optional[str] = None
     schema_: Optional[Union[str, Dict[str, Any]]] = Field(None, alias="schema")
@@ -302,11 +311,11 @@ class InputValue(RootModel):
     root: Union[InputValueNoObject, Dict[str, Any]]
 
 
-class Output(BaseModel):
+class Output(BaseSchema):
     format: Optional[Format] = None
 
 
-class Subscriber(BaseModel):
+class Subscriber(BaseSchema):
     successUri: AnyUrl
     inProgressUri: Optional[AnyUrl] = None
     failedUri: Optional[AnyUrl] = None
@@ -328,7 +337,7 @@ class Deployment(Enum):
     cloud = "cloud"
 
 
-class Config(BaseModel):
+class Config(BaseSchema):
     model_config = ConfigDict(extra='allow')
 
     cpuMin: Optional[confloat(ge=1.0)] = Field(
@@ -352,7 +361,7 @@ class Config(BaseModel):
     jobTimeout: Optional[float] = Field(None, description="Timeout delay for a job execution (in seconds)")
 
 
-class ExecutionUnit(BaseModel):
+class ExecutionUnit(BaseSchema):
     model_config = ConfigDict(extra='allow')
 
     type: Type3 = Field(..., description="Type of execution unit.")
@@ -369,14 +378,14 @@ class ExtentUad(Extent):
     pass
 
 
-class DescriptionType(BaseModel):
+class DescriptionType(BaseSchema):
     title: Optional[str] = None
     description: Optional[str] = None
     keywords: Optional[List[str]] = None
     metadata: Optional[List[Metadata]] = None
 
 
-class StatusInfo(BaseModel):
+class StatusInfo(BaseSchema):
     processID: Optional[str] = None
     type: Type2
     jobID: str
@@ -395,7 +404,7 @@ class BboxProcesses(RootModel):
     root: Bbox
 
 
-class Execute(BaseModel):
+class Execute(BaseSchema):
     inputs: Optional[Any] = None
     outputs: Optional[Any] = None
     subscriber: Optional[Subscriber] = None
@@ -409,7 +418,7 @@ class OgcapppkgArray(RootModel):
     root: List[Union[ExecutionUnit, Link, QualifiedInputValue]]
 
 
-class CollectionInfo(BaseModel):
+class CollectionInfo(BaseSchema):
     id: str = Field(
         ...,
         description="identifier of the collection used, for example, in URIs",
@@ -506,16 +515,16 @@ class ProcessSummary(DescriptionType):
 
 
 class Process(ProcessSummary):
-    inputs: Optional[Any] = None
-    outputs: Optional[Any] = None
+    inputs: Optional[List[InputValue]] = None
+    outputs: Optional[List[InputValue]] = None
 
 
-class ProcessList(BaseModel):
+class ProcessList(BaseSchema):
     processes: List[ProcessSummary]
     links: List[Link]
 
 
-class JobList(BaseModel):
+class JobList(BaseSchema):
     jobs: List[StatusInfo]
     links: List[Link]
 
@@ -524,7 +533,7 @@ class InlineOrRefData(RootModel):
     root: Union[InputValueNoObject, QualifiedInputValue, Link]
 
 
-class Ogcapppkg(BaseModel):
+class Ogcapppkg(BaseSchema):
     processDescription: Optional[Process] = None
     executionUnit: Union[ExecutionUnit, Link, QualifiedInputValue, OgcapppkgArray]
 
@@ -533,7 +542,7 @@ class StaticIndicator(ProcessSummary):
     mutable: Optional[bool] = True
 
 
-class Collections(BaseModel):
+class Collections(BaseSchema):
     links: List[Link]
     timeStamp: Optional[datetime] = None
     numberMatched: Optional[conint(ge=0)] = Field(None, json_schema_extra={"example": 1})
@@ -552,7 +561,7 @@ class InputDescription(DescriptionType):
     schema_: Schema = Field(..., alias="schema")
 
 
-class Schema1(BaseModel):
+class Schema1(BaseSchema):
     model_config = ConfigDict(extra='forbid')
 
     title: Optional[str] = None

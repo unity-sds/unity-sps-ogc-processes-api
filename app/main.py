@@ -5,13 +5,14 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from contextlib import asynccontextmanager
 
-from fastapi import Body, FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException, Depends
 
 from .config import Settings
-from .database import SessionLocal, engine, models
-
-models.Base.metadata.create_all(bind=engine)
+from .database import SessionLocal, engine, models, crud
+from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from .schemas.ogc_processes import (
     ConfClasses,
@@ -22,10 +23,48 @@ from .schemas.ogc_processes import (
     Process,
     ProcessList,
     Results,
-    StatusCode,
     StatusInfo,
-    Type2,
+    StatusCode
 )
+
+
+models.Base.metadata.create_all(bind=engine)  # Create database tables
+
+
+# def create_initial_processes(db: Session):
+#     # Check if data already exists
+#     if db.query(models.Process).first() is None:
+#         # Pre-populate the database
+#         processes = [
+#             models.Process(
+#                 version="1.0",
+#                 job_control_options={"option1": "value1"},
+#                 links=[{"href": "http://example.com", "rel": "self"}],
+#                 inputs={"input1": "data1"},
+#                 outputs={"output1": "result1"}
+#             ),
+#             models.Process(
+#                 version="1.1",
+#                 job_control_options={"option2": "value2"},
+#                 links=[{"href": "http://example.org", "rel": "self"}],
+#                 inputs={"input2": "data2"},
+#                 outputs={"output2": "result2"}
+#             )
+#         ]
+#         for p in processes:
+#             db_item = models.Process(**p.model_dump())
+#             db.add(db_item)
+#             db.commit()
+#             print(p.model_dump)
+
+
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     db = SessionLocal()
+#     create_initial_processes(db)
+#     yield
+#     db.close()
+
 
 app = FastAPI(
     version="Placeholder",
@@ -34,6 +73,7 @@ app = FastAPI(
     contact={"name": "Placeholder", "email": "Placeholder"},
     license={"name": "Placeholder", "url": "Placeholder"},
     servers=[],
+    # lifespan=lifespan
 )
 
 
@@ -51,24 +91,6 @@ def get_db():
         db.close()
 
 
-processes_data = [Process(id="sample-process", version="1.0")]
-
-jobs_data = [
-    StatusInfo(
-        jobID="job1",
-        type=Type2.process,
-        processID="sample-process",
-        status=StatusCode.running,
-    ),
-    StatusInfo(
-        jobID="job2",
-        type=Type2.process,
-        processID="sample-process",
-        status=StatusCode.successful,
-    ),
-]
-
-
 @app.get("/", response_model=LandingPage)
 async def landing_page():
     return LandingPage(
@@ -81,63 +103,108 @@ async def landing_page():
 @app.get("/conformance", response_model=ConfClasses)
 async def conformance_declaration():
     return ConfClasses(
-        conformsTo=["http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/ogc-process-description"]
+        conformsto=["http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/ogc-process-description"]
     )
 
 
+@app.post("/processes", response_model=Process)
+async def deploy_process(db: Session = Depends(get_db), process: Process = Body(...)):
+    try:
+        crud.get_process(db, process.id)
+        raise HTTPException(status_code=400, detail=f"Process with ID {process.id} not found")
+    except MultipleResultsFound:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Multiple processes found with same ID {process.id}, data integrity error",
+        )
+    except NoResultFound:
+        pass
+    return crud.create_process(db, process)
+
+
 @app.get("/processes", response_model=ProcessList)
-async def process_list():
-    return ProcessList(processes=processes_data, links=[])
+async def process_list(db: Session = Depends(get_db)):
+    processes = crud.get_processes(db)
+    links = [
+        Link(href="/processes", rel="self", type="application/json", hreflang=None, title="List of processes")
+    ]
+    return ProcessList(processes=processes, links=links)
 
 
 @app.get("/processes/{process_id}", response_model=Process)
-async def process_description(process_id: str):
-    filtered_processes = [process for process in processes_data if process.id == process_id]
-
-    if len(filtered_processes) > 1:
+async def process_description(process_id: str, db: Session = Depends(get_db)):
+    try:
+        process = crud.get_process(db, process_id)  # Assume this should only return one or no results
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail=f"Process with ID {process_id} not found")
+    except MultipleResultsFound:
         raise HTTPException(
             status_code=500,
-            detail="Multiple processes found for given ID, which is an unexpected error.",
+            detail=f"Multiple processes found with same ID {process_id}, data integrity error",
         )
-
-    if not filtered_processes:
-        raise HTTPException(status_code=404, detail="Process not found")
-
-    return filtered_processes[0]
+    return process
 
 
 @app.get("/jobs", response_model=JobList)
-async def job_list():
-    job_list = JobList(jobs=jobs_data, links=[])
-    return job_list
+async def job_list(db: Session = Depends(get_db)):
+    jobs = crud.get_jobs(db)
+    links = [Link(href="/jobs", rel="self", type="application/json", hreflang=None, title="List of jobs")]
+    return JobList(jobs=jobs, links=links)
 
 
 @app.post("/processes/{process_id}/execution", response_model=StatusInfo)
-async def execute(process_id: str, process: Execute = Body(...)):
-    raise HTTPException(status_code=501, detail="Not Implemented")
+async def execute(process_id: str, execute: Process = Body(...), db: Session = Depends(get_db)):
+    try:
+        crud.get_process(db, process_id)
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail=f"Process with ID {process_id} not found")
+    except MultipleResultsFound:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Multiple processes found with same ID {process_id}, data integrity error",
+        )
+    return crud.create_job(db, execute, process_id)
 
 
 @app.get("/jobs/{job_id}", response_model=StatusInfo)
-async def status(job_id: str):
-    filtered_jobs = [job for job in jobs_data if job.jobID == job_id]
-
-    if len(filtered_jobs) > 1:
+async def status(job_id: str, db: Session = Depends(get_db)):
+    try:
+        job = crud.get_job(db, job_id)  # Assume this should only return one or no results
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
+    except MultipleResultsFound:
         raise HTTPException(
             status_code=500,
-            detail="Multiple jobs found for given ID, which is an unexpected error.",
+            detail=f"Multiple jobs found with same ID {job_id}, data integrity error",
         )
-
-    if not filtered_jobs:
-        raise HTTPException(status_code=404, detail="Process not found")
-
-    return filtered_jobs[0]
+    return job
 
 
 @app.delete("/jobs/{job_id}", response_model=StatusInfo)
-async def dismiss(job_id: str):
-    raise HTTPException(status_code=501, detail="Not Implemented")
+async def dismiss(job_id: str, db: Session = Depends(get_db)):
+    try:
+        job = crud.get_job(db, job_id)  # Assume this should only return one or no results
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
+    except MultipleResultsFound:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Multiple jobs found with same ID {job_id}, data integrity error",
+        )
+    crud.delete_job(db, job)
+    job.status = StatusCode.dismissed
+    return job
 
 
 @app.get("/jobs/{job_id}/results", response_model=Results)
-async def result(job_id: str):
-    raise HTTPException(status_code=501, detail="Not Implemented")
+async def results(job_id: str, db: Session = Depends(get_db)):
+    try:
+        crud.get_job(db, job_id)
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
+    except MultipleResultsFound:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Multiple jobs found with same ID {job_id}, data integrity error",
+        )
+    return crud.get_results(db, job_id)

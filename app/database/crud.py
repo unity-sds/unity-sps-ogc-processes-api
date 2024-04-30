@@ -2,36 +2,66 @@ from sqlalchemy.orm import Session
 
 from . import models
 from ..schemas import ogc_processes
+from sqlalchemy.dialects.postgresql import UUID
 
 
-def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first()
+def create_process(db: Session, process: ogc_processes.Process):
+    # Copy DAG from static PVC to deployed PVC
+    # Unpause DAG
+    # Create new process row in processes table in DB
+    db_process = models.Process(**process.model_dump(by_alias=True))
+    db.add(db_process)
+    db.commit()
+    db.refresh(db_process)
+    return db_process
 
 
-# def get_user_by_email(db: Session, email: str):
-#     return db.query(models.User).filter(models.User.email == email).first()
+def get_processes(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Process).offset(skip).limit(limit).all()
 
 
-# def get_users(db: Session, skip: int = 0, limit: int = 100):
-#     return db.query(models.User).offset(skip).limit(limit).all()
+def get_process(db: Session, process_id: int):
+    return db.query(models.Process).filter(models.Process.id == process_id).one()
 
 
-# def create_user(db: Session, user: schemas.UserCreate):
-#     fake_hashed_password = user.password + "notreallyhashed"
-#     db_user = models.User(email=user.email, hashed_password=fake_hashed_password)
-#     db.add(db_user)
-#     db.commit()
-#     db.refresh(db_user)
-#     return db_user
+# def delete_process(db: Session, process: ogc_processes.Process):
+#     # Pause DAG
+#     # Delete DAG from deployed PVC
+#     # Delete process from processes table in DB
+#     return None
 
 
-# def get_items(db: Session, skip: int = 0, limit: int = 100):
-#     return db.query(models.Item).offset(skip).limit(limit).all()
+def create_job(db: Session, execute: ogc_processes.Execute, process_id: int):
+    # Trigger DAG
+    # Create JobStatus object and add to jobs table in DB
+    # StatusInfo(
+    #     jobid="job1",
+    #     type=Type2.process,
+    #     processid="sample-process",
+    #     status=StatusCode.running,
+    # ),
+    db_job = models.Job(**execute.dict(), owner_id=process_id)
+    db.add(db_job)
+    db.commit()
+    db.refresh(db_job)
+    return db_job
 
 
-# def create_user_item(db: Session, item: schemas.ItemCreate, user_id: int):
-#     db_item = models.Item(**item.dict(), owner_id=user_id)
-#     db.add(db_item)
-#     db.commit()
-#     db.refresh(db_item)
-#     return db_item
+# def update_job(db: Session, job_id: UUID):
+
+
+def get_jobs(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Job).offset(skip).limit(limit).all()
+
+
+def get_job(db: Session, job_id: UUID):
+    return db.query(models.Job).filter(models.Job._id == job_id).one()
+
+
+def get_results(db: Session, job_id: UUID):
+    return db.query(models.Result).filter(models.Result.job_id == job_id).all()
+
+
+def delete_job(db: Session, job: models.Job):
+    db.delete(job)
+    db.commit()
