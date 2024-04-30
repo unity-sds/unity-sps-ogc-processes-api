@@ -1,8 +1,8 @@
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
 
-from . import models
 from ..schemas import ogc_processes
-from sqlalchemy.dialects.postgresql import UUID
+from . import models
 
 
 def create_process(db: Session, process: ogc_processes.Process):

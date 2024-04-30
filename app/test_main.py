@@ -1,19 +1,18 @@
-from fastapi.testclient import TestClient
 import uuid
 
+from fastapi.testclient import TestClient
+
 from .main import app
-from .schemas.ogc_processes import (
+from .schemas.ogc_processes import (  # Execute,
     ConfClasses,
+    JobList,
     LandingPage,
     Process,
     ProcessList,
-    StatusInfo,
-    JobList,
     Results,
     StatusCode,
-    Execute
+    StatusInfo,
 )
-
 
 client = TestClient(app)
 

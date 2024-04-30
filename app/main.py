@@ -4,29 +4,26 @@
 
 from __future__ import annotations
 
+# from contextlib import asynccontextmanager
 from functools import lru_cache
-from contextlib import asynccontextmanager
 
-from fastapi import Body, FastAPI, HTTPException, Depends
+from fastapi import Body, Depends, FastAPI, HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 from .config import Settings
-from .database import SessionLocal, engine, models, crud
-from sqlalchemy.orm import Session
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-
-from .schemas.ogc_processes import (
+from .database import SessionLocal, crud, engine, models
+from .schemas.ogc_processes import (  # Execute,
     ConfClasses,
-    Execute,
     JobList,
     LandingPage,
     Link,
     Process,
     ProcessList,
     Results,
+    StatusCode,
     StatusInfo,
-    StatusCode
 )
-
 
 models.Base.metadata.create_all(bind=engine)  # Create database tables
 

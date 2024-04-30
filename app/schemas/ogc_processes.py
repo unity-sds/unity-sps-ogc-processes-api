@@ -6,18 +6,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Set, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
-from pydantic import AnyUrl, RootModel, BaseModel, ConfigDict, Field, PositiveFloat, confloat, conint
+from pydantic import AnyUrl, BaseModel, ConfigDict, Field, PositiveFloat, RootModel, confloat, conint
 from pydantic.alias_generators import to_camel
 
 
 class BaseSchema(BaseModel):
-    model_config = ConfigDict(
-        use_enum_values=True,
-        from_attributes=True,
-        alias_generator=to_camel
-    )
+    model_config = ConfigDict(use_enum_values=True, from_attributes=True, alias_generator=to_camel)
 
 
 class ConfClasses(BaseSchema):
@@ -47,7 +43,7 @@ class LandingPage(BaseSchema):
 
 
 class Exception(BaseSchema):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
     type: str
     title: Optional[str] = None
@@ -266,7 +262,7 @@ class Type1(Enum):
 
 
 class Reference(BaseSchema):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     field_ref: str = Field(..., alias="$ref")
 
@@ -338,7 +334,7 @@ class Deployment(Enum):
 
 
 class Config(BaseSchema):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
     cpuMin: Optional[confloat(ge=1.0)] = Field(
         None, description="Minimum number of CPUs required to run the process (unit is CPU core)."
@@ -362,7 +358,7 @@ class Config(BaseSchema):
 
 
 class ExecutionUnit(BaseSchema):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
     type: Type3 = Field(..., description="Type of execution unit.")
     image: str = Field(..., description="Container image reference for the execution unit.")
@@ -562,7 +558,7 @@ class InputDescription(DescriptionType):
 
 
 class Schema1(BaseSchema):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = None
     multipleOf: Optional[PositiveFloat] = None
