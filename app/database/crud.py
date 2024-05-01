@@ -30,7 +30,8 @@ def get_process(db: Session, process_id: int):
 #     # Pause DAG
 #     # Delete DAG from deployed PVC
 #     # Delete process from processes table in DB
-#     return None
+#     db.delete(process)
+#     db.commit()
 
 
 def create_job(db: Session, execute: ogc_processes.Execute, process_id: int):

@@ -406,6 +406,12 @@ def test_deploy_process():
     assert process.id == "EchoProcess"
 
 
+def test_undeploy_process():
+    process_id = "EchoProcess"
+    response = client.delete(f"/processes/{process_id}")
+    assert response.status_code == 204
+
+
 def test_get_process_list():
     response = client.get("/processes")
     assert response.status_code == 200

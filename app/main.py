@@ -13,7 +13,7 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 from .config import Settings
 from .database import SessionLocal, crud, engine, models
-from .schemas.ogc_processes import (  # Execute,
+from .schemas.ogc_processes import (
     ConfClasses,
     Execute,
     JobList,
@@ -119,6 +119,22 @@ async def deploy_process(db: Session = Depends(get_db), process: Process = Body(
     except NoResultFound:
         pass
     return crud.create_process(db, process)
+
+
+@app.delete("/processes/{process_id}", status_code=204)
+async def undeploy_process(process_id: str, db: Session = Depends(get_db)):
+    try:
+        process = crud.get_process(db, process_id)
+        raise HTTPException(status_code=400, detail=f"Process with ID {process_id} not found")
+    except MultipleResultsFound:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Multiple processes found with same ID {process_id}, data integrity error",
+        )
+    except NoResultFound:
+        pass
+
+    crud.delete_process(db, process)
 
 
 @app.get("/processes", response_model=ProcessList)
