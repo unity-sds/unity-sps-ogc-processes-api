@@ -66,11 +66,11 @@ models.Base.metadata.create_all(bind=engine)  # Create database tables
 
 
 app = FastAPI(
-    version="Placeholder",
-    title="Placeholder",
-    description="Placeholder",
+    version="1.0.0",
+    title="Unity Processing API conforming to the OGC API - Processes - Part 1 standard",
+    description="This document is an API definition document provided alongside the OGC API - Processes standard. The OGC API - Processes Standard specifies a processing interface to communicate over a RESTful protocol using JavaScript Object Notation (JSON) encodings. The specification allows for the wrapping of computational tasks into executable processes that can be offered by a server and be invoked by a client application.",
     contact={"name": "Placeholder", "email": "Placeholder"},
-    license={"name": "Placeholder", "url": "Placeholder"},
+    license={"name": "Apache 2.0", "url": "https://www.apache.org/licenses/LICENSE-2.0.html"},
     servers=[],
     # lifespan=lifespan
 )
@@ -81,7 +81,6 @@ def get_settings():
     return Settings()
 
 
-# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -90,8 +89,45 @@ def get_db():
         db.close()
 
 
+def check_process_integrity(db: Session, process_id: str):
+    try:
+        process = crud.get_process(db, process_id)
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail=f"Process with ID {process_id} not found")
+    except MultipleResultsFound:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Multiple processes found with same ID {process_id}, data integrity error",
+        )
+    return process
+
+
+def check_job_integrity(db: Session, job_id: str):
+    try:
+        job = crud.get_job(db, job_id)
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
+    except MultipleResultsFound:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Multiple jobs found with same ID {job_id}, data integrity error",
+        )
+    return job
+
+
 @app.get("/", response_model=LandingPage)
 async def landing_page():
+    """
+    ## Landing Page of this API
+
+    The landing page provides links to the:
+    - API Definition (no fixed path),
+    - Conformance Statements (`/conformance`),
+    - Processes Metadata (`/processes`),
+    - Endpoint for Job Monitoring (`/jobs`).
+
+    For more information, see [Section 7.2](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_landing_page).
+    """
     return LandingPage(
         title="Unity SPS Processing Server",
         description="Server implementing the OGC API - Processes 1.0 Standard",
@@ -108,32 +144,16 @@ async def conformance_declaration():
 
 @app.post("/processes", response_model=Process)
 async def deploy_process(db: Session = Depends(get_db), process: Process = Body(...)):
-    try:
-        crud.get_process(db, process.id)
-        raise HTTPException(status_code=400, detail=f"Process with ID {process.id} not found")
-    except MultipleResultsFound:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Multiple processes found with same ID {process.id}, data integrity error",
-        )
-    except NoResultFound:
-        pass
+    process = check_process_integrity(db, process.id)  # TODO needs to check if already exists
+    # Verify that the process_id corresponds with a DAG ID by filename
+    # Copy DAG from static PVC to deployed PVC
+    # Unpause DAG
     return crud.create_process(db, process)
 
 
 @app.delete("/processes/{process_id}", status_code=204)
 async def undeploy_process(process_id: str, db: Session = Depends(get_db)):
-    try:
-        process = crud.get_process(db, process_id)
-        raise HTTPException(status_code=400, detail=f"Process with ID {process_id} not found")
-    except MultipleResultsFound:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Multiple processes found with same ID {process_id}, data integrity error",
-        )
-    except NoResultFound:
-        pass
-
+    process = check_process_integrity(db, process_id)
     crud.delete_process(db, process)
 
 
@@ -153,16 +173,7 @@ async def process_list(db: Session = Depends(get_db)):
 
 @app.get("/processes/{process_id}", response_model=Process)
 async def process_description(process_id: str, db: Session = Depends(get_db)):
-    try:
-        process = crud.get_process(db, process_id)  # Assume this should only return one or no results
-    except NoResultFound:
-        raise HTTPException(status_code=404, detail=f"Process with ID {process_id} not found")
-    except MultipleResultsFound:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Multiple processes found with same ID {process_id}, data integrity error",
-        )
-    return process
+    return check_process_integrity(db, process_id)
 
 
 @app.get("/jobs", response_model=JobList)
@@ -174,43 +185,41 @@ async def job_list(db: Session = Depends(get_db)):
 
 @app.post("/processes/{process_id}/execution", response_model=StatusInfo)
 async def execute(process_id: str, execute: Execute = Body(...), db: Session = Depends(get_db)):
-    try:
-        crud.get_process(db, process_id)
-    except NoResultFound:
-        raise HTTPException(status_code=404, detail=f"Process with ID {process_id} not found")
-    except MultipleResultsFound:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Multiple processes found with same ID {process_id}, data integrity error",
-        )
+    check_process_integrity(db, process_id)
+    # Verify that the process_id corresponds with a DAG ID in Airflow
+    # Validate that that the inputs and outputs conform to the schemas for inputs and outputs of the process
+    # # Trigger DAG
+    # # job_id = str(uuid.uuid4())
+    # try:
+    #     check_job_integrity(db, job_id)  # TODO needs to check if already exists
+    # except NoResultFound:
+    # StatusInfo(
+    #     jobID=job_id,
+    #     processID=process_id,
+    #     type=ogc_processes.Type2.process.value,
+    #     status=StatusCode.running,
+    # ),
+    # job_status = crud.create_job(db, execute, process_id, job)
+    # return job_status
+    # job = crud.create_job(db, execute, process_id)
     return crud.create_job(db, execute, process_id)
 
 
 @app.get("/jobs/{job_id}", response_model=StatusInfo)
 async def status(job_id: str, db: Session = Depends(get_db)):
-    try:
-        job = crud.get_job(db, job_id)  # Assume this should only return one or no results
-    except NoResultFound:
-        raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
-    except MultipleResultsFound:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Multiple jobs found with same ID {job_id}, data integrity error",
-        )
+    job = check_job_integrity(db, job_id)
     return job
+    # check airflow job status
+    # set job to updates to Pydantic model based on airflow response
+    # reflect updates in db
+    # return update_job(db, job)
 
 
 @app.delete("/jobs/{job_id}", response_model=StatusInfo)
 async def dismiss(job_id: str, db: Session = Depends(get_db)):
-    try:
-        job = crud.get_job(db, job_id)  # Assume this should only return one or no results
-    except NoResultFound:
-        raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
-    except MultipleResultsFound:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Multiple jobs found with same ID {job_id}, data integrity error",
-        )
+    job = check_job_integrity(db, job_id)
+    # Pause DAG
+    # Delete DAG from deployed PVC
     crud.delete_job(db, job)
     job.status = StatusCode.dismissed
     return job
@@ -218,13 +227,5 @@ async def dismiss(job_id: str, db: Session = Depends(get_db)):
 
 @app.get("/jobs/{job_id}/results", response_model=Results)
 async def results(job_id: str, db: Session = Depends(get_db)):
-    try:
-        crud.get_job(db, job_id)
-    except NoResultFound:
-        raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
-    except MultipleResultsFound:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Multiple jobs found with same ID {job_id}, data integrity error",
-        )
+    check_job_integrity(db, job_id)
     return crud.get_results(db, job_id)

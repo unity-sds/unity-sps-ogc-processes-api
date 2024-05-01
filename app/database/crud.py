@@ -8,10 +8,7 @@ from . import models
 
 
 def create_process(db: Session, process: ogc_processes.Process):
-    # Copy DAG from static PVC to deployed PVC
-    # Unpause DAG
-    # Create new process row in processes table in DB
-    db_process = models.Process(**process.model_dump(by_alias=True))
+    db_process = models.Process(**process.model_dump())
     db.add(db_process)
     db.commit()
     db.refresh(db_process)
@@ -26,23 +23,13 @@ def get_process(db: Session, process_id: int):
     return db.query(models.Process).filter(models.Process.id == process_id).one()
 
 
-# def delete_process(db: Session, process: ogc_processes.Process):
-#     # Pause DAG
-#     # Delete DAG from deployed PVC
-#     # Delete process from processes table in DB
-#     db.delete(process)
-#     db.commit()
+def delete_process(db: Session, process: ogc_processes.Process):
+    db_process = models.Process(**process.model_dump())
+    db.delete(db_process)
+    db.commit()
 
 
 def create_job(db: Session, execute: ogc_processes.Execute, process_id: int):
-    # Trigger DAG
-    # Create JobStatus object and add to jobs table in DB
-    # StatusInfo(
-    #     jobid="job1",
-    #     type=Type2.process,
-    #     processid="sample-process",
-    #     status=StatusCode.running,
-    # ),
     job_id = str(uuid.uuid4())
     db_job = models.Job(
         jobID=job_id,
@@ -57,7 +44,14 @@ def create_job(db: Session, execute: ogc_processes.Execute, process_id: int):
     return db_job
 
 
-# def update_job(db: Session, job_id: UUID):
+def update_job(db: Session, job: ogc_processes.StatusInfo):
+    db_job = db.query(models.Job).filter(models.Job.jobID == job.jobID).one()
+    for key, value in job.model_dump().items():
+        if hasattr(db_job, key):
+            setattr(db_job, key, value)
+    db.commit()
+    db.refresh(db_job)
+    return db_job
 
 
 def get_jobs(db: Session, skip: int = 0, limit: int = 100):
