@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
 
@@ -40,7 +42,14 @@ def create_job(db: Session, execute: ogc_processes.Execute, process_id: int):
     #     processid="sample-process",
     #     status=StatusCode.running,
     # ),
-    db_job = models.Job(**execute.dict(), owner_id=process_id)
+    job_id = str(uuid.uuid4())
+    db_job = models.Job(
+        jobID=job_id,
+        processID=process_id,
+        type=ogc_processes.Type2.process.value,
+        status=ogc_processes.StatusCode.accepted.value,
+        **execute.model_dump(mode="json")
+    )
     db.add(db_job)
     db.commit()
     db.refresh(db_job)

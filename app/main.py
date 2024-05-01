@@ -15,11 +15,13 @@ from .config import Settings
 from .database import SessionLocal, crud, engine, models
 from .schemas.ogc_processes import (  # Execute,
     ConfClasses,
+    Execute,
     JobList,
     LandingPage,
     Link,
     Process,
     ProcessList,
+    ProcessSummary,
     Results,
     StatusCode,
     StatusInfo,
@@ -100,7 +102,7 @@ async def landing_page():
 @app.get("/conformance", response_model=ConfClasses)
 async def conformance_declaration():
     return ConfClasses(
-        conformsto=["http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/ogc-process-description"]
+        conformsTo=["http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/ogc-process-description"]
     )
 
 
@@ -122,10 +124,15 @@ async def deploy_process(db: Session = Depends(get_db), process: Process = Body(
 @app.get("/processes", response_model=ProcessList)
 async def process_list(db: Session = Depends(get_db)):
     processes = crud.get_processes(db)
+    process_summaries = []
+    for p in processes:
+        process_summaries.append(
+            ProcessSummary(id=p.id, version=p.version, jobControlOptions=p.jobControlOptions, links=p.links)
+        )
     links = [
         Link(href="/processes", rel="self", type="application/json", hreflang=None, title="List of processes")
     ]
-    return ProcessList(processes=processes, links=links)
+    return ProcessList(processes=process_summaries, links=links)
 
 
 @app.get("/processes/{process_id}", response_model=Process)
@@ -150,7 +157,7 @@ async def job_list(db: Session = Depends(get_db)):
 
 
 @app.post("/processes/{process_id}/execution", response_model=StatusInfo)
-async def execute(process_id: str, execute: Process = Body(...), db: Session = Depends(get_db)):
+async def execute(process_id: str, execute: Execute = Body(...), db: Session = Depends(get_db)):
     try:
         crud.get_process(db, process_id)
     except NoResultFound:

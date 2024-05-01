@@ -15,7 +15,7 @@ class Process(Base):
     description = Column(String)
     keywords = Column(JSON)
     version = Column(String)
-    jobcontroloptions = Column(JSON)
+    jobControlOptions = Column(JSON)
     links = Column(JSON)
     inputs = Column(JSON)
     outputs = Column(JSON)
@@ -27,8 +27,9 @@ Process.metadata = Column("metadata", JSON)
 
 class Job(Base):
     __tablename__ = "jobs"
-    _id = Column(String, primary_key=True)
-    process_id = Column(Integer, ForeignKey("processes._id"))
+    _id = Column(Integer, primary_key=True)
+    jobID = Column(String, index=True, unique=True, nullable=False)
+    processID = Column(Integer, ForeignKey("processes.id"))
     process = relationship("Process", back_populates="jobs")
     results = relationship("Result", back_populates="job")
 
@@ -43,11 +44,15 @@ class Job(Base):
     progress = Column(Integer)
     links = Column(JSON, nullable=True)
 
+    inputs = Column(JSON)
+    outputs = Column(JSON)
+    subscriber = Column(JSON)
+
 
 class Result(Base):
     __tablename__ = "results"
     _id = Column(Integer, primary_key=True)
-    job_id = Column(String, ForeignKey("jobs._id"))
+    jobID = Column(String, ForeignKey("jobs.jobID"))
     job = relationship("Job", back_populates="results")
 
     root = Column(JSON)
