@@ -38,7 +38,7 @@ def test_get_conformance_declaration():
     ]
 
 
-def test_deploy_process():
+def test_register_process():
     process = Process.model_validate_json(
         """
     {
@@ -406,7 +406,7 @@ def test_deploy_process():
     assert process.id == "EchoProcess"
 
 
-def test_undeploy_process():
+def test_unregister_process():
     process_id = "EchoProcess"
     response = client.delete(f"/processes/{process_id}")
     assert response.status_code == 204

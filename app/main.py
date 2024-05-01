@@ -397,7 +397,6 @@ def create_initial_processes(db: Session):
             )
         ]
         for p in processes:
-            print(p.model_dump())
             crud.create_process(db, p)
 
 
@@ -413,7 +412,7 @@ app = FastAPI(
     version="1.0.0",
     title="Unity Processing API conforming to the OGC API - Processes - Part 1 standard",
     description="This document is an API definition document provided alongside the OGC API - Processes standard. The OGC API - Processes Standard specifies a processing interface to communicate over a RESTful protocol using JavaScript Object Notation (JSON) encodings. The specification allows for the wrapping of computational tasks into executable processes that can be offered by a server and be invoked by a client application.",
-    contact={"name": "Placeholder", "email": "Placeholder"},
+    # contact={"name": "Placeholder", "email": "Placeholder"},
     license={"name": "Apache 2.0", "url": "https://www.apache.org/licenses/LICENSE-2.0.html"},
     servers=[],
     lifespan=lifespan,
@@ -459,11 +458,9 @@ def check_job_integrity(db: Session, job_id: str):
     return job
 
 
-@app.get("/", response_model=LandingPage)
+@app.get("/", response_model=LandingPage, summary="Landing page of this API")
 async def landing_page():
     """
-    ## Landing Page of this API
-
     The landing page provides links to the:
     - API Definition (no fixed path),
     - Conformance Statements (`/conformance`),
@@ -479,15 +476,40 @@ async def landing_page():
     )
 
 
-@app.get("/conformance", response_model=ConfClasses)
+@app.get(
+    "/conformance",
+    response_model=ConfClasses,
+    summary="Information about standards that this API conforms to",
+)
 async def conformance_declaration():
+    """
+    A list of all conformance classes, specified in a standard, that the server conforms to.
+
+    | Conformance class | URI |
+    | -------- | ------- |
+    | Core | http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/core |
+    | OGC Process Description | http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/ogc-process-description |
+    | JSON | http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/json |
+    | HTML | http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/html |
+    | OpenAPI | Specification 3.0	http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/oas30 |
+    | Job list | http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/job-list |
+    | Callback | http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/callback |
+    | Dismiss |	http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/dismiss |
+
+    For more information, see [Section 7.4](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_conformance_classes).
+    """
     return ConfClasses(
         conformsTo=["http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/ogc-process-description"]
     )
 
 
-@app.post("/processes", response_model=Process)
-async def deploy_process(db: Session = Depends(get_db), process: Process = Body(...)):
+@app.post("/processes", response_model=Process, summary="Register a process")
+async def register_process(db: Session = Depends(get_db), process: Process = Body(...)):
+    """
+    Register a new process.
+
+    **Note:** This is not an officially supported endpoint in the OGC Processes specification.
+    """
     process = check_process_integrity(db, process.id)  # TODO needs to check if already exists
     # Verify that the process_id corresponds with a DAG ID by filename
     # Copy DAG from static PVC to deployed PVC
@@ -495,14 +517,24 @@ async def deploy_process(db: Session = Depends(get_db), process: Process = Body(
     return crud.create_process(db, process)
 
 
-@app.delete("/processes/{process_id}", status_code=204)
-async def undeploy_process(process_id: str, db: Session = Depends(get_db)):
+@app.delete("/processes/{process_id}", status_code=204, summary="Unregister a process")
+async def unregister_process(process_id: str, db: Session = Depends(get_db)):
+    """
+    Unregister an existing process.
+
+    **Note:** This is not an officially supported endpoint in the OGC Processes specification.
+    """
     process = check_process_integrity(db, process_id)
     crud.delete_process(db, process)
 
 
-@app.get("/processes", response_model=ProcessList)
+@app.get("/processes", response_model=ProcessList, summary="Retrieve the list of available processes")
 async def process_list(db: Session = Depends(get_db)):
+    """
+    The list of processes contains a summary of each process the OGC API - Processes offers, including the link to a more detailed description of the process.
+
+    For more information, see [Section 7.9](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_process_list).
+    """
     processes = crud.get_processes(db)
     process_summaries = []
     for p in processes:
@@ -513,20 +545,37 @@ async def process_list(db: Session = Depends(get_db)):
     return ProcessList(processes=process_summaries, links=links)
 
 
-@app.get("/processes/{process_id}", response_model=Process)
+@app.get("/processes/{process_id}", response_model=Process, summary="Retrieve a process description")
 async def process_description(process_id: str, db: Session = Depends(get_db)):
+    """
+    The process description contains information about inputs and outputs and a link to the execution-endpoint for the process. The Core does not mandate the use of a specific process description to specify the interface of a process. That said, the Core requirements class makes the following recommendation:
+
+    Implementations SHOULD consider supporting the OGC process description.
+
+    For more information, see [Section 7.10](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_process_description).
+    """
     return check_process_integrity(db, process_id)
 
 
-@app.get("/jobs", response_model=JobList)
+@app.get("/jobs", response_model=JobList, summary="Retrieve the list of jobs")
 async def job_list(db: Session = Depends(get_db)):
+    """
+    Lists available jobs.
+
+    For more information, see [Section 11](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_job_list).
+    """
     jobs = crud.get_jobs(db)
     links = [Link(href="/jobs", rel="self", type="application/json", hreflang=None, title="List of jobs")]
     return JobList(jobs=jobs, links=links)
 
 
-@app.post("/processes/{process_id}/execution", response_model=StatusInfo)
+@app.post("/processes/{process_id}/execution", response_model=StatusInfo, summary="Execute a process")
 async def execute(process_id: str, execute: Execute = Body(...), db: Session = Depends(get_db)):
+    """
+    Create a new job.
+
+    For more information, see [Section 7.11](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_create_job).
+    """
     check_process_integrity(db, process_id)
     # Verify that the process_id corresponds with a DAG ID in Airflow
     # Validate that that the inputs and outputs conform to the schemas for inputs and outputs of the process
@@ -547,8 +596,13 @@ async def execute(process_id: str, execute: Execute = Body(...), db: Session = D
     return crud.create_job(db, execute, process_id)
 
 
-@app.get("/jobs/{job_id}", response_model=StatusInfo)
+@app.get("/jobs/{job_id}", response_model=StatusInfo, summary="Retrieve the status of a job")
 async def status(job_id: str, db: Session = Depends(get_db)):
+    """
+    Shows the status of a job.
+
+    For more information, see [Section 7.12](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_status_info).
+    """
     job = check_job_integrity(db, job_id)
     return job
     # check airflow job status
@@ -557,8 +611,15 @@ async def status(job_id: str, db: Session = Depends(get_db)):
     # return update_job(db, job)
 
 
-@app.delete("/jobs/{job_id}", response_model=StatusInfo)
+@app.delete(
+    "/jobs/{job_id}", response_model=StatusInfo, summary="Cancel a job execution, remove a finished job"
+)
 async def dismiss(job_id: str, db: Session = Depends(get_db)):
+    """
+    Cancel a job execution and remove it from the jobs list.
+
+    For more information, see [Section 13](https://docs.ogc.org/is/18-062r2/18-062r2.html#Dismiss).
+    """
     job = check_job_integrity(db, job_id)
     # Pause DAG
     # Delete DAG from deployed PVC
@@ -567,7 +628,12 @@ async def dismiss(job_id: str, db: Session = Depends(get_db)):
     return job
 
 
-@app.get("/jobs/{job_id}/results", response_model=Results)
+@app.get("/jobs/{job_id}/results", response_model=Results, summary="Retrieve the result(s) of a job")
 async def results(job_id: str, db: Session = Depends(get_db)):
+    """
+    Lists available results of a job. In case of a failure, lists exceptions instead.
+
+    For more information, see [Section 7.13](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_job_results).
+    """
     check_job_integrity(db, job_id)
     return crud.get_results(db, job_id)
