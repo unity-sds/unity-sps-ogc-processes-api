@@ -506,9 +506,7 @@ async def process_list(db: Session = Depends(get_db)):
     processes = crud.get_processes(db)
     process_summaries = []
     for p in processes:
-        process_summaries.append(
-            ProcessSummary(id=p.id, version=p.version, jobControlOptions=p.jobControlOptions, links=p.links)
-        )
+        process_summaries.append(ProcessSummary(**Process.from_orm(p).model_dump()))
     links = [
         Link(href="/processes", rel="self", type="application/json", hreflang=None, title="List of processes")
     ]
