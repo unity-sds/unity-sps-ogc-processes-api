@@ -3,8 +3,8 @@ import uuid
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 
-from .main import app
-from .schemas.ogc_processes import (
+from app.main import app
+from app.schemas.ogc_processes import (
     ConfClasses,
     Execute,
     JobList,
