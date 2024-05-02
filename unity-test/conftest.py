@@ -13,17 +13,13 @@ from app.main import app, get_db, get_settings
 from app.schemas.ogc_processes import Execute, Process, StatusCode, StatusInfo
 
 settings = get_settings()
-
 SQLALCHEMY_DATABASE_URL = settings.db_url
-
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
 Base.metadata.create_all(bind=engine)
 
 

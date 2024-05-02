@@ -600,7 +600,7 @@ async def execute(
     check_process_integrity(db, process_id, new_process=False)
     # Verify that the process_id corresponds with a DAG ID in Airflow
     # Validate that that the inputs and outputs conform to the schemas for inputs and outputs of the process
-    # # Trigger DAG
+    # Trigger DAG
     job_id = str(uuid.uuid4())
     # try:
     #     check_process_integrity(db, process_id, new_process=False)
@@ -635,7 +635,7 @@ async def status(
     job = check_job_integrity(db, job_id, new_job=False)
     return job
     # check airflow job status
-    # set job to updates to Pydantic model based on airflow response
+    # set job to updates to Pydantic model based on airflow response, set started time if not set already, etc
     # reflect updates in db
     # return update_job(db, job)
 
