@@ -49,11 +49,11 @@ def get_jobs(db: Session, skip: int = 0, limit: int = 100):
 
 
 def get_job(db: Session, job_id: UUID):
-    return db.query(models.Job).filter(models.Job._id == job_id).one()
+    return db.query(models.Job).filter(models.Job.jobID == job_id).one()
 
 
 def get_results(db: Session, job_id: UUID):
-    return db.query(models.Result).filter(models.Result.job_id == job_id).all()
+    return db.query(models.Result).filter(models.Result.jobID == job_id).all()
 
 
 def delete_job(db: Session, job: models.Job):

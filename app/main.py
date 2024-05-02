@@ -11,8 +11,9 @@ from functools import lru_cache
 from fastapi import Body, Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
+from typing_extensions import Annotated
 
-from .config import Settings
+from . import config
 from .database import SessionLocal, crud, engine, models
 from .schemas.ogc_processes import (
     ConfClasses,
@@ -423,7 +424,7 @@ app = FastAPI(
 
 @lru_cache
 def get_settings():
-    return Settings()
+    return config.Settings()
 
 
 def get_db():
@@ -552,7 +553,7 @@ async def process_list(db: Session = Depends(get_db)):
     processes = crud.get_processes(db)
     process_summaries = []
     for p in processes:
-        process_summaries.append(ProcessSummary(**Process.from_orm(p).model_dump()))
+        process_summaries.append(ProcessSummary(**Process.model_validate(p).model_dump()))
     links = [
         Link(href="/processes", rel="self", type="application/json", hreflang=None, title="List of processes")
     ]
@@ -584,19 +585,25 @@ async def job_list(db: Session = Depends(get_db)):
 
 
 @app.post("/processes/{process_id}/execution", response_model=StatusInfo, summary="Execute a process")
-async def execute(process_id: str, execute: Execute = Body(...), db: Session = Depends(get_db)):
+async def execute(
+    settings: Annotated[config.Settings, Depends(get_settings)],
+    process_id: str,
+    execute: Execute = Body(...),
+    db: Session = Depends(get_db),
+):
     """
     Create a new job.
 
     For more information, see [Section 7.11](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_create_job).
     """
+    print(settings.airflow_api_url)
     check_process_integrity(db, process_id, new_process=False)
     # Verify that the process_id corresponds with a DAG ID in Airflow
     # Validate that that the inputs and outputs conform to the schemas for inputs and outputs of the process
     # # Trigger DAG
     job_id = str(uuid.uuid4())
     # try:
-    #     check_job_integrity(db, job_id)  # TODO needs to check if already exists
+    #     check_process_integrity(db, process_id, new_process=False)
     #     raise ValueError()
     # except NoResultFound:
     #     StatusInfo(
@@ -616,12 +623,15 @@ async def execute(process_id: str, execute: Execute = Body(...), db: Session = D
 
 
 @app.get("/jobs/{job_id}", response_model=StatusInfo, summary="Retrieve the status of a job")
-async def status(job_id: str, db: Session = Depends(get_db)):
+async def status(
+    settings: Annotated[config.Settings, Depends(get_settings)], job_id: str, db: Session = Depends(get_db)
+):
     """
     Shows the status of a job.
 
     For more information, see [Section 7.12](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_status_info).
     """
+    print(settings.airflow_api_url)
     job = check_job_integrity(db, job_id, new_job=False)
     return job
     # check airflow job status
@@ -633,12 +643,16 @@ async def status(job_id: str, db: Session = Depends(get_db)):
 @app.delete(
     "/jobs/{job_id}", response_model=StatusInfo, summary="Cancel a job execution, remove a finished job"
 )
-async def dismiss(job_id: str, db: Session = Depends(get_db)):
+async def dismiss(
+    settings: Annotated[config.Settings, Depends(get_settings)], job_id: str, db: Session = Depends(get_db)
+):
     """
     Cancel a job execution and remove it from the jobs list.
 
     For more information, see [Section 13](https://docs.ogc.org/is/18-062r2/18-062r2.html#Dismiss).
     """
+    print(settings.airflow_api_url)
+
     job = check_job_integrity(db, job_id, new_job=False)
     # Pause DAG
     # Delete DAG from deployed PVC

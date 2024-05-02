@@ -1,7 +1,8 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import HttpUrl  # , PostgresDsn, AnyUrl
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    app_name: str = "Awesome API"
-    admin_email: str
-    model_config = SettingsConfigDict(env_file=".env")
+    airflow_api_url: HttpUrl
+    db_url: str
+    # pg_dsn: PostgresDsn
