@@ -1,5 +1,3 @@
-import uuid
-
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session
 
@@ -19,25 +17,17 @@ def get_processes(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Process).offset(skip).limit(limit).all()
 
 
-def get_process(db: Session, process_id: int):
+def get_process(db: Session, process_id: str):
     return db.query(models.Process).filter(models.Process.id == process_id).one()
 
 
-def delete_process(db: Session, process: ogc_processes.Process):
-    db_process = models.Process(**process.model_dump())
-    db.delete(db_process)
+def delete_process(db: Session, process: models.Process):
+    db.delete(process)
     db.commit()
 
 
-def create_job(db: Session, execute: ogc_processes.Execute, process_id: int):
-    job_id = str(uuid.uuid4())
-    db_job = models.Job(
-        jobID=job_id,
-        processID=process_id,
-        type=ogc_processes.Type2.process.value,
-        status=ogc_processes.StatusCode.accepted.value,
-        **execute.model_dump(mode="json")
-    )
+def create_job(db: Session, execute: ogc_processes.Execute, job: ogc_processes.StatusInfo):
+    db_job = models.Job(**execute.model_dump(mode="json"), **job.model_dump())
     db.add(db_job)
     db.commit()
     db.refresh(db_job)

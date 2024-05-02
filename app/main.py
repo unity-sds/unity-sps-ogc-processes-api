@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import uuid
 from contextlib import asynccontextmanager
 from functools import lru_cache
 
@@ -25,6 +26,7 @@ from .schemas.ogc_processes import (
     Results,
     StatusCode,
     StatusInfo,
+    Type2,
 )
 
 models.Base.metadata.create_all(bind=engine)  # Create database tables
@@ -432,29 +434,41 @@ def get_db():
         db.close()
 
 
-def check_process_integrity(db: Session, process_id: str):
+def check_process_integrity(db: Session, process_id: str, new_process: bool):
+    process = None
     try:
         process = crud.get_process(db, process_id)
+        if new_process and process is not None:
+            raise ValueError
     except NoResultFound:
-        raise HTTPException(status_code=404, detail=f"Process with ID {process_id} not found")
+        if not new_process:
+            raise HTTPException(status_code=404, detail=f"Process with ID {process_id} not found")
     except MultipleResultsFound:
         raise HTTPException(
             status_code=500,
             detail=f"Multiple processes found with same ID {process_id}, data integrity error",
         )
+    except ValueError:
+        raise HTTPException(status_code=500, detail=f"Existing process with ID {process_id} already exists")
     return process
 
 
-def check_job_integrity(db: Session, job_id: str):
+def check_job_integrity(db: Session, job_id: str, new_job: bool):
+    job = None
     try:
         job = crud.get_job(db, job_id)
+        if new_job and job is not None:
+            raise ValueError
     except NoResultFound:
-        raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
+        if not new_job:
+            raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
     except MultipleResultsFound:
         raise HTTPException(
             status_code=500,
             detail=f"Multiple jobs found with same ID {job_id}, data integrity error",
         )
+    except ValueError:
+        raise HTTPException(status_code=500, detail=f"Existing job with ID {job_id} already exists")
     return job
 
 
@@ -510,7 +524,7 @@ async def register_process(db: Session = Depends(get_db), process: Process = Bod
 
     **Note:** This is not an officially supported endpoint in the OGC Processes specification.
     """
-    process = check_process_integrity(db, process.id)  # TODO needs to check if already exists
+    check_process_integrity(db, process.id, new_process=True)
     # Verify that the process_id corresponds with a DAG ID by filename
     # Copy DAG from static PVC to deployed PVC
     # Unpause DAG
@@ -524,7 +538,7 @@ async def unregister_process(process_id: str, db: Session = Depends(get_db)):
 
     **Note:** This is not an officially supported endpoint in the OGC Processes specification.
     """
-    process = check_process_integrity(db, process_id)
+    process = check_process_integrity(db, process_id, new_process=False)
     crud.delete_process(db, process)
 
 
@@ -554,7 +568,7 @@ async def process_description(process_id: str, db: Session = Depends(get_db)):
 
     For more information, see [Section 7.10](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_process_description).
     """
-    return check_process_integrity(db, process_id)
+    return check_process_integrity(db, process_id, new_process=False)
 
 
 @app.get("/jobs", response_model=JobList, summary="Retrieve the list of jobs")
@@ -576,24 +590,29 @@ async def execute(process_id: str, execute: Execute = Body(...), db: Session = D
 
     For more information, see [Section 7.11](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_create_job).
     """
-    check_process_integrity(db, process_id)
+    check_process_integrity(db, process_id, new_process=False)
     # Verify that the process_id corresponds with a DAG ID in Airflow
     # Validate that that the inputs and outputs conform to the schemas for inputs and outputs of the process
     # # Trigger DAG
-    # # job_id = str(uuid.uuid4())
+    job_id = str(uuid.uuid4())
     # try:
     #     check_job_integrity(db, job_id)  # TODO needs to check if already exists
+    #     raise ValueError()
     # except NoResultFound:
-    # StatusInfo(
-    #     jobID=job_id,
-    #     processID=process_id,
-    #     type=ogc_processes.Type2.process.value,
-    #     status=StatusCode.running,
-    # ),
-    # job_status = crud.create_job(db, execute, process_id, job)
-    # return job_status
-    # job = crud.create_job(db, execute, process_id)
-    return crud.create_job(db, execute, process_id)
+    #     StatusInfo(
+    #         jobID=job_id,
+    #         processID=process_id,
+    #         type=ogc_processes.Type2.process.value,
+    #         status=StatusCode.running,
+    #     )
+    check_job_integrity(db, job_id, new_job=True)
+    job = StatusInfo(
+        jobID=job_id,
+        processID=process_id,
+        type=Type2.process.value,
+        status=StatusCode.accepted,
+    )
+    return crud.create_job(db, execute, job)
 
 
 @app.get("/jobs/{job_id}", response_model=StatusInfo, summary="Retrieve the status of a job")
@@ -603,7 +622,7 @@ async def status(job_id: str, db: Session = Depends(get_db)):
 
     For more information, see [Section 7.12](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_status_info).
     """
-    job = check_job_integrity(db, job_id)
+    job = check_job_integrity(db, job_id, new_job=False)
     return job
     # check airflow job status
     # set job to updates to Pydantic model based on airflow response
@@ -620,7 +639,7 @@ async def dismiss(job_id: str, db: Session = Depends(get_db)):
 
     For more information, see [Section 13](https://docs.ogc.org/is/18-062r2/18-062r2.html#Dismiss).
     """
-    job = check_job_integrity(db, job_id)
+    job = check_job_integrity(db, job_id, new_job=False)
     # Pause DAG
     # Delete DAG from deployed PVC
     crud.delete_job(db, job)
@@ -635,5 +654,5 @@ async def results(job_id: str, db: Session = Depends(get_db)):
 
     For more information, see [Section 7.13](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_job_results).
     """
-    check_job_integrity(db, job_id)
+    check_job_integrity(db, job_id, new_job=False)
     return crud.get_results(db, job_id)
