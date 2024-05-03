@@ -3,6 +3,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    airflow_api_url: HttpUrl
     db_url: str
     # pg_dsn: PostgresDsn
+    ems_api_url: HttpUrl
+    ems_api_auth_username: str
+    ems_api_auth_password: str

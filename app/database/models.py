@@ -40,7 +40,7 @@ class Job(Base):
     created = Column(DateTime(timezone=True), default=func.now())
     started = Column(DateTime(timezone=True), nullable=True)
     finished = Column(DateTime(timezone=True), nullable=True)
-    updated = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+    updated = Column(DateTime(timezone=True), nullable=True)
     progress = Column(Integer)
     links = Column(JSON, nullable=True)
 

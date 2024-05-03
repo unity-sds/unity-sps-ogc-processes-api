@@ -47,7 +47,7 @@ def test_directory():
 
 @pytest.fixture(scope="session")
 def deploy_process(test_directory, client):
-    data_filename = os.path.join(test_directory, "test_data/ProcessDescription.json")
+    data_filename = os.path.join(test_directory, "..", "process_definitions", "cwltool_help_dag.json")
     f = open(data_filename)
     process_json = json.load(f)
     process = Process.model_validate(process_json)
@@ -55,7 +55,7 @@ def deploy_process(test_directory, client):
     assert response.status_code == 200
     data = response.json()
     process = Process.model_validate(data)
-    assert process.id == "EchoProcess"
+    assert process.id == "cwltool_help_dag"
 
     yield process
 
@@ -65,7 +65,7 @@ def deploy_process(test_directory, client):
 
 @pytest.fixture(scope="session")
 def execute_process(test_directory, client, deploy_process):
-    data_filename = os.path.join(test_directory, "test_data/Execute.json")
+    data_filename = os.path.join(test_directory, "test_data/execution_requests/execute_cwltool_help_dag.json")
     f = open(data_filename)
     execute_json = json.load(f)
     execute = Execute.model_validate(execute_json)

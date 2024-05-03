@@ -6,9 +6,13 @@ from __future__ import annotations
 
 import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime
 from functools import lru_cache
 
+import requests
 from fastapi import Body, Depends, FastAPI, HTTPException
+from fastapi import status as fastapi_status
+from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from typing_extensions import Annotated
@@ -41,7 +45,7 @@ def create_initial_processes(db: Session):
             Process.model_validate_json(
                 """
             {
-                "id": "EchoProcess",
+                "id": "cwltool_help_dag",
                 "title": "Echo Process",
                 "description": "This process accepts and number of input and simple echoes each input as an output.",
                 "version": "1.0.0",
@@ -443,14 +447,20 @@ def check_process_integrity(db: Session, process_id: str, new_process: bool):
             raise ValueError
     except NoResultFound:
         if not new_process:
-            raise HTTPException(status_code=404, detail=f"Process with ID {process_id} not found")
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_404_NOT_FOUND,
+                detail=f"Process with ID {process_id} not found",
+            )
     except MultipleResultsFound:
         raise HTTPException(
-            status_code=500,
+            status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Multiple processes found with same ID {process_id}, data integrity error",
         )
     except ValueError:
-        raise HTTPException(status_code=500, detail=f"Existing process with ID {process_id} already exists")
+        raise HTTPException(
+            status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Existing process with ID {process_id} already exists",
+        )
     return process
 
 
@@ -462,14 +472,19 @@ def check_job_integrity(db: Session, job_id: str, new_job: bool):
             raise ValueError
     except NoResultFound:
         if not new_job:
-            raise HTTPException(status_code=404, detail=f"Job with ID {job_id} not found")
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_404_NOT_FOUND, detail=f"Job with ID {job_id} not found"
+            )
     except MultipleResultsFound:
         raise HTTPException(
-            status_code=500,
+            status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Multiple jobs found with same ID {job_id}, data integrity error",
         )
     except ValueError:
-        raise HTTPException(status_code=500, detail=f"Existing job with ID {job_id} already exists")
+        raise HTTPException(
+            status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Existing job with ID {job_id} already exists",
+        )
     return job
 
 
@@ -532,13 +547,17 @@ async def register_process(db: Session = Depends(get_db), process: Process = Bod
     return crud.create_process(db, process)
 
 
-@app.delete("/processes/{process_id}", status_code=204, summary="Unregister a process")
+@app.delete(
+    "/processes/{process_id}", status_code=fastapi_status.HTTP_204_NO_CONTENT, summary="Unregister a process"
+)
 async def unregister_process(process_id: str, db: Session = Depends(get_db)):
     """
     Unregister an existing process.
 
     **Note:** This is not an officially supported endpoint in the OGC Processes specification.
     """
+    # Pause DAG
+    # Delete DAG from deployed PVC
     process = check_process_integrity(db, process_id, new_process=False)
     crud.delete_process(db, process)
 
@@ -596,30 +615,51 @@ async def execute(
 
     For more information, see [Section 7.11](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_create_job).
     """
-    print(settings.airflow_api_url)
     check_process_integrity(db, process_id, new_process=False)
-    # Verify that the process_id corresponds with a DAG ID in Airflow
-    # Validate that that the inputs and outputs conform to the schemas for inputs and outputs of the process
-    # Trigger DAG
+    ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+    try:
+        response = requests.get(f"{settings.ems_api_url}/dags/{process_id}", auth=ems_api_auth)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        status_code_to_raise = fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR
+        detail_message = f"Failed to fetch DAG {process_id} due to an error."
+        if hasattr(e, "response"):
+            # If the exception has a response attribute, it's likely an HTTPError with more info
+            detail_message = f"Failed to fetch DAG {process_id}: {e.response.status_code} {e.response.reason}"
+
+        raise HTTPException(status_code=status_code_to_raise, detail=detail_message)
+
     job_id = str(uuid.uuid4())
-    # try:
-    #     check_process_integrity(db, process_id, new_process=False)
-    #     raise ValueError()
-    # except NoResultFound:
-    #     StatusInfo(
-    #         jobID=job_id,
-    #         processID=process_id,
-    #         type=ogc_processes.Type2.process.value,
-    #         status=StatusCode.running,
-    #     )
-    check_job_integrity(db, job_id, new_job=True)
-    job = StatusInfo(
-        jobID=job_id,
-        processID=process_id,
-        type=Type2.process.value,
-        status=StatusCode.accepted,
-    )
-    return crud.create_job(db, execute, job)
+
+    # TODO Validate that that the inputs and outputs conform to the schemas for inputs and outputs of the process
+
+    logical_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    data = {"dag_run_id": job_id, "logical_date": logical_date, "conf": {**execute.model_dump()}}
+    try:
+        response = requests.post(
+            f"{settings.ems_api_url}/dags/{process_id}/dagRuns", json=data, auth=ems_api_auth
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        check_job_integrity(db, job_id, new_job=True)
+        job = StatusInfo(
+            jobID=job_id,
+            processID=process_id,
+            type=Type2.process.value,
+            status=StatusCode.accepted,
+            started=data["start_date"],
+        )
+        return crud.create_job(db, execute, job)
+    except requests.exceptions.RequestException as e:
+        status_code_to_raise = fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR
+        detail_message = f"Failed to start a DAG run with DAG {process_id} due to an error."
+
+        if hasattr(e, "response"):
+            # If the exception has a response attribute, it's likely an HTTPError with more info
+            detail_message = f"Failed to start a DAG run with DAG {process_id}: {e.response.status_code} {e.response.reason}"
+
+        raise HTTPException(status_code=status_code_to_raise, detail=detail_message)
 
 
 @app.get("/jobs/{job_id}", response_model=StatusInfo, summary="Retrieve the status of a job")
@@ -631,13 +671,37 @@ async def status(
 
     For more information, see [Section 7.12](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_status_info).
     """
-    print(settings.airflow_api_url)
     job = check_job_integrity(db, job_id, new_job=False)
-    return job
-    # check airflow job status
-    # set job to updates to Pydantic model based on airflow response, set started time if not set already, etc
-    # reflect updates in db
-    # return update_job(db, job)
+    job = StatusInfo.model_validate(job)
+
+    # TODO validate DAG exists
+    # TODO validate DAG run exists
+
+    ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+    response = requests.get(
+        f"{settings.ems_api_url}/dags/{job.processID}/dagRuns/{job.jobID}",
+        auth=ems_api_auth,
+    )
+    data = response.json()
+
+    execution_status_conversion_dict = {
+        "queued": StatusCode.accepted,
+        "running": StatusCode.running,
+        "success": StatusCode.successful,
+        "failed": StatusCode.failed,
+    }
+    current_execution_status = execution_status_conversion_dict[data["state"]].value
+    if job.status != current_execution_status:
+        job.status = current_execution_status
+        updated = datetime.now()
+        job.updated = updated
+
+    end_date_str = data.get("end_date", None)
+    if end_date_str:
+        end_date = datetime.fromisoformat(end_date_str)
+        job.finished = end_date
+
+    return crud.update_job(db, job)
 
 
 @app.delete(
@@ -651,11 +715,14 @@ async def dismiss(
 
     For more information, see [Section 13](https://docs.ogc.org/is/18-062r2/18-062r2.html#Dismiss).
     """
-    print(settings.airflow_api_url)
-
     job = check_job_integrity(db, job_id, new_job=False)
-    # Pause DAG
-    # Delete DAG from deployed PVC
+    # TODO validate DAG exists
+    # TODO validate DAG run exists
+    ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+    requests.delete(
+        f"{settings.ems_api_url}/dags/{job.processID}/dagRuns/{job.jobID}",
+        auth=ems_api_auth,
+    )
     crud.delete_job(db, job)
     job.status = StatusCode.dismissed
     return job
