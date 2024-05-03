@@ -541,9 +541,9 @@ async def register_process(db: Session = Depends(get_db), process: Process = Bod
     **Note:** This is not an officially supported endpoint in the OGC Processes specification.
     """
     check_process_integrity(db, process.id, new_process=True)
-    # Verify that the process_id corresponds with a DAG ID by filename
-    # Copy DAG from static PVC to deployed PVC
-    # Unpause DAG
+    # TODO Verify that the process_id corresponds with a DAG ID by filename
+    # TODO Copy DAG from static PVC to deployed PVC
+    # TODO Unpause DAG
     return crud.create_process(db, process)
 
 
