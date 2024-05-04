@@ -44,6 +44,7 @@ develop = [
 ]
 test = [
     "pytest==8.0.2",
+    "pytest-dependency==0.6.0",
     "httpx==0.23.0",
     "requests-mock==1.12.1",
     "pyfakefs==5.4.1"

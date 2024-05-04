@@ -188,7 +188,7 @@ def mock_delete_existing_dag_dagrun(requests_mock, execute_process):
 
 @pytest.fixture(scope="function")
 def deploy_process(test_directory, client):
-    data_filename = os.path.join(test_directory, "..", "process_definitions", "cwltool_help_dag.json")
+    data_filename = os.path.join(test_directory, "..", "process_descriptions", "cwltool_help_dag.json")
     f = open(data_filename)
     process_json = json.load(f)
     process = Process.model_validate(process_json)
