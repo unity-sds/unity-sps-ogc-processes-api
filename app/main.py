@@ -645,7 +645,7 @@ async def execute(
             jobID=job_id,
             processID=process_id,
             type=Type2.process.value,
-            status=StatusCode.accepted,
+            status=StatusCode.accepted.value,
         )
         return crud.create_job(db, execute, job)
     except requests.exceptions.RequestException as e:
@@ -680,6 +680,7 @@ async def status(
         auth=ems_api_auth,
     )
     data = response.json()
+    print(data)
 
     execution_status_conversion_dict = {
         "queued": StatusCode.accepted,
@@ -721,7 +722,7 @@ async def dismiss(
         auth=ems_api_auth,
     )
     crud.delete_job(db, job)
-    job.status = StatusCode.dismissed
+    job.status = StatusCode.dismissed.value
     return job
 
 
