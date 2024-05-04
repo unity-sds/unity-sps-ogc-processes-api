@@ -33,6 +33,7 @@ from .schemas.ogc_processes import (
     StatusInfo,
     Type2,
 )
+from .schemas.unity_sps import HealthCheck
 
 models.Base.metadata.create_all(bind=engine)  # Create database tables
 
@@ -504,6 +505,26 @@ async def landing_page():
         description="Server implementing the OGC API - Processes 1.0 Standard",
         links=[Link(href="/conformance"), Link(href="/processes"), Link(href="/jobs")],
     )
+
+
+@app.get(
+    "/health",
+    summary="Perform a Health Check",
+    response_description="Return HTTP Status Code 200 (OK)",
+    status_code=fastapi_status.HTTP_200_OK,
+    response_model=HealthCheck,
+)
+def get_health() -> HealthCheck:
+    """
+    ## Perform a Health Check
+    Endpoint to perform a healthcheck on. This endpoint can primarily be used Docker
+    to ensure a robust container orchestration and management is in place. Other
+    services which rely on proper functioning of the API service will not deploy if this
+    endpoint returns any other HTTP status code except 200 (OK).
+    Returns:
+        HealthCheck: Returns a JSON response with the health status
+    """
+    return HealthCheck(status="OK")
 
 
 @app.get(
