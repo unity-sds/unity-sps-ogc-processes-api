@@ -640,15 +640,12 @@ async def execute(
             f"{settings.ems_api_url}/dags/{process_id}/dagRuns", json=data, auth=ems_api_auth
         )
         response.raise_for_status()
-        data = response.json()
-
         check_job_integrity(db, job_id, new_job=True)
         job = StatusInfo(
             jobID=job_id,
             processID=process_id,
             type=Type2.process.value,
             status=StatusCode.accepted,
-            started=data["start_date"],
         )
         return crud.create_job(db, execute, job)
     except requests.exceptions.RequestException as e:

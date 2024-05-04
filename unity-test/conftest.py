@@ -35,6 +35,28 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 
+# @pytest.fixture(scope="session")
+# def fake_filesystem(fs):  # pylint:disable=invalid-name
+#     """Variable name 'fs' causes a pylint warning. Provide a longer name
+#     acceptable to pylint for use in tests.
+#     """
+#     yield fs
+
+
+# @pytest.fixture(scope="session", autouse=True)
+# def static_dags_directory(fake_filesystem):
+#     file_path = "/static-dags"
+#     fake_filesystem.create_dir(file_path)
+#     assert os.path.isdir(file_path)
+
+
+# @pytest.fixture(scope="session", autouse=True)
+# def deployed_dags_directory(fake_filesystem):
+#     file_path = "/deployed-dags"
+#     fake_filesystem.create_dir(file_path)
+#     assert os.path.isdir(file_path)
+
+
 @pytest.fixture(scope="session")
 def client():
     return TestClient(app)
@@ -44,44 +66,6 @@ def client():
 def test_directory():
     """Returns the directory path of the current test session."""
     return os.path.dirname(os.path.abspath(__file__))
-
-
-@pytest.fixture(scope="session")
-def deploy_process(test_directory, client):
-    data_filename = os.path.join(test_directory, "..", "process_definitions", "cwltool_help_dag.json")
-    f = open(data_filename)
-    process_json = json.load(f)
-    process = Process.model_validate(process_json)
-    response = client.post("/processes", json=process.model_dump())
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    process = Process.model_validate(data)
-    assert process.id == "cwltool_help_dag"
-
-    yield process
-
-    response = client.delete(f"/processes/{process.id}")
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-
-
-@pytest.fixture(scope="session")
-def execute_process(test_directory, client, deploy_process):
-    data_filename = os.path.join(test_directory, "test_data/execution_requests/execute_cwltool_help_dag.json")
-    f = open(data_filename)
-    execute_json = json.load(f)
-    execute = Execute.model_validate(execute_json)
-    response = client.post(f"/processes/{deploy_process.id}/execution", json=jsonable_encoder(execute))
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    status_info = StatusInfo.model_validate(data)
-
-    yield status_info
-
-    response = client.delete(f"/jobs/{status_info.jobID}")
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    status_info = StatusInfo.model_validate(data)
-    assert status_info.status == StatusCode.dismissed.value
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -124,6 +108,22 @@ def mock_get_existing_dag(requests_mock, deploy_process):
 def mock_delete_existing_dag(requests_mock, deploy_process):
     return requests_mock.get(
         f"{settings.ems_api_url}/dags/{deploy_process.id}", status_code=status.HTTP_204_NO_CONTENT
+    )
+
+
+@pytest.fixture(scope="function", autouse=True)
+def mock_post_existing_dag_new_dagrun(requests_mock, deploy_process):
+    return requests_mock.post(
+        f"{settings.ems_api_url}/dags/{deploy_process.id}/dagRuns",
+        json={
+            "dag_run_id": "string",
+            "logical_date": "2019-08-24T14:15:22Z",
+            "execution_date": "2019-08-24T14:15:22Z",
+            "data_interval_start": "2019-08-24T14:15:22Z",
+            "data_interval_end": "2019-08-24T14:15:22Z",
+            "conf": {},
+            "note": "string",
+        },
     )
 
 
@@ -184,3 +184,41 @@ def mock_delete_existing_dag_dagrun(requests_mock, execute_process):
         f"{settings.ems_api_url}/dags/{execute_process.processID}/dagRuns/{execute_process.jobID}",
         status_code=status.HTTP_204_NO_CONTENT,
     )
+
+
+@pytest.fixture(scope="function")
+def deploy_process(test_directory, client):
+    data_filename = os.path.join(test_directory, "..", "process_definitions", "cwltool_help_dag.json")
+    f = open(data_filename)
+    process_json = json.load(f)
+    process = Process.model_validate(process_json)
+    response = client.post("/processes", json=process.model_dump())
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    process = Process.model_validate(data)
+    assert process.id == "cwltool_help_dag"
+
+    yield process
+
+    response = client.delete(f"/processes/{process.id}")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+@pytest.fixture(scope="function")
+def execute_process(test_directory, mock_post_existing_dag_new_dagrun, client, deploy_process):
+    data_filename = os.path.join(test_directory, "test_data/execution_requests/execute_cwltool_help_dag.json")
+    f = open(data_filename)
+    execute_json = json.load(f)
+    execute = Execute.model_validate(execute_json)
+    response = client.post(f"/processes/{deploy_process.id}/execution", json=jsonable_encoder(execute))
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    status_info = StatusInfo.model_validate(data)
+
+    yield status_info
+
+    response = client.delete(f"/jobs/{status_info.jobID}")
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    status_info = StatusInfo.model_validate(data)
+    assert status_info.status == StatusCode.dismissed.value

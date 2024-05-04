@@ -45,7 +45,8 @@ develop = [
 test = [
     "pytest==8.0.2",
     "httpx==0.23.0",
-    "requests-mock==1.12.1"
+    "requests-mock==1.12.1",
+    "pyfakefs==5.4.1"
 ]
 experiment = []
 
