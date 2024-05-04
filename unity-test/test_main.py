@@ -16,6 +16,7 @@ from app.schemas.ogc_processes import (
     StatusCode,
     StatusInfo,
 )
+from app.schemas.unity_sps import HealthCheck
 
 
 def test_get_landing_page(client):
@@ -24,6 +25,14 @@ def test_get_landing_page(client):
     data = response.json()
     landing_page = LandingPage.model_validate(data)
     assert landing_page.title == "Unity SPS Processing Server"
+
+
+def test_get_health(client):
+    response = client.get("/health")
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    landing_page = HealthCheck.model_validate(data)
+    assert landing_page.status == "OK"
 
 
 def test_get_conformance_declaration(client):
