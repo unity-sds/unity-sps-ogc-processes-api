@@ -13,6 +13,7 @@ from app.schemas.ogc_processes import (
     Process,
     ProcessList,
     Results,
+    StatusCode,
     StatusInfo,
 )
 
@@ -66,20 +67,20 @@ def test_post_execute_process(test_directory, client, deploy_process):
     assert StatusInfo.model_validate(data)
 
 
-# def test_delete_dismiss_execution(test_directory, client, deploy_process):
-#     data_filename = os.path.join(test_directory, "test_data/execution_requests/execute_cwltool_help_dag.json")
-#     f = open(data_filename)
-#     execute_json = json.load(f)
-#     execute = Execute.model_validate(execute_json)
-#     response = client.post(f"/processes/{deploy_process.id}/execution", json=jsonable_encoder(execute))
-#     data = response.json()
-#     status_info = StatusInfo.model_validate(data)
+def test_delete_dismiss_execution(test_directory, client, deploy_process):
+    data_filename = os.path.join(test_directory, "test_data/execution_requests/execute_cwltool_help_dag.json")
+    f = open(data_filename)
+    execute_json = json.load(f)
+    execute = Execute.model_validate(execute_json)
+    response = client.post(f"/processes/{deploy_process.id}/execution", json=jsonable_encoder(execute))
+    data = response.json()
+    status_info = StatusInfo.model_validate(data)
 
-#     response = client.delete(f"/jobs/{status_info.jobID}")
-#     assert response.status_code == status.HTTP_200_OK
-#     data = response.json()
-#     status_info = StatusInfo.model_validate(data)
-#     assert status_info.status == StatusCode.dismissed.value
+    response = client.delete(f"/jobs/{status_info.jobID}")
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    status_info = StatusInfo.model_validate(data)
+    assert status_info.status == StatusCode.dismissed.value
 
 
 def test_get_process_description(client, deploy_process):

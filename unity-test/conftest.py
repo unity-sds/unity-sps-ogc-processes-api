@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import pytest
 from fastapi import status
@@ -69,11 +70,11 @@ def test_directory():
 
 
 @pytest.fixture(scope="function", autouse=True)
-def mock_get_existing_dag(requests_mock, deploy_process):
+def mock_get_existing_dag(requests_mock):
     return requests_mock.get(
-        f"{settings.ems_api_url}/dags/{deploy_process.id}",
+        re.compile(f"{settings.ems_api_url}/dags/([^/]*)$"),
         json={
-            "dag_id": deploy_process.id,
+            "dag_id": "string",
             "dag_display_name": "string",
             "root_dag_id": "string",
             "is_paused": True,
@@ -105,16 +106,16 @@ def mock_get_existing_dag(requests_mock, deploy_process):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def mock_delete_existing_dag(requests_mock, deploy_process):
-    return requests_mock.get(
-        f"{settings.ems_api_url}/dags/{deploy_process.id}", status_code=status.HTTP_204_NO_CONTENT
+def mock_delete_existing_dag(requests_mock):
+    return requests_mock.delete(
+        re.compile(f"{settings.ems_api_url}/dags/([^/]*)$"), status_code=status.HTTP_204_NO_CONTENT
     )
 
 
 @pytest.fixture(scope="function", autouse=True)
-def mock_post_existing_dag_new_dagrun(requests_mock, deploy_process):
+def mock_post_existing_dag_new_dagrun(requests_mock):
     return requests_mock.post(
-        f"{settings.ems_api_url}/dags/{deploy_process.id}/dagRuns",
+        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns$"),
         json={
             "dag_run_id": "string",
             "logical_date": "2019-08-24T14:15:22Z",
@@ -128,9 +129,9 @@ def mock_post_existing_dag_new_dagrun(requests_mock, deploy_process):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def mock_get_existing_dag_dagruns(requests_mock, deploy_process):
+def mock_get_existing_dag_dagruns(requests_mock):
     return requests_mock.get(
-        f"{settings.ems_api_url}/dags/{deploy_process.id}/dagRuns",
+        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns$"),
         json={
             "dag_runs": [
                 {
@@ -156,9 +157,9 @@ def mock_get_existing_dag_dagruns(requests_mock, deploy_process):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def mock_get_existing_dag_dagrun(requests_mock, execute_process):
+def mock_get_existing_dag_dagrun(requests_mock):
     return requests_mock.get(
-        f"{settings.ems_api_url}/dags/{execute_process.processID}/dagRuns/{execute_process.jobID}",
+        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns/([^/]*)$"),
         json={
             "dag_run_id": "string",
             "dag_id": "string",
@@ -179,9 +180,9 @@ def mock_get_existing_dag_dagrun(requests_mock, execute_process):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def mock_delete_existing_dag_dagrun(requests_mock, execute_process):
+def mock_delete_existing_dag_dagrun(requests_mock):
     return requests_mock.delete(
-        f"{settings.ems_api_url}/dags/{execute_process.processID}/dagRuns/{execute_process.jobID}",
+        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns/([^/]*)$"),
         status_code=status.HTTP_204_NO_CONTENT,
     )
 
