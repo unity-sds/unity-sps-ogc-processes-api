@@ -680,7 +680,6 @@ async def status(
         auth=ems_api_auth,
     )
     data = response.json()
-    print(data)
 
     execution_status_conversion_dict = {
         "queued": StatusCode.accepted,
