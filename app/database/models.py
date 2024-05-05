@@ -29,7 +29,7 @@ class Job(Base):
     __tablename__ = "jobs"
     _id = Column(Integer, primary_key=True)
     jobID = Column(String, index=True, unique=True, nullable=False)
-    processID = Column(Integer, ForeignKey("processes.id"))
+    processID = Column(String, ForeignKey("processes.id"))
     process = relationship("Process", back_populates="jobs")
     results = relationship("Result", back_populates="job")
 
