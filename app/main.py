@@ -554,7 +554,7 @@ async def conformance_declaration():
 
 
 @app.post("/processes", response_model=Process, summary="Register a process")
-async def register_process(db: Session = Depends(get_db), process: Process = Body(...)):
+def register_process(db: Session = Depends(get_db), process: Process = Body(...)):
     """
     Register a new process.
 
@@ -570,7 +570,7 @@ async def register_process(db: Session = Depends(get_db), process: Process = Bod
 @app.delete(
     "/processes/{process_id}", status_code=fastapi_status.HTTP_204_NO_CONTENT, summary="Unregister a process"
 )
-async def unregister_process(process_id: str, db: Session = Depends(get_db)):
+def unregister_process(process_id: str, db: Session = Depends(get_db)):
     """
     Unregister an existing process.
 
@@ -583,7 +583,7 @@ async def unregister_process(process_id: str, db: Session = Depends(get_db)):
 
 
 @app.get("/processes", response_model=ProcessList, summary="Retrieve the list of available processes")
-async def process_list(db: Session = Depends(get_db)):
+def process_list(db: Session = Depends(get_db)):
     """
     The list of processes contains a summary of each process the OGC API - Processes offers, including the link to a more detailed description of the process.
 
@@ -600,7 +600,7 @@ async def process_list(db: Session = Depends(get_db)):
 
 
 @app.get("/processes/{process_id}", response_model=Process, summary="Retrieve a process description")
-async def process_description(process_id: str, db: Session = Depends(get_db)):
+def process_description(process_id: str, db: Session = Depends(get_db)):
     """
     The process description contains information about inputs and outputs and a link to the execution-endpoint for the process. The Core does not mandate the use of a specific process description to specify the interface of a process. That said, the Core requirements class makes the following recommendation:
 
@@ -612,7 +612,7 @@ async def process_description(process_id: str, db: Session = Depends(get_db)):
 
 
 @app.get("/jobs", response_model=JobList, summary="Retrieve the list of jobs")
-async def job_list(db: Session = Depends(get_db)):
+def job_list(db: Session = Depends(get_db)):
     """
     Lists available jobs.
 
@@ -624,7 +624,7 @@ async def job_list(db: Session = Depends(get_db)):
 
 
 @app.post("/processes/{process_id}/execution", response_model=StatusInfo, summary="Execute a process")
-async def execute(
+def execute(
     settings: Annotated[config.Settings, Depends(get_settings)],
     process_id: str,
     execute: Execute = Body(...),
@@ -680,7 +680,7 @@ async def execute(
 
 
 @app.get("/jobs/{job_id}", response_model=StatusInfo, summary="Retrieve the status of a job")
-async def status(
+def status(
     settings: Annotated[config.Settings, Depends(get_settings)], job_id: str, db: Session = Depends(get_db)
 ):
     """
@@ -724,7 +724,7 @@ async def status(
 @app.delete(
     "/jobs/{job_id}", response_model=StatusInfo, summary="Cancel a job execution, remove a finished job"
 )
-async def dismiss(
+def dismiss(
     settings: Annotated[config.Settings, Depends(get_settings)], job_id: str, db: Session = Depends(get_db)
 ):
     """
@@ -746,7 +746,7 @@ async def dismiss(
 
 
 @app.get("/jobs/{job_id}/results", response_model=Results, summary="Retrieve the result(s) of a job")
-async def results(job_id: str, db: Session = Depends(get_db)):
+def results(job_id: str, db: Session = Depends(get_db)):
     """
     Lists available results of a job. In case of a failure, lists exceptions instead.
 
