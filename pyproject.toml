@@ -25,7 +25,8 @@ dependencies = [
     "pydantic==2.6.4",
     "SQLAlchemy==2.0.28",
     "pydantic-settings==2.0.0",
-    "uvicorn==0.27.1"
+    "uvicorn==0.27.1",
+    "psycopg2==2.9.9"
 ]
 
 [project.license]
