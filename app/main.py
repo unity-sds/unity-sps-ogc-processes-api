@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+# import os
+# import shutil
+# import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -553,31 +556,143 @@ async def conformance_declaration():
     )
 
 
+def pause_dag(airflow_url, dag_id, auth, pause=True):
+    """Pauses or unpauses a DAG based on the pause parameter."""
+    endpoint = f"{airflow_url}/dags/{dag_id}"
+    data = {"is_paused": pause}
+    response = requests.patch(endpoint, auth=auth, json=data)
+    response.raise_for_status()
+
+
+def list_active_dag_runs(airflow_url, dag_id, auth):
+    """Fetches all active DAG runs for a specific DAG."""
+    endpoint = f"{airflow_url}/dags/{dag_id}/dagRuns"
+    params = {"state": "running"}  # Adjust the states as necessary
+    response = requests.get(endpoint, auth=auth, params=params)
+    response.raise_for_status()
+    return response.json()["dag_runs"]
+
+
+def stop_dag_run(airflow_url, dag_id, dag_run_id, auth):
+    """Stops a specific DAG run by updating its state to 'failed'."""
+    endpoint = f"{airflow_url}/dags/{dag_id}/dagRuns/{dag_run_id}"
+    data = {"state": "failed"}  # Use 'failed' or another terminal state
+    response = requests.patch(endpoint, auth=auth, json=data)
+    response.raise_for_status()
+
+
+def stop_task_instances(airflow_url, dag_id, dag_run_id, auth):
+    """Stops all task instances of a specific DAG run."""
+    endpoint = f"{airflow_url}/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances"
+    tasks = requests.get(endpoint, auth=auth)
+    tasks.raise_for_status()
+
+    for task in tasks.json()["tasks"]:
+        task_instance_endpoint = (
+            f"{airflow_url}/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task['task_id']}"
+        )
+        update_data = {"state": "failed"}
+        update_response = requests.patch(task_instance_endpoint, auth=auth, json=update_data)
+        update_response.raise_for_status()
+
+
 @app.post("/processes", response_model=Process, summary="Register a process")
-def register_process(db: Session = Depends(get_db), process: Process = Body(...)):
+def register_process(
+    settings: Annotated[config.Settings, Depends(get_settings)],
+    db: Session = Depends(get_db),
+    process: Process = Body(...),
+):
     """
     Register a new process.
 
     **Note:** This is not an officially supported endpoint in the OGC Processes specification.
     """
     check_process_integrity(db, process.id, new_process=True)
-    # TODO Verify that the process_id corresponds with a DAG ID by filename
-    # TODO Copy DAG from static PVC to deployed PVC
-    # TODO Unpause DAG
+
+    # # TODO should probably wrap in a try except that unregisters the DAG
+    # # TODO verify that the DAG does not already exist in the registered dags directory and does not exist in Airflow
+
+    # # Verify that the process_id corresponds with a DAG ID by filename in the DAG catalog
+    # dag_filename = process.id + ".py"
+    # os.path.isfile(os.path.join(settings.dag_catalog_directory, dag_filename))
+
+    # # Copy DAG from the DAG catalog PVC to deployed PVC
+    # shutil.copy2(
+    #     os.path.join(settings.dag_catalog_directory, dag_filename),
+    #     settings.registered_dags_directory,
+    # )
+
+    # ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+
+    # # Poll the EMS API to verify DAG existence
+    # timeout = 20  # Timeout after 20 seconds
+    # start_time = time.time()
+    # while time.time() - start_time < timeout:
+    #     try:
+    #         response = requests.get(f"{settings.ems_api_url}/dags/{process.id}", auth=ems_api_auth)
+    #         response.raise_for_status()
+    #         break  # Exit the loop if the DAG is found
+    #     except requests.exceptions.HTTPError:
+    #         time.sleep(5)  # Wait for a few seconds before retrying
+    # else:
+    #     # If we exit the loop without breaking, it means we timed out
+    #     raise HTTPException(
+    #         status_code=fastapi_status.HTTP_504_GATEWAY_TIMEOUT,
+    #         detail=f"Timeout waiting for DAG {process.id} to be available in Airflow."
+    #     )
+
+    # # Unpause DAG
+    # pause_dag(settings.ems_api_url, process.id, ems_api_auth, pause=False)
     return crud.create_process(db, process)
 
 
 @app.delete(
     "/processes/{process_id}", status_code=fastapi_status.HTTP_204_NO_CONTENT, summary="Unregister a process"
 )
-def unregister_process(process_id: str, db: Session = Depends(get_db)):
+def unregister_process(
+    settings: Annotated[config.Settings, Depends(get_settings)],
+    process_id: str,
+    db: Session = Depends(get_db),
+):
     """
     Unregister an existing process.
 
     **Note:** This is not an officially supported endpoint in the OGC Processes specification.
     """
-    # Pause DAG
-    # Delete DAG from deployed PVC
+    # # TODO should first check existence of DAG in the registered DAGs directory and in Airflow
+    # # TODO should probably wrap in a try except that keeps it registered if anything fails
+    # ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+
+    # # Pause the DAG first
+    # pause_dag(settings.ems_api_url, process_id, ems_api_auth, pause=True)
+
+    # # List and stop active DAG runs and their task instances
+    # active_dag_runs = list_active_dag_runs(settings.ems_api_url, process_id, ems_api_auth)
+    # for dag_run in active_dag_runs:
+    #     stop_dag_run(settings.ems_api_url, process_id, dag_run["dag_run_id"], ems_api_auth)
+    #     stop_task_instances(settings.ems_api_url, process_id, dag_run["dag_run_id"], ems_api_auth)
+
+    # try:
+    #     os.remove(os.path.join(settings.registered_dags_directory, process_id + ".py"))
+    # except OSError as e:
+    #     # If it fails, inform the user.
+    #     print("Error: %s - %s." % (e.filename, e.strerror))
+
+    # # # Poll for the removal of the DAG from the Airflow API
+    # # timeout = 20  # Timeout after 20 seconds
+    # # start_time = time.time()
+    # # while time.time() - start_time < timeout:
+    # #     response = requests.get(f"{settings.ems_api_url}/dags/{process_id}", auth=ems_api_auth)
+    # #     if response.status_code == 404:
+    # #         break  # Exit loop if DAG is confirmed removed
+    # #     time.sleep(5)  # Wait before retrying
+    # # else:
+    # #     # If we timeout waiting for the DAG to disappear, raise an error
+    # #     raise HTTPException(
+    # #         status_code=fastapi_status.HTTP_504_GATEWAY_TIMEOUT,
+    # #         detail="Timeout waiting for DAG to be fully removed from Airflow."
+    # #     )
+
     process = check_process_integrity(db, process_id, new_process=False)
     crud.delete_process(db, process)
 
@@ -649,10 +764,8 @@ def execute(
 
         raise HTTPException(status_code=status_code_to_raise, detail=detail_message)
 
-    job_id = str(uuid.uuid4())
-
     # TODO Validate that that the inputs and outputs conform to the schemas for inputs and outputs of the process
-
+    job_id = str(uuid.uuid4())
     logical_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     data = {"dag_run_id": job_id, "logical_date": logical_date, "conf": {**execute.model_dump()}}
     try:
@@ -670,11 +783,11 @@ def execute(
         return crud.create_job(db, execute, job)
     except requests.exceptions.RequestException as e:
         status_code_to_raise = fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR
-        detail_message = f"Failed to start a DAG run with DAG {process_id} due to an error."
+        detail_message = f"Failed to start DAG run {job_id} with DAG {process_id} due to an error."
 
         if hasattr(e, "response"):
             # If the exception has a response attribute, it's likely an HTTPError with more info
-            detail_message = f"Failed to start a DAG run with DAG {process_id}: {e.response.status_code} {e.response.reason}"
+            detail_message = f"Failed to start a DAG run {job_id} with DAG {process_id}: {e.response.status_code} {e.response.reason}"
 
         raise HTTPException(status_code=status_code_to_raise, detail=detail_message)
 
@@ -691,15 +804,21 @@ def status(
     job = check_job_integrity(db, job_id, new_job=False)
     job = StatusInfo.model_validate(job)
 
-    # TODO validate DAG exists
-    # TODO validate DAG run exists
-
     ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
-    response = requests.get(
-        f"{settings.ems_api_url}/dags/{job.processID}/dagRuns/{job.jobID}",
-        auth=ems_api_auth,
-    )
-    data = response.json()
+    try:
+        response = requests.get(
+            f"{settings.ems_api_url}/dags/{job.processID}/dagRuns/{job.jobID}",
+            auth=ems_api_auth,
+        )
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        status_code_to_raise = fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR
+        detail_message = f"Failed to fetch DAG run {job.jobID} for DAG {job.processID} due to an error."
+        if hasattr(e, "response"):
+            # If the exception has a response attribute, it's likely an HTTPError with more info
+            detail_message = f"Failed to fetch DAG run {job.jobID} for DAG {job.processID}: {e.response.status_code} {e.response.reason}"
+
+        raise HTTPException(status_code=status_code_to_raise, detail=detail_message)
 
     execution_status_conversion_dict = {
         "queued": StatusCode.accepted,
@@ -707,6 +826,7 @@ def status(
         "success": StatusCode.successful,
         "failed": StatusCode.failed,
     }
+    data = response.json()
     current_execution_status = execution_status_conversion_dict[data["state"]].value
     if job.status != current_execution_status:
         job.status = current_execution_status
@@ -733,13 +853,22 @@ def dismiss(
     For more information, see [Section 13](https://docs.ogc.org/is/18-062r2/18-062r2.html#Dismiss).
     """
     job = check_job_integrity(db, job_id, new_job=False)
-    # TODO validate DAG exists
-    # TODO validate DAG run exists
     ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
-    requests.delete(
-        f"{settings.ems_api_url}/dags/{job.processID}/dagRuns/{job.jobID}",
-        auth=ems_api_auth,
-    )
+    try:
+        response = requests.delete(
+            f"{settings.ems_api_url}/dags/{job.processID}/dagRuns/{job.jobID}",
+            auth=ems_api_auth,
+        )
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        status_code_to_raise = fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR
+        detail_message = f"Failed to fetch DAG run {job.jobID} for DAG {job.processID} due to an error."
+        if hasattr(e, "response"):
+            # If the exception has a response attribute, it's likely an HTTPError with more info
+            detail_message = f"Failed to fetch DAG run {job.jobID} for DAG {job.processID}: {e.response.status_code} {e.response.reason}"
+
+        raise HTTPException(status_code=status_code_to_raise, detail=detail_message)
+
     crud.delete_job(db, job)
     job.status = StatusCode.dismissed.value
     return job

@@ -26,7 +26,8 @@ dependencies = [
     "SQLAlchemy==2.0.28",
     "pydantic-settings==2.0.0",
     "uvicorn==0.27.1",
-    "psycopg2==2.9.9"
+    "psycopg2-binary==2.9.9",
+    "apache-airflow-client @ git+https://github.com/apache/airflow-client-python.git@2.9.0"
 ]
 
 [project.license]
