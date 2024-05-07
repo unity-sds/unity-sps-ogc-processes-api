@@ -633,7 +633,7 @@ def register_process(
             response.raise_for_status()
             break  # Exit the loop if the DAG is found
         except requests.exceptions.HTTPError:
-            time.sleep(5)  # Wait for a few seconds before retrying
+            time.sleep(0.5)
     else:
         # If we exit the loop without breaking, it means we timed out
         raise HTTPException(
@@ -683,9 +683,12 @@ def unregister_process(
     start_time = time.time()
     while time.time() - start_time < timeout:
         response = requests.get(f"{settings.ems_api_url}/dags/{process_id}", auth=ems_api_auth)
+        data = response.json()
         if response.status_code == 404:
-            break  # Exit loop if DAG is confirmed removed
-        time.sleep(5)  # Wait before retrying
+            break
+        elif not data["is_active"]:
+            break
+        time.sleep(0.5)
     else:
         # If we timeout waiting for the DAG to disappear, raise an error
         raise HTTPException(
