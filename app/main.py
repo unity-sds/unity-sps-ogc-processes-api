@@ -591,7 +591,7 @@ def stop_task_instances(airflow_url, dag_id, dag_run_id, auth):
         task_instance_endpoint = (
             f"{airflow_url}/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task['task_id']}"
         )
-        update_data = {"state": "failed"}
+        update_data = {"dry_run": False, "state": "new_state"}
         update_response = requests.patch(task_instance_endpoint, auth=auth, json=update_data)
         update_response.raise_for_status()
 
