@@ -2,7 +2,7 @@
 FROM python:3.12-slim
 
 # Install PostgreSQL development packages
-RUN apt-get update && apt-get install -y gcc libpq-dev
+RUN apt-get update && apt-get install -y git gcc libpq-dev
 
 # Copy the current directory contents into the container at /app
 COPY ./app /app
