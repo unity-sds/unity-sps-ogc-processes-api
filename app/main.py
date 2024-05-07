@@ -660,6 +660,8 @@ def unregister_process(
 
     **Note:** This is not an officially supported endpoint in the OGC Processes specification.
     """
+    process = check_process_integrity(db, process_id, new_process=False)
+
     # # TODO should first check existence of DAG in the registered DAGs directory and in Airflow
     # # TODO should probably wrap in a try except that keeps it registered if anything fails
     ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
@@ -696,7 +698,6 @@ def unregister_process(
             detail="Timeout waiting for DAG to be fully removed from Airflow.",
         )
 
-    process = check_process_integrity(db, process_id, new_process=False)
     crud.delete_process(db, process)
 
 
