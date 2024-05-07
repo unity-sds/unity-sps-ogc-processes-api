@@ -614,6 +614,7 @@ def register_process(
 
     # Verify that the process_id corresponds with a DAG ID by filename in the DAG catalog
     dag_filename = process.id + ".py"
+    # TODO raise exception if file does not exist
     os.path.isfile(os.path.join(settings.dag_catalog_directory, dag_filename))
 
     # Copy DAG from the DAG catalog PVC to deployed PVC
@@ -625,24 +626,24 @@ def register_process(
     ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
 
     # Poll the EMS API to verify DAG existence
-    timeout = 20  # Timeout after 20 seconds
+    timeout = 20
     start_time = time.time()
     while time.time() - start_time < timeout:
-        try:
-            response = requests.get(f"{settings.ems_api_url}/dags/{process.id}", auth=ems_api_auth)
-            response.raise_for_status()
-            break  # Exit the loop if the DAG is found
-        except requests.exceptions.HTTPError:
-            time.sleep(0.5)
+        response = requests.get(f"{settings.ems_api_url}/dags/{process.id}", auth=ems_api_auth)
+        data = response.json()
+        if response.status_code == 404:
+            pass
+        elif data["is_paused"]:
+            pause_dag(settings.ems_api_url, process.id, ems_api_auth, pause=False)
+        elif data["is_active"]:
+            break
+        time.sleep(0.5)
     else:
-        # If we exit the loop without breaking, it means we timed out
         raise HTTPException(
             status_code=fastapi_status.HTTP_504_GATEWAY_TIMEOUT,
             detail=f"Timeout waiting for DAG {process.id} to be available in Airflow.",
         )
 
-    # Unpause DAG
-    pause_dag(settings.ems_api_url, process.id, ems_api_auth, pause=False)
     return crud.create_process(db, process)
 
 
@@ -679,7 +680,7 @@ def unregister_process(
         print("Error: %s - %s." % (e.filename, e.strerror))
 
     # Poll for the removal of the DAG from the Airflow API
-    timeout = 20  # Timeout after 20 seconds
+    timeout = 20
     start_time = time.time()
     while time.time() - start_time < timeout:
         response = requests.get(f"{settings.ems_api_url}/dags/{process_id}", auth=ems_api_auth)
@@ -690,7 +691,6 @@ def unregister_process(
             break
         time.sleep(0.5)
     else:
-        # If we timeout waiting for the DAG to disappear, raise an error
         raise HTTPException(
             status_code=fastapi_status.HTTP_504_GATEWAY_TIMEOUT,
             detail="Timeout waiting for DAG to be fully removed from Airflow.",
