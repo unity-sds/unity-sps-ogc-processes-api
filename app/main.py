@@ -587,7 +587,7 @@ def stop_task_instances(airflow_url, dag_id, dag_run_id, auth):
     tasks = requests.get(endpoint, auth=auth)
     tasks.raise_for_status()
 
-    for task in tasks.json()["tasks"]:
+    for task in tasks.json()["task_instances"]:
         task_instance_endpoint = (
             f"{airflow_url}/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task['task_id']}"
         )
