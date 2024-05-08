@@ -1,0 +1,3 @@
+[submodule "ogcapi-processes"]
+	path = ogcapi-processes
+	url = https://github.com/opengeospatial/ogcapi-processes
