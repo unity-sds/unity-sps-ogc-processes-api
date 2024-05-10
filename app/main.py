@@ -807,7 +807,6 @@ def status(
     """
     job = check_job_integrity(db, job_id, new_job=False)
     job = StatusInfo.model_validate(job)
-
     ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
     try:
         response = requests.get(
