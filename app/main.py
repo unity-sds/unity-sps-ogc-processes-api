@@ -8,7 +8,6 @@ import os
 import shutil
 import time
 import uuid
-from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import lru_cache
 
@@ -41,384 +40,6 @@ from .schemas.unity_sps import HealthCheck
 models.Base.metadata.create_all(bind=engine)  # Create database tables
 
 
-def create_initial_processes(db: Session):
-    # Check if data already exists
-    if db.query(models.Process).first() is None:
-        # Pre-populate the database
-        processes = [
-            Process.model_validate_json(
-                """
-            {
-                "id": "cwltool_help_dag",
-                "title": "Echo Process",
-                "description": "This process accepts and number of input and simple echoes each input as an output.",
-                "version": "1.0.0",
-                "jobControlOptions": [
-                    "async-execute",
-                    "sync-execute"
-                ],
-                "inputs": [{
-                    "stringInput": {
-                    "title": "String Literal Input Example",
-                    "description": "This is an example of a STRING literal input.",
-                    "schema": {
-                        "type": "string",
-                        "enum": [
-                        "Value1",
-                        "Value2",
-                        "Value3"
-                        ]
-                    }
-                    },
-                    "measureInput": {
-                    "title": "Numerical Value with UOM Example",
-                    "description": "This is an example of a NUMERIC literal with an associated unit of measure.",
-                    "schema": {
-                        "type": "object",
-                        "required": [
-                        "measurement",
-                        "uom"
-                        ],
-                        "properties": {
-                        "measurement": {
-                            "type": "number"
-                        },
-                        "uom": {
-                            "type": "string"
-                        },
-                        "reference": {
-                            "type": "string",
-                            "format": "uri"
-                        }
-                        }
-                    }
-                    },
-                    "dateInput": {
-                    "title": "Date Literal Input Example",
-                    "description": "This is an example of a DATE literal input.",
-                    "schema": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                    },
-                    "doubleInput": {
-                    "title": "Bounded Double Literal Input Example",
-                    "description": "This is an example of a DOUBLE literal input that is bounded between a value greater than 0 and 10.  The default value is 5.",
-                    "schema": {
-                        "type": "number",
-                        "format": "double",
-                        "minimum": 0,
-                        "maximum": 10,
-                        "default": 5,
-                        "exclusiveMinimum": true
-                    }
-                    },
-                    "arrayInput": {
-                    "title": "Array Input Example",
-                    "description": "This is an example of a single process input that is an array of values.  In this case, the input array would be interpreted as a single value and not as individual inputs.",
-                    "schema": {
-                        "type": "array",
-                        "minItems": 2,
-                        "maxItems": 10,
-                        "items": {
-                        "type": "integer"
-                        }
-                    }
-                    },
-                    "complexObjectInput": {
-                    "title": "Complex Object Input Example",
-                    "description": "This is an example of a complex object input.",
-                    "schema": {
-                        "type": "object",
-                        "required": [
-                        "property1",
-                        "property5"
-                        ],
-                        "properties": {
-                        "property1": {
-                            "type": "string"
-                        },
-                        "property2": {
-                            "type": "string",
-                            "format": "uri"
-                        },
-                        "property3": {
-                            "type": "number"
-                        },
-                        "property4": {
-                            "type": "string",
-                            "format": "date-time"
-                        },
-                        "property5": {
-                            "type": "boolean"
-                        }
-                        }
-                    }
-                    },
-                    "geometryInput": {
-                    "title": "Geometry input",
-                    "description": "This is an example of a geometry input.  In this case the geometry can be expressed as a GML of GeoJSON geometry.",
-                    "minOccurs": 2,
-                    "maxOccurs": 5,
-                    "schema": {
-                        "oneOf": [
-                        {
-                            "type": "string",
-                            "contentMediaType": "application/gml+xml; version=3.2",
-                            "contentSchema": "http://schemas.opengis.net/gml/3.2.1/geometryBasic2d.xsd"
-                        },
-                        {
-                            "format": "geojson-geometry"
-                        }
-                        ]
-                    }
-                    },
-                    "boundingBoxInput": {
-                    "title": "Bounding Box Input Example",
-                    "description": "This is an example of a BBOX literal input.",
-                    "schema": {
-                        "allOf": [
-                        {
-                            "format": "ogc-bbox"
-                        },
-                        {
-                            "$ref": "../../openapi/schemas/bbox.yaml"
-                        }
-                        ]
-                    }
-                    },
-                    "imagesInput": {
-                    "title": "Inline Images Value Input",
-                    "description": "This is an example of an image input.  In this case, the input is an array of up to 150 images that might, for example, be a set of tiles.  The oneOf[] conditional is used to indicate the acceptable image content types; GeoTIFF and JPEG 2000 in this case.  Each input image in the input array can be included inline in the execute request as a base64-encoded string or referenced using the link.yaml schema.  The use of a base64-encoded string is implied by the specification and does not need to be specified in the definition of the input.",
-                    "minOccurs": 1,
-                    "maxOccurs": 150,
-                    "schema": {
-                        "oneOf": [
-                        {
-                            "type": "string",
-                            "contentEncoding": "binary",
-                            "contentMediaType": "image/tiff; application=geotiff"
-                        },
-                        {
-                            "type": "string",
-                            "contentEncoding": "binary",
-                            "contentMediaType": "image/jp2"
-                        }
-                        ]
-                    }
-                    },
-                    "featureCollectionInput": {
-                    "title": "Feature Collection Input Example.",
-                    "description": "This is an example of an input that is a feature collection that can be encoded in one of three ways: as a GeoJSON feature collection, as a GML feature collection retrieved from a WFS or as a KML document.",
-                    "schema": {
-                        "oneOf": [
-                        {
-                            "type": "string",
-                            "contentMediaType": "application/gml+xml; version=3.2"
-                        },
-                        {
-                            "type": "string",
-                            "contentSchema": "https://schemas.opengis.net/kml/2.3/ogckml23.xsd",
-                            "contentMediaType": "application/vnd.google-earth.kml+xml"
-                        },
-                        {
-                            "allOf": [
-                            {
-                                "format": "geojson-feature-collection"
-                            },
-                            {
-                                "$ref": "https://geojson.org/schema/FeatureCollection.json"
-                            }
-                            ]
-                        }
-                        ]
-                    }
-                    }
-                }],
-                "outputs": [{
-                    "stringOutput": {
-                    "schema": {
-                        "type": "string",
-                        "enum": [
-                        "Value1",
-                        "Value2",
-                        "Value3"
-                        ]
-                    }
-                    },
-                    "measureOutput": {
-                    "schema": {
-                        "type": "object",
-                        "required": [
-                        "measurement",
-                        "uom"
-                        ],
-                        "properties": {
-                        "measurement": {
-                            "type": "number"
-                        },
-                        "uom": {
-                            "type": "string"
-                        },
-                        "reference": {
-                            "type": "string",
-                            "format": "uri"
-                        }
-                        }
-                    }
-                    },
-                    "dateOutput": {
-                    "schema": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                    },
-                    "doubleOutput": {
-                    "schema": {
-                        "type": "number",
-                        "format": "double",
-                        "minimum": 0,
-                        "maximum": 10,
-                        "default": 5,
-                        "exclusiveMinimum": true
-                    }
-                    },
-                    "arrayOutput": {
-                    "schema": {
-                        "type": "array",
-                        "minItems": 2,
-                        "maxItems": 10,
-                        "items": {
-                        "type": "integer"
-                        }
-                    }
-                    },
-                    "complexObjectOutput": {
-                    "schema": {
-                        "type": "object",
-                        "required": [
-                        "property1",
-                        "property5"
-                        ],
-                        "properties": {
-                        "property1": {
-                            "type": "string"
-                        },
-                        "property2": {
-                            "type": "string",
-                            "format": "uri"
-                        },
-                        "property3": {
-                            "type": "number"
-                        },
-                        "property4": {
-                            "type": "string",
-                            "format": "date-time"
-                        },
-                        "property5": {
-                            "type": "boolean"
-                        }
-                        }
-                    }
-                    },
-                    "geometryOutput": {
-                    "schema": {
-                        "oneOf": [
-                        {
-                            "type": "string",
-                            "contentMediaType": "application/gml+xml",
-                            "contentSchema": "http://schemas.opengis.net/gml/3.2.1/geometryBasic2d.xsd"
-                        },
-                        {
-                            "allOf": [
-                            {
-                                "format": "geojson-geometry"
-                            },
-                            {
-                                "$ref": "http://schemas.opengis.net/ogcapi/features/part1/1.0/openapi/schemas/geometryGeoJSON.yaml"
-                            }
-                            ]
-                        }
-                        ]
-                    }
-                    },
-                    "boundingBoxOutput": {
-                    "schema": {
-                        "allOf": [
-                        {
-                            "format": "ogc-bbox"
-                        },
-                        {
-                            "$ref": "../../openapi/schemas/bbox.yaml"
-                        }
-                        ]
-                    }
-                    },
-                    "imagesOutput": {
-                    "schema": {
-                        "oneOf": [
-                        {
-                            "type": "string",
-                            "contentEncoding": "binary",
-                            "contentMediaType": "image/tiff; application=geotiff"
-                        },
-                        {
-                            "type": "string",
-                            "contentEncoding": "binary",
-                            "contentMediaType": "image/jp2"
-                        }
-                        ]
-                    }
-                    },
-                    "featureCollectionOutput": {
-                    "schema": {
-                        "oneOf": [
-                        {
-                            "type": "string",
-                            "contentMediaType": "application/gml+xml; version=3.2"
-                        },
-                        {
-                            "type": "string",
-                            "contentMediaType": "application/vnd.google-earth.kml+xml",
-                            "contentSchema": "https://schemas.opengis.net/kml/2.3/ogckml23.xsd"
-                        },
-                        {
-                            "allOf": [
-                            {
-                                "format": "geojson-feature-collection"
-                            },
-                            {
-                                "$ref": "https://geojson.org/schema/FeatureCollection.json"
-                            }
-                            ]
-                        }
-                        ]
-                    }
-                    }
-                }],
-                "links": [
-                    {
-                    "href": "https://processing.example.org/oapi-p/processes/EchoProcess/execution",
-                    "rel": "http://www.opengis.net/def/rel/ogc/1.0/execute",
-                    "title": "Execute endpoint"
-                    }
-                ]
-            }
-            """
-            )
-        ]
-        for p in processes:
-            crud.create_process(db, p)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    db = SessionLocal()
-    create_initial_processes(db)
-    yield
-    db.close()
-
-
 app = FastAPI(
     version="1.0.0",
     title="Unity Processing API conforming to the OGC API - Processes - Part 1 standard",
@@ -426,7 +47,6 @@ app = FastAPI(
     # contact={"name": "Placeholder", "email": "Placeholder"},
     license={"name": "Apache 2.0", "url": "https://www.apache.org/licenses/LICENSE-2.0.html"},
     servers=[],
-    lifespan=lifespan,
 )
 
 
@@ -453,17 +73,17 @@ def check_process_integrity(db: Session, process_id: str, new_process: bool):
         if not new_process:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_404_NOT_FOUND,
-                detail=f"Process with ID {process_id} not found",
+                detail=f"Process with ID '{process_id}' not found",
             )
     except MultipleResultsFound:
         raise HTTPException(
             status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Multiple processes found with same ID {process_id}, data integrity error",
+            detail=f"Multiple processes found with same ID '{process_id}', data integrity error",
         )
     except ValueError:
         raise HTTPException(
             status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Existing process with ID {process_id} already exists",
+            detail=f"Existing process with ID '{process_id}' already exists",
         )
     return process
 
@@ -477,17 +97,17 @@ def check_job_integrity(db: Session, job_id: str, new_job: bool):
     except NoResultFound:
         if not new_job:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_404_NOT_FOUND, detail=f"Job with ID {job_id} not found"
+                status_code=fastapi_status.HTTP_404_NOT_FOUND, detail=f"Job with ID '{job_id}' not found"
             )
     except MultipleResultsFound:
         raise HTTPException(
             status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Multiple jobs found with same ID {job_id}, data integrity error",
+            detail=f"Multiple jobs found with same ID '{job_id}', data integrity error",
         )
     except ValueError:
         raise HTTPException(
             status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Existing job with ID {job_id} already exists",
+            detail=f"Existing job with ID '{job_id}' already exists",
         )
     return job
 
@@ -609,13 +229,25 @@ def deploy_process(
     """
     check_process_integrity(db, process.id, new_process=True)
 
-    # # TODO should probably wrap in a try except that undeploys the DAG
-    # # TODO verify that the DAG does not already exist in the deployed dags directory and does not exist in Airflow
+    # TODO should probably wrap in a try except that undeploys the DAG
+    # TODO verify that the DAG does not already exist in the deployed dags directory and does not exist in Airflow
 
     # Verify that the process_id corresponds with a DAG ID by filename in the DAG catalog
     dag_filename = process.id + ".py"
-    # TODO raise exception if file does not exist
-    os.path.isfile(os.path.join(settings.dag_catalog_directory, dag_filename))
+    if not os.path.isfile(os.path.join(settings.dag_catalog_directory, dag_filename)):
+        # If the file doesn't exist, list other files in the same directory
+        existing_files = os.listdir(settings.dag_catalog_directory)
+        existing_files_str = "\n".join(existing_files)  # Create a string from the list of files
+
+        # Raise an exception with details about what files are actually there
+        raise HTTPException(
+            status_code=fastapi_status.HTTP_409_CONFLICT,
+            detail=f"The process ID '{process.id}' does not have a matching DAG file named '{dag_filename}' in the DAG catalog.\nThe DAG catalog includes the following files:\n{existing_files_str}",
+        )
+
+    if os.path.isfile(os.path.join(settings.deployed_dags_directory, dag_filename)):
+        # Log warning that file already exists in the deployed dags directory
+        pass
 
     # Copy DAG from the DAG catalog PVC to deployed PVC
     shutil.copy2(
@@ -623,9 +255,14 @@ def deploy_process(
         settings.deployed_dags_directory,
     )
 
-    ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+    if not os.path.isfile(os.path.join(settings.deployed_dags_directory, dag_filename)):
+        raise HTTPException(
+            status_code=fastapi_status.HTTP_409_CONFLICT,
+            detail="",
+        )
 
     # Poll the EMS API to verify DAG existence
+    ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
     timeout = 20
     start_time = time.time()
     while time.time() - start_time < timeout:
@@ -641,7 +278,7 @@ def deploy_process(
     else:
         raise HTTPException(
             status_code=fastapi_status.HTTP_504_GATEWAY_TIMEOUT,
-            detail=f"Timeout waiting for DAG {process.id} to be available in Airflow.",
+            detail=f"Timeout waiting for DAG '{process.id}' to be available in Airflow.",
         )
 
     return crud.create_process(db, process)
@@ -654,6 +291,7 @@ def undeploy_process(
     settings: Annotated[config.Settings, Depends(get_settings)],
     process_id: str,
     db: Session = Depends(get_db),
+    force: bool = False,
 ):
     """
     Undeploy an existing process.
@@ -662,24 +300,35 @@ def undeploy_process(
     """
     process = check_process_integrity(db, process_id, new_process=False)
 
-    # # TODO should first check existence of DAG in the deployed DAGs directory and in Airflow
-    # # TODO should probably wrap in a try except that keeps it deployed if anything fails
+    # TODO should first check existence of DAG in the deployed DAGs directory and in Airflow
+    # TODO should probably wrap in a try except that keeps it deployed if anything fails
+    # List and stop active DAG runs and their task instances
     ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+    active_dag_runs = list_active_dag_runs(settings.ems_api_url, process_id, ems_api_auth)
+    if len(active_dag_runs) and not force:
+        raise HTTPException(
+            status_code=fastapi_status.HTTP_409_CONFLICT,
+            detail="Process has active DAG runs. Set 'force' to true to override and stop all active DAG runs and tasks.",
+        )
 
     # Pause the DAG first
     pause_dag(settings.ems_api_url, process_id, ems_api_auth, pause=True)
 
-    # List and stop active DAG runs and their task instances
-    active_dag_runs = list_active_dag_runs(settings.ems_api_url, process_id, ems_api_auth)
     for dag_run in active_dag_runs:
         stop_dag_run(settings.ems_api_url, process_id, dag_run["dag_run_id"], ems_api_auth)
         stop_task_instances(settings.ems_api_url, process_id, dag_run["dag_run_id"], ems_api_auth)
 
     try:
         os.remove(os.path.join(settings.deployed_dags_directory, process_id + ".py"))
+    except FileNotFoundError:
+        # Log the absence of the file for information, but do not interrupt the flow
+        # logger.info(f"No file to remove at {file_path}. Continuing process.")
+        pass
     except OSError as e:
-        # If it fails, inform the user.
-        print("Error: %s - %s." % (e.filename, e.strerror))
+        raise HTTPException(
+            status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to remove DAG file from deployed DAGs directory: {e.strerror}",
+        )
 
     # Poll for the removal of the DAG from the Airflow API
     timeout = 20

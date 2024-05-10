@@ -62,6 +62,8 @@ def test_post_deploy_process(test_directory, client):
 @pytest.mark.dependency(depends=["test_post_deploy_process"])
 def test_delete_undeploy_process(client):
     response = client.delete("/processes/EchoProcess")
+    assert response.status_code == status.HTTP_409_CONFLICT
+    response = client.delete("/processes/EchoProcess", params={"force": True})
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
 

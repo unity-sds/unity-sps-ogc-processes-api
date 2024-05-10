@@ -427,7 +427,7 @@ def deploy_process(test_directory, client):
 
     yield process
 
-    response = client.delete(f"/processes/{process.id}")
+    response = client.delete(f"/processes/{process.id}", params={"force": True})
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
