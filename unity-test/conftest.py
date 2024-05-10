@@ -54,7 +54,7 @@ def fake_filesystem(fs_session, test_directory):  # pylint:disable=invalid-name
         os.path.join(settings.dag_catalog_directory, "cwltool_help_dag.py"), contents="test"
     )
     fs_session.create_file(os.path.join(settings.dag_catalog_directory, "EchoProcess.py"), contents="test")
-    fs_session.create_dir(settings.registered_dags_directory)
+    fs_session.create_dir(settings.deployed_dags_directory)
     yield fs_session
 
 

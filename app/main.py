@@ -596,21 +596,21 @@ def stop_task_instances(airflow_url, dag_id, dag_run_id, auth):
         update_response.raise_for_status()
 
 
-@app.post("/processes", response_model=Process, summary="Register a process")
-def register_process(
+@app.post("/processes", response_model=Process, summary="Deploy a process")
+def deploy_process(
     settings: Annotated[config.Settings, Depends(get_settings)],
     db: Session = Depends(get_db),
     process: Process = Body(...),
 ):
     """
-    Register a new process.
+    Deploy a new process.
 
     **Note:** This is not an officially supported endpoint in the OGC Processes specification.
     """
     check_process_integrity(db, process.id, new_process=True)
 
-    # # TODO should probably wrap in a try except that unregisters the DAG
-    # # TODO verify that the DAG does not already exist in the registered dags directory and does not exist in Airflow
+    # # TODO should probably wrap in a try except that undeploys the DAG
+    # # TODO verify that the DAG does not already exist in the deployed dags directory and does not exist in Airflow
 
     # Verify that the process_id corresponds with a DAG ID by filename in the DAG catalog
     dag_filename = process.id + ".py"
@@ -620,7 +620,7 @@ def register_process(
     # Copy DAG from the DAG catalog PVC to deployed PVC
     shutil.copy2(
         os.path.join(settings.dag_catalog_directory, dag_filename),
-        settings.registered_dags_directory,
+        settings.deployed_dags_directory,
     )
 
     ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
@@ -648,22 +648,22 @@ def register_process(
 
 
 @app.delete(
-    "/processes/{process_id}", status_code=fastapi_status.HTTP_204_NO_CONTENT, summary="Unregister a process"
+    "/processes/{process_id}", status_code=fastapi_status.HTTP_204_NO_CONTENT, summary="Undeploy a process"
 )
-def unregister_process(
+def undeploy_process(
     settings: Annotated[config.Settings, Depends(get_settings)],
     process_id: str,
     db: Session = Depends(get_db),
 ):
     """
-    Unregister an existing process.
+    Undeploy an existing process.
 
     **Note:** This is not an officially supported endpoint in the OGC Processes specification.
     """
     process = check_process_integrity(db, process_id, new_process=False)
 
-    # # TODO should first check existence of DAG in the registered DAGs directory and in Airflow
-    # # TODO should probably wrap in a try except that keeps it registered if anything fails
+    # # TODO should first check existence of DAG in the deployed DAGs directory and in Airflow
+    # # TODO should probably wrap in a try except that keeps it deployed if anything fails
     ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
 
     # Pause the DAG first
@@ -676,7 +676,7 @@ def unregister_process(
         stop_task_instances(settings.ems_api_url, process_id, dag_run["dag_run_id"], ems_api_auth)
 
     try:
-        os.remove(os.path.join(settings.registered_dags_directory, process_id + ".py"))
+        os.remove(os.path.join(settings.deployed_dags_directory, process_id + ".py"))
     except OSError as e:
         # If it fails, inform the user.
         print("Error: %s - %s." % (e.filename, e.strerror))
