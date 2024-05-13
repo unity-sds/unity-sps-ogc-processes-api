@@ -2,6 +2,7 @@ import json
 import os
 import re
 
+import fakeredis
 import pytest
 from fastapi import status
 from fastapi.encoders import jsonable_encoder
@@ -11,11 +12,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base
-from app.main import app, get_db, get_settings
+from app.main import app, get_db, get_redis_locking_client, get_settings
+from app.redis import RedisLock
 from app.schemas.ogc_processes import Execute, Process, StatusCode, StatusInfo
 
 settings = get_settings()
-SQLALCHEMY_DATABASE_URL = settings.db_url
+SQLALCHEMY_DATABASE_URL = settings.DB_URL
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
@@ -33,7 +35,13 @@ def override_get_db():
         db.close()
 
 
+def override_get_redis_locking_client():
+    redis_client = fakeredis.FakeRedis(decode_responses=True, version=(6,))
+    return RedisLock(redis_client)
+
+
 app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[get_redis_locking_client] = override_get_redis_locking_client
 
 
 @pytest.fixture(scope="session")
@@ -49,12 +57,12 @@ def fake_filesystem(fs_session, test_directory):  # pylint:disable=invalid-name
     """
     fs_session.add_real_directory(os.path.join(test_directory, "..", "process_descriptions"))
     fs_session.add_real_directory(os.path.join(test_directory), "test_data")
-    fs_session.create_dir(settings.dag_catalog_directory)
+    fs_session.create_dir(settings.DAG_CATALOG_DIRECTORY)
     fs_session.create_file(
-        os.path.join(settings.dag_catalog_directory, "cwltool_help_dag.py"), contents="test"
+        os.path.join(settings.DAG_CATALOG_DIRECTORY, "cwltool_help_dag.py"), contents="test"
     )
-    fs_session.create_file(os.path.join(settings.dag_catalog_directory, "EchoProcess.py"), contents="test")
-    fs_session.create_dir(settings.deployed_dags_directory)
+    fs_session.create_file(os.path.join(settings.DAG_CATALOG_DIRECTORY, "EchoProcess.py"), contents="test")
+    fs_session.create_dir(settings.DEPLOYED_DAGS_DIRECTORY)
     yield fs_session
 
 
@@ -66,7 +74,7 @@ def client():
 @pytest.fixture(scope="function", autouse=True)
 def mock_get_existing_dag(requests_mock):
     return requests_mock.get(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)$"),
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)$"),
         [
             {
                 "json": {
@@ -137,7 +145,7 @@ def mock_get_existing_dag(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_patch_existing_dag(requests_mock):
     return requests_mock.patch(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)$"),
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)$"),
         [
             {
                 "json": {
@@ -208,14 +216,14 @@ def mock_patch_existing_dag(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_delete_existing_dag(requests_mock):
     return requests_mock.delete(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)$"), status_code=status.HTTP_204_NO_CONTENT
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)$"), status_code=status.HTTP_204_NO_CONTENT
     )
 
 
 @pytest.fixture(scope="function", autouse=True)
 def mock_post_existing_dag_new_dagrun(requests_mock):
     return requests_mock.post(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns$"),
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns$"),
         json={
             "dag_run_id": "string",
             "logical_date": "2019-08-24T14:15:22Z",
@@ -231,7 +239,7 @@ def mock_post_existing_dag_new_dagrun(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_get_existing_dag_dagruns(requests_mock):
     return requests_mock.get(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns$"),
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns$"),
         json={
             "dag_runs": [
                 {
@@ -259,7 +267,7 @@ def mock_get_existing_dag_dagruns(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_get_existing_running_dag_dagruns(requests_mock):
     return requests_mock.get(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns\\?state=running$"),
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns\\?state=running$"),
         json={
             "dag_runs": [
                 {
@@ -287,7 +295,7 @@ def mock_get_existing_running_dag_dagruns(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_patch_existing_running_dag_dagrun(requests_mock):
     return requests_mock.patch(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns/([^/]*)$"),
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns/([^/]*)$"),
         json={
             "dag_run_id": "string",
             "dag_id": "string",
@@ -310,7 +318,7 @@ def mock_patch_existing_running_dag_dagrun(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_get_existing_dag_dagrun(requests_mock):
     return requests_mock.get(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns/([^/]*)$"),
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns/([^/]*)$"),
         json={
             "dag_run_id": "string",
             "dag_id": "string",
@@ -333,7 +341,7 @@ def mock_get_existing_dag_dagrun(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_delete_existing_dag_dagrun(requests_mock):
     return requests_mock.delete(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns/([^/]*)$"),
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns/([^/]*)$"),
         status_code=status.HTTP_204_NO_CONTENT,
     )
 
@@ -341,7 +349,7 @@ def mock_delete_existing_dag_dagrun(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_get_existing_running_dag_dagrun_tasks(requests_mock):
     return requests_mock.get(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns/([^/]*)/taskInstances$"),
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns/([^/]*)/taskInstances$"),
         json={
             "task_instances": [
                 {
@@ -408,7 +416,7 @@ def mock_get_existing_running_dag_dagrun_tasks(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_patch_existing_running_dag_dagrun_task(requests_mock):
     return requests_mock.patch(
-        re.compile(f"{settings.ems_api_url}/dags/([^/]*)/dagRuns/([^/]*)/taskInstances/([^/]*)$"),
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns/([^/]*)/taskInstances/([^/]*)$"),
         json={"task_id": "string", "dag_id": "string", "execution_date": "string", "dag_run_id": "string"},
     )
 

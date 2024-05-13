@@ -12,7 +12,14 @@ from datetime import datetime
 from functools import lru_cache
 
 import requests
-from fastapi import Body, Depends, FastAPI, HTTPException
+
+# from airflow_client.client.api import dag_api
+from airflow_client.client.api_client import ApiClient
+from airflow_client.client.configuration import Configuration
+
+# from airflow_client.client.model.dag import DAG
+# from airflow_client.client.model.error import Error
+from fastapi import BackgroundTasks, Body, Depends, FastAPI, HTTPException
 from fastapi import status as fastapi_status
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
@@ -21,6 +28,7 @@ from typing_extensions import Annotated
 
 from . import config
 from .database import SessionLocal, crud, engine, models
+from .redis import RedisLock
 from .schemas.ogc_processes import (
     ConfClasses,
     Execute,
@@ -53,6 +61,23 @@ app = FastAPI(
 @lru_cache
 def get_settings():
     return config.Settings()
+
+
+@lru_cache()
+def get_redis_locking_client():
+    settings = get_settings()
+    return RedisLock(host=settings.redis_host, port=settings.redis_port)
+
+
+@lru_cache()
+def get_ems_client():
+    settings = get_settings()
+    configuration = Configuration(
+        host=settings.EMS_API_URL,
+        username=settings.EMS_API_AUTH_USERNAME,
+        password=settings.EMS_API_AUTH_PASSWORD,
+    )
+    return ApiClient(configuration)
 
 
 def get_db():
@@ -216,9 +241,39 @@ def stop_task_instances(airflow_url, dag_id, dag_run_id, auth):
         update_response.raise_for_status()
 
 
+# def deploy_process_background(
+#     settings: config.Settings,
+#     db: Session,
+#     process: Process,
+# ):
+#     lock_id = f"process_deploy_{process.id}"
+#     try:
+#         with redis_lock.lock(lock_id, timeout=20):
+#             check_process_integrity(db, process.id, new_process=True)
+#             # Add the actual deployment logic here
+#             # For example, file copying, Airflow DAG interaction, etc.
+#             crud.create_process(db, process)
+#     except LockError as e:
+#         raise HTTPException(status_code=409, detail=str(e))
+
+
+# @app.post("/processes", response_model=Process, summary="Deploy a process")
+# def deploy_process(
+#     background_tasks: BackgroundTasks,
+#     settings: Annotated[config.Settings, Depends(get_settings)],
+#     db: Session = Depends(get_db),
+#     process: Process = Body(...),
+# ):
+#     background_tasks.add_task(deploy_process_background, settings, db, process)
+#     return {"message": "Process deployment initiated."}
+
+
 @app.post("/processes", response_model=Process, summary="Deploy a process")
 def deploy_process(
+    background_tasks: BackgroundTasks,
     settings: Annotated[config.Settings, Depends(get_settings)],
+    redis_locking_client: Annotated[RedisLock, Depends(get_redis_locking_client)],
+    ems_client: Annotated[ApiClient, Depends(get_ems_client)],
     db: Session = Depends(get_db),
     process: Process = Body(...),
 ):
@@ -227,16 +282,31 @@ def deploy_process(
 
     **Note:** This is not an officially supported endpoint in the OGC Processes specification.
     """
+    # api_instance = dag_api.DAGApi(ems_client)
+    # api_response = api_instance.get_dags()
+    # print(api_response)
     check_process_integrity(db, process.id, new_process=True)
 
-    # TODO should probably wrap in a try except that undeploys the DAG
-    # TODO verify that the DAG does not already exist in the deployed dags directory and does not exist in Airflow
+    with redis_locking_client.lock("deploy_process_" + process.id):  # as lock:
+        pass
+
+    # Acquire lock
+    # Check if DAG exists in Airflow
+    # Check if file exists in DAG folder
+    # Check if file exists in DAG catalog
+    # Copy file to DAG folder
+    # Poll Airflow until DAG appears
+    # Unpause DAG
+    # Check if DAG is_active is True
+    # Create process in DB
+    # Release lock
 
     # Verify that the process_id corresponds with a DAG ID by filename in the DAG catalog
     dag_filename = process.id + ".py"
-    if not os.path.isfile(os.path.join(settings.dag_catalog_directory, dag_filename)):
+    dag_catalog_filepath = os.path.join(settings.DAG_CATALOG_DIRECTORY, dag_filename)
+    if not os.path.isfile(dag_catalog_filepath):
         # If the file doesn't exist, list other files in the same directory
-        existing_files = os.listdir(settings.dag_catalog_directory)
+        existing_files = os.listdir(settings.DAG_CATALOG_DIRECTORY)
         existing_files_str = "\n".join(existing_files)  # Create a string from the list of files
 
         # Raise an exception with details about what files are actually there
@@ -245,33 +315,33 @@ def deploy_process(
             detail=f"The process ID '{process.id}' does not have a matching DAG file named '{dag_filename}' in the DAG catalog.\nThe DAG catalog includes the following files:\n{existing_files_str}",
         )
 
-    if os.path.isfile(os.path.join(settings.deployed_dags_directory, dag_filename)):
+    if os.path.isfile(os.path.join(settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)):
         # Log warning that file already exists in the deployed dags directory
         pass
 
     # Copy DAG from the DAG catalog PVC to deployed PVC
     shutil.copy2(
-        os.path.join(settings.dag_catalog_directory, dag_filename),
-        settings.deployed_dags_directory,
+        dag_catalog_filepath,
+        settings.DEPLOYED_DAGS_DIRECTORY,
     )
 
-    if not os.path.isfile(os.path.join(settings.deployed_dags_directory, dag_filename)):
+    if not os.path.isfile(os.path.join(settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)):
         raise HTTPException(
             status_code=fastapi_status.HTTP_409_CONFLICT,
             detail="",
         )
 
     # Poll the EMS API to verify DAG existence
-    ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+    ems_api_auth = HTTPBasicAuth(settings.EMS_API_AUTH_USERNAME, settings.EMS_API_AUTH_PASSWORD)
     timeout = 20
     start_time = time.time()
     while time.time() - start_time < timeout:
-        response = requests.get(f"{settings.ems_api_url}/dags/{process.id}", auth=ems_api_auth)
+        response = requests.get(f"{settings.EMS_API_URL}/dags/{process.id}", auth=ems_api_auth)
         data = response.json()
         if response.status_code == 404:
             pass
         elif data["is_paused"]:
-            pause_dag(settings.ems_api_url, process.id, ems_api_auth, pause=False)
+            pause_dag(settings.EMS_API_URL, process.id, ems_api_auth, pause=False)
         elif data["is_active"]:
             break
         time.sleep(0.5)
@@ -288,7 +358,10 @@ def deploy_process(
     "/processes/{process_id}", status_code=fastapi_status.HTTP_204_NO_CONTENT, summary="Undeploy a process"
 )
 def undeploy_process(
+    background_tasks: BackgroundTasks,
     settings: Annotated[config.Settings, Depends(get_settings)],
+    redis_locking_client: Annotated[RedisLock, Depends(get_redis_locking_client)],
+    ems_client: Annotated[ApiClient, Depends(get_ems_client)],
     process_id: str,
     db: Session = Depends(get_db),
     force: bool = False,
@@ -300,11 +373,28 @@ def undeploy_process(
     """
     process = check_process_integrity(db, process_id, new_process=False)
 
-    # TODO should first check existence of DAG in the deployed DAGs directory and in Airflow
-    # TODO should probably wrap in a try except that keeps it deployed if anything fails
-    # List and stop active DAG runs and their task instances
-    ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
-    active_dag_runs = list_active_dag_runs(settings.ems_api_url, process_id, ems_api_auth)
+    with redis_locking_client.lock("deploy_process_" + process.id):  # as lock:
+        pass
+
+    # Acquire lock
+    # Check if DAG exists in Airflow
+    # Pause the DAG
+    # Stop all DAG runs and tasks
+    # Remove file from dag folder
+    # Ensure DAG field is_active turns to False
+    # Delete process from DB
+    # Release lock
+
+    ems_api_auth = HTTPBasicAuth(settings.EMS_API_AUTH_USERNAME, settings.EMS_API_AUTH_PASSWORD)
+    # response = requests.get(f"{settings.EMS_API_URL}/dags/{process_id}", auth=ems_api_auth)
+    # if response.status_code == 200:
+    #     return True  # DAG exists
+    # elif response.status_code == 404:
+    #     return False  # DAG does not exist
+    # else:
+    #     response.raise_for_status()  # Raise an exception for other HTTP errors
+
+    active_dag_runs = list_active_dag_runs(settings.EMS_API_URL, process_id, ems_api_auth)
     if len(active_dag_runs) and not force:
         raise HTTPException(
             status_code=fastapi_status.HTTP_409_CONFLICT,
@@ -312,29 +402,28 @@ def undeploy_process(
         )
 
     # Pause the DAG first
-    pause_dag(settings.ems_api_url, process_id, ems_api_auth, pause=True)
+    pause_dag(settings.EMS_API_URL, process_id, ems_api_auth, pause=True)
 
     for dag_run in active_dag_runs:
-        stop_dag_run(settings.ems_api_url, process_id, dag_run["dag_run_id"], ems_api_auth)
-        stop_task_instances(settings.ems_api_url, process_id, dag_run["dag_run_id"], ems_api_auth)
+        stop_dag_run(settings.EMS_API_URL, process_id, dag_run["dag_run_id"], ems_api_auth)
+        stop_task_instances(settings.EMS_API_URL, process_id, dag_run["dag_run_id"], ems_api_auth)
 
-    try:
-        os.remove(os.path.join(settings.deployed_dags_directory, process_id + ".py"))
-    except FileNotFoundError:
-        # Log the absence of the file for information, but do not interrupt the flow
-        # logger.info(f"No file to remove at {file_path}. Continuing process.")
-        pass
-    except OSError as e:
-        raise HTTPException(
-            status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to remove DAG file from deployed DAGs directory: {e.strerror}",
-        )
+    dag_filename = process_id + ".py"
+    deployed_dag_filepath = os.path.join(settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)
+    if os.path.isfile(deployed_dag_filepath):
+        try:
+            os.remove(deployed_dag_filepath)
+        except OSError as e:
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to remove DAG file from deployed DAGs directory: {e.strerror}",
+            )
 
     # Poll for the removal of the DAG from the Airflow API
     timeout = 20
     start_time = time.time()
     while time.time() - start_time < timeout:
-        response = requests.get(f"{settings.ems_api_url}/dags/{process_id}", auth=ems_api_auth)
+        response = requests.get(f"{settings.EMS_API_URL}/dags/{process_id}", auth=ems_api_auth)
         data = response.json()
         if response.status_code == 404:
             break
@@ -404,9 +493,9 @@ def execute(
     For more information, see [Section 7.11](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_create_job).
     """
     check_process_integrity(db, process_id, new_process=False)
-    ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+    ems_api_auth = HTTPBasicAuth(settings.EMS_API_AUTH_USERNAME, settings.EMS_API_AUTH_PASSWORD)
     try:
-        response = requests.get(f"{settings.ems_api_url}/dags/{process_id}", auth=ems_api_auth)
+        response = requests.get(f"{settings.EMS_API_URL}/dags/{process_id}", auth=ems_api_auth)
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         status_code_to_raise = fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -423,7 +512,7 @@ def execute(
     data = {"dag_run_id": job_id, "logical_date": logical_date, "conf": {**execute.model_dump()}}
     try:
         response = requests.post(
-            f"{settings.ems_api_url}/dags/{process_id}/dagRuns", json=data, auth=ems_api_auth
+            f"{settings.EMS_API_URL}/dags/{process_id}/dagRuns", json=data, auth=ems_api_auth
         )
         response.raise_for_status()
         check_job_integrity(db, job_id, new_job=True)
@@ -456,10 +545,10 @@ def status(
     """
     job = check_job_integrity(db, job_id, new_job=False)
     job = StatusInfo.model_validate(job)
-    ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+    ems_api_auth = HTTPBasicAuth(settings.EMS_API_AUTH_USERNAME, settings.EMS_API_AUTH_PASSWORD)
     try:
         response = requests.get(
-            f"{settings.ems_api_url}/dags/{job.processID}/dagRuns/{job.jobID}",
+            f"{settings.EMS_API_URL}/dags/{job.processID}/dagRuns/{job.jobID}",
             auth=ems_api_auth,
         )
         response.raise_for_status()
@@ -505,10 +594,10 @@ def dismiss(
     For more information, see [Section 13](https://docs.ogc.org/is/18-062r2/18-062r2.html#Dismiss).
     """
     job = check_job_integrity(db, job_id, new_job=False)
-    ems_api_auth = HTTPBasicAuth(settings.ems_api_auth_username, settings.ems_api_auth_password)
+    ems_api_auth = HTTPBasicAuth(settings.EMS_API_AUTH_USERNAME, settings.EMS_API_AUTH_PASSWORD)
     try:
         response = requests.delete(
-            f"{settings.ems_api_url}/dags/{job.processID}/dagRuns/{job.jobID}",
+            f"{settings.EMS_API_URL}/dags/{job.processID}/dagRuns/{job.jobID}",
             auth=ems_api_auth,
         )
         response.raise_for_status()
