@@ -47,7 +47,7 @@ def test_get_conformance_declaration(client):
 
 
 @pytest.mark.dependency()
-def test_post_register_process(test_directory, client):
+def test_post_deploy_process(test_directory, client):
     data_filename = os.path.join(test_directory, "test_data/process_descriptions/EchoProcess.json")
     f = open(data_filename)
     process_json = json.load(f)
@@ -59,9 +59,11 @@ def test_post_register_process(test_directory, client):
     assert process.id == "EchoProcess"
 
 
-@pytest.mark.dependency(depends=["test_post_register_process"])
-def test_delete_unregister_process(client):
+@pytest.mark.dependency(depends=["test_post_deploy_process"])
+def test_delete_undeploy_process(client):
     response = client.delete("/processes/EchoProcess")
+    assert response.status_code == status.HTTP_409_CONFLICT
+    response = client.delete("/processes/EchoProcess", params={"force": True})
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
