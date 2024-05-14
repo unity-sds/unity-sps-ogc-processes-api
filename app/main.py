@@ -66,7 +66,7 @@ def get_settings():
 @lru_cache()
 def get_redis_locking_client():
     settings = get_settings()
-    return RedisLock(host=settings.redis_host, port=settings.redis_port)
+    return RedisLock(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 
 
 @lru_cache()
