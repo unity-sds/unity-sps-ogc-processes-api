@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from typing_extensions import Annotated
 
-from . import config
+from . import config, cwl_arbitrary_dag
 from .database import SessionLocal, crud, engine, models
 from .redis import RedisLock
 from .schemas.ogc_processes import (
@@ -297,15 +297,19 @@ def deploy_process(
     dag_filename = process.id + ".py"
     dag_catalog_filepath = os.path.join(settings.DAG_CATALOG_DIRECTORY, dag_filename)
     if not os.path.isfile(dag_catalog_filepath):
-        # If the file doesn't exist, list other files in the same directory
-        existing_files = os.listdir(settings.DAG_CATALOG_DIRECTORY)
-        existing_files_str = "\n".join(existing_files)  # Create a string from the list of files
+        if process.executionunit:
+            cwl_arbitrary_dag.write_dag(dag_catalog_filepath,process.id,process.executionunit.reference.href,dict(),process.processdescription)
+        else:
+            # If the file doesn't exist and the executionunit wasn't provided,
+            #     list other files in the same directory
+            existing_files = os.listdir(settings.DAG_CATALOG_DIRECTORY)
+            existing_files_str = "\n".join(existing_files)  # Create a string from the list of files
 
-        # Raise an exception with details about what files are actually there
-        raise HTTPException(
-            status_code=fastapi_status.HTTP_409_CONFLICT,
-            detail=f"The process ID '{process.id}' does not have a matching DAG file named '{dag_filename}' in the DAG catalog.\nThe DAG catalog includes the following files:\n{existing_files_str}",
-        )
+            # Raise an exception with details about what files are actually there
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_409_CONFLICT,
+                detail=f"The process ID '{process.id}' does not have a matching DAG file named '{dag_filename}' in the DAG catalog.\nThe DAG catalog includes the following files:\n{existing_files_str}",
+            )
 
     if os.path.isfile(os.path.join(settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)):
         # Log warning that file already exists in the deployed dags directory
