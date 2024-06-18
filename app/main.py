@@ -297,8 +297,8 @@ def deploy_process(
     dag_filename = process.id + ".py"
     dag_catalog_filepath = os.path.join(settings.DAG_CATALOG_DIRECTORY, dag_filename)
     if not os.path.isfile(dag_catalog_filepath):
-        if process.executionunit:
-            cwl_arbitrary_dag.write_dag(dag_catalog_filepath,process.id,process.executionunit.reference.href,dict(),process.processdescription)
+        if process.executionunit.type == "application/cwl":
+            cwl_arbitrary_dag.write_dag(dag_catalog_filepath,process.id,process.executionunit.href,dict(),process.processdescription)
         else:
             # If the file doesn't exist and the executionunit wasn't provided,
             #     list other files in the same directory
