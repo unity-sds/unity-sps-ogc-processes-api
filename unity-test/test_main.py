@@ -129,3 +129,61 @@ def test_get_results(client, execute_process):
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert Results.model_validate(data)
+
+
+@pytest.mark.dependency()
+def test_post_deploy_process_cwl_dag(test_directory, client):
+    data_filename = os.path.join(test_directory, "test_data/process_descriptions/cwl_dag_process.json")
+    f = open(data_filename)
+    process_json = json.load(f)
+    process = Process.model_validate(process_json)
+    response = client.post("/processes", json=process.model_dump())
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    process = Process.model_validate(data)
+    assert process.id == "cwl_dag"
+    assert process.title == "CWL DAG Process"
+
+
+@pytest.mark.dependency(depends=["test_post_deploy_process_cwl_dag"])
+def test_post_execute_process_cwl_dag(test_directory, client):
+    data_filename = os.path.join(test_directory, "test_data/execution_requests/cwl_dag_request.json")
+    f = open(data_filename)
+    execute_json = json.load(f)
+    execute = Execute.model_validate(execute_json)
+    response = client.post("/processes/cwl_dag/execution", json=jsonable_encoder(execute))
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert StatusInfo.model_validate(data)
+    assert data["processID"] == "cwl_dag"
+    assert data["type"] == "process"
+
+
+@pytest.mark.dependency(depends=["test_post_execute_process_cwl_dag"])
+def test_get_status_cwl_dag(test_directory, client):
+    data_filename = os.path.join(test_directory, "test_data/execution_requests/cwl_dag_request.json")
+    f = open(data_filename)
+    execute_json = json.load(f)
+    execute = Execute.model_validate(execute_json)
+    execute_response = client.post("/processes/cwl_dag/execution", json=jsonable_encoder(execute))
+    data = execute_response.json()
+    status_info = StatusInfo.model_validate(data)
+    job_id = status_info.jobID
+
+    code = status.HTTP_404_NOT_FOUND
+    while code != status.HTTP_200_OK:
+        status_response = client.get(f"/jobs/{job_id}")
+        code = status_response.status_code
+
+    assert status_response.status_code == status.HTTP_200_OK
+    data = status_response.json()
+    status_info = StatusInfo.model_validate(data)
+    assert status_info.jobID == job_id
+
+
+@pytest.mark.dependency(depends=["test_get_status_cwl_dag"])
+def test_delete_undeploy_cwl_dag(client):
+    response = client.delete("/processes/cwl_dag")
+    assert response.status_code == status.HTTP_409_CONFLICT
+    response = client.delete("/processes/cwl_dag", params={"force": True})
+    assert response.status_code == status.HTTP_204_NO_CONTENT
