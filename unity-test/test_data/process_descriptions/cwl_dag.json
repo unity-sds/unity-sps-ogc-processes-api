@@ -1,0 +1,48 @@
+{
+  "description": "This process accepts string input and echoes the input as a string output.",
+  "id": "cwl_dag",
+  "inputs": [
+    {
+      "complexObjectInput": {
+        "description": "Excepts a string under message property.",
+        "schema": {
+          "properties": {
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message"
+          ],
+          "type": "object"
+        },
+        "title": "Input object"
+      }
+    }
+  ],
+  "jobControlOptions": [
+    "async-execute",
+    "sync-execute"
+  ],
+  "links": [
+    {
+      "href": "https://processing.example.org/oapi-p/processes/CWGDAGProcess/execution",
+      "rel": "http://www.opengis.net/def/rel/ogc/1.0/execute",
+      "title": "Execute endpoint"
+    }
+  ],
+  "outputs": [
+    {
+      "stringOutput": {
+        "schema": {
+          "enum": [
+            "Output string value"
+          ],
+          "type": "string"
+        }
+      }
+    }
+  ],
+  "title": "CWL DAG Process",
+  "version": "1.0.0"
+}
