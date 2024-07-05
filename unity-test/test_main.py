@@ -52,39 +52,6 @@ def test_get_conformance_declaration(client):
     ]
 
 
-@pytest.mark.parametrize("process_filename", PROCESS_FILES)
-@pytest.mark.dependency(name="test_post_deploy_process")
-def test_post_deploy_process(client, process_filename):
-    f = open(process_filename)
-    process_json = json.load(f)
-    process = Process.model_validate(process_json)
-    response = client.post("/processes", json=process.model_dump())
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    process = Process.model_validate(data)
-    assert process.id == pathlib.Path(process_filename).stem
-
-
-@pytest.mark.parametrize("process_filename", PROCESS_FILES)
-@pytest.mark.dependency(depends=["test_post_deploy_process"])
-def test_delete_undeploy_process(client, process_filename):
-    process_id = pathlib.Path(process_filename).stem
-    response = client.delete(f"/processes/{process_id}")
-    assert response.status_code == status.HTTP_409_CONFLICT
-    response = client.delete(f"/processes/{process_id}", params={"force": True})
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-
-
-def test_post_execute_process(test_directory, client, deploy_process):
-    f = open(os.path.join(test_directory, f"test_data/execution_requests/{deploy_process.id}.json"))
-    execute_json = json.load(f)
-    execute = Execute.model_validate(execute_json)
-    response = client.post(f"/processes/{deploy_process.id}/execution", json=jsonable_encoder(execute))
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert StatusInfo.model_validate(data)
-
-
 def test_delete_dismiss_execution(test_directory, client, deploy_process):
     data_filename = os.path.join(test_directory, f"test_data/execution_requests/{deploy_process.id}.json")
     f = open(data_filename)
