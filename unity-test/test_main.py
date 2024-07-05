@@ -1,5 +1,7 @@
+import glob
 import json
 import os
+import pathlib
 
 import pytest
 from fastapi import status
@@ -17,6 +19,10 @@ from app.schemas.ogc_processes import (
     StatusInfo,
 )
 from app.schemas.unity_sps import HealthCheck
+
+TEST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data")
+PROCESS_FILES = glob.glob(f"{TEST_DIR}/process_descriptions/*.json")
+EXECUTION_FILES = glob.glob(f"{TEST_DIR}/execution_requests/*.json")
 
 
 def test_get_landing_page(client):
@@ -46,30 +52,31 @@ def test_get_conformance_declaration(client):
     ]
 
 
-@pytest.mark.dependency()
-def test_post_deploy_process(test_directory, client):
-    data_filename = os.path.join(test_directory, "test_data/process_descriptions/EchoProcess.json")
-    f = open(data_filename)
+@pytest.mark.parametrize("process_filename", PROCESS_FILES)
+@pytest.mark.dependency(name="test_post_deploy_process")
+def test_post_deploy_process(client, process_filename):
+    f = open(process_filename)
     process_json = json.load(f)
     process = Process.model_validate(process_json)
     response = client.post("/processes", json=process.model_dump())
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     process = Process.model_validate(data)
-    assert process.id == "EchoProcess"
+    assert process.id == pathlib.Path(process_filename).stem
 
 
+@pytest.mark.parametrize("process_filename", PROCESS_FILES)
 @pytest.mark.dependency(depends=["test_post_deploy_process"])
-def test_delete_undeploy_process(client):
-    response = client.delete("/processes/EchoProcess")
+def test_delete_undeploy_process(client, process_filename):
+    process_id = pathlib.Path(process_filename).stem
+    response = client.delete(f"/processes/{process_id}")
     assert response.status_code == status.HTTP_409_CONFLICT
-    response = client.delete("/processes/EchoProcess", params={"force": True})
+    response = client.delete(f"/processes/{process_id}", params={"force": True})
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 def test_post_execute_process(test_directory, client, deploy_process):
-    data_filename = os.path.join(test_directory, "test_data/execution_requests/execute_cwltool_help_dag.json")
-    f = open(data_filename)
+    f = open(os.path.join(test_directory, f"test_data/execution_requests/{deploy_process.id}.json"))
     execute_json = json.load(f)
     execute = Execute.model_validate(execute_json)
     response = client.post(f"/processes/{deploy_process.id}/execution", json=jsonable_encoder(execute))
@@ -79,7 +86,7 @@ def test_post_execute_process(test_directory, client, deploy_process):
 
 
 def test_delete_dismiss_execution(test_directory, client, deploy_process):
-    data_filename = os.path.join(test_directory, "test_data/execution_requests/execute_cwltool_help_dag.json")
+    data_filename = os.path.join(test_directory, f"test_data/execution_requests/{deploy_process.id}.json")
     f = open(data_filename)
     execute_json = json.load(f)
     execute = Execute.model_validate(execute_json)
@@ -131,41 +138,40 @@ def test_get_results(client, execute_process):
     assert Results.model_validate(data)
 
 
-@pytest.mark.dependency()
-def test_post_deploy_process_cwl_dag(test_directory, client):
-    data_filename = os.path.join(test_directory, "test_data/process_descriptions/cwl_dag_process.json")
-    f = open(data_filename)
+@pytest.mark.parametrize("process_filename", PROCESS_FILES)
+def test_post_deploy_process_dag(test_directory, client, process_filename):
+    f = open(process_filename)
     process_json = json.load(f)
     process = Process.model_validate(process_json)
     response = client.post("/processes", json=process.model_dump())
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     process = Process.model_validate(data)
-    assert process.id == "cwl_dag"
-    assert process.title == "CWL DAG Process"
+    assert process.id == pathlib.Path(process_filename).stem
 
 
-@pytest.mark.dependency(depends=["test_post_deploy_process_cwl_dag"])
-def test_post_execute_process_cwl_dag(test_directory, client):
-    data_filename = os.path.join(test_directory, "test_data/execution_requests/cwl_dag_request.json")
-    f = open(data_filename)
+@pytest.mark.dependency(name="test_post_execute_process_dag")
+@pytest.mark.parametrize("execution_filename", EXECUTION_FILES)
+def test_post_execute_process_dag(test_directory, client, execution_filename):
+    f = open(execution_filename)
     execute_json = json.load(f)
     execute = Execute.model_validate(execute_json)
-    response = client.post("/processes/cwl_dag/execution", json=jsonable_encoder(execute))
+    process_id = pathlib.Path(execution_filename).stem
+    response = client.post(f"/processes/{process_id}/execution", json=jsonable_encoder(execute))
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert StatusInfo.model_validate(data)
-    assert data["processID"] == "cwl_dag"
+    assert data["processID"] == process_id
     assert data["type"] == "process"
 
 
-@pytest.mark.dependency(depends=["test_post_execute_process_cwl_dag"])
-def test_get_status_cwl_dag(test_directory, client):
-    data_filename = os.path.join(test_directory, "test_data/execution_requests/cwl_dag_request.json")
-    f = open(data_filename)
+@pytest.mark.parametrize("execution_filename", EXECUTION_FILES)
+def test_get_status_dag(test_directory, client, execution_filename):
+    f = open(execution_filename)
     execute_json = json.load(f)
     execute = Execute.model_validate(execute_json)
-    execute_response = client.post("/processes/cwl_dag/execution", json=jsonable_encoder(execute))
+    process_id = pathlib.Path(execution_filename).stem
+    execute_response = client.post(f"/processes/{process_id}/execution", json=jsonable_encoder(execute))
     data = execute_response.json()
     status_info = StatusInfo.model_validate(data)
     job_id = status_info.jobID
@@ -181,9 +187,11 @@ def test_get_status_cwl_dag(test_directory, client):
     assert status_info.jobID == job_id
 
 
-@pytest.mark.dependency(depends=["test_get_status_cwl_dag"])
-def test_delete_undeploy_cwl_dag(client):
-    response = client.delete("/processes/cwl_dag")
+@pytest.mark.parametrize("process_filename", PROCESS_FILES)
+@pytest.mark.dependency(depends=["test_post_execute_process_dag"])
+def test_delete_undeploy_dag(client, process_filename):
+    process_id = pathlib.Path(process_filename).stem
+    response = client.delete(f"/processes/{process_id}")
     assert response.status_code == status.HTTP_409_CONFLICT
-    response = client.delete("/processes/cwl_dag", params={"force": True})
+    response = client.delete(f"/processes/{process_id}", params={"force": True})
     assert response.status_code == status.HTTP_204_NO_CONTENT
