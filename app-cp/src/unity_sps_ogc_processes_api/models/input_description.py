@@ -45,9 +45,7 @@ class InputDescription(BaseModel):
     metadata: Optional[List[Metadata]] = None
     schema: ModelSchema = Field(alias="schema")
     min_occurs: Optional[StrictInt] = Field(default=1, alias="minOccurs")
-    max_occurs: Optional[InputDescriptionAllOfMaxOccurs] = Field(
-        default=None, alias="maxOccurs"
-    )
+    max_occurs: Optional[StrictInt] = Field(alias="maxOccurs")
     value_passing: Optional[List[StrictStr]] = Field(default=None, alias="valuePassing")
     __properties: ClassVar[List[str]] = [
         "title",
