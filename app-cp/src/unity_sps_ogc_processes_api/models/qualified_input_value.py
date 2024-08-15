@@ -38,7 +38,7 @@ class QualifiedInputValue(BaseModel):
 
     media_type: Optional[StrictStr] = Field(default=None, alias="mediaType")
     encoding: Optional[StrictStr] = None
-    schema: Optional[FormatSchema] = Field(default=None, alias="schema")
+    schema_: Optional[FormatSchema] = Field(default=None, alias="schema")
     value: InputValue
     __properties: ClassVar[List[str]] = ["mediaType", "encoding", "schema", "value"]
 
@@ -78,8 +78,8 @@ class QualifiedInputValue(BaseModel):
             exclude_none=True,
         )
         # override the default output from pydantic by calling `to_dict()` of schema
-        if self.schema:
-            _dict["schema"] = self.schema.to_dict()
+        if self.schema_:
+            _dict["schema"] = self.schema_.to_dict()
         # override the default output from pydantic by calling `to_dict()` of value
         if self.value:
             _dict["value"] = self.value.to_dict()
@@ -99,15 +99,9 @@ class QualifiedInputValue(BaseModel):
                 "mediaType": obj.get("mediaType"),
                 "encoding": obj.get("encoding"),
                 "schema": (
-                    FormatSchema.from_dict(obj.get("schema"))
-                    if obj.get("schema") is not None
-                    else None
+                    FormatSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None
                 ),
-                "value": (
-                    InputValue.from_dict(obj.get("value"))
-                    if obj.get("value") is not None
-                    else None
-                ),
+                "value": (InputValue.from_dict(obj.get("value")) if obj.get("value") is not None else None),
             }
         )
         return _obj

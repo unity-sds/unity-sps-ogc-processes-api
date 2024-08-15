@@ -43,7 +43,7 @@ class InputDescription(BaseModel):
     description: Optional[StrictStr] = None
     keywords: Optional[List[StrictStr]] = None
     metadata: Optional[List[Metadata]] = None
-    schema: ModelSchema = Field(alias="schema")
+    schema_: ModelSchema = Field(alias="schema")
     min_occurs: Optional[StrictInt] = Field(default=1, alias="minOccurs")
     max_occurs: Optional[StrictInt] = Field(alias="maxOccurs")
     value_passing: Optional[List[StrictStr]] = Field(default=None, alias="valuePassing")
@@ -66,9 +66,7 @@ class InputDescription(BaseModel):
 
         for i in value:
             if i not in ("byValue", "byReference"):
-                raise ValueError(
-                    "each list item must be one of ('byValue', 'byReference')"
-                )
+                raise ValueError("each list item must be one of ('byValue', 'byReference')")
         return value
 
     model_config = {
@@ -114,8 +112,8 @@ class InputDescription(BaseModel):
                     _items.append(_item.to_dict())
             _dict["metadata"] = _items
         # override the default output from pydantic by calling `to_dict()` of schema
-        if self.schema:
-            _dict["schema"] = self.schema.to_dict()
+        if self.schema_:
+            _dict["schema"] = self.schema_.to_dict()
         # override the default output from pydantic by calling `to_dict()` of max_occurs
         if self.max_occurs:
             _dict["maxOccurs"] = self.max_occurs.to_dict()
@@ -141,13 +139,9 @@ class InputDescription(BaseModel):
                     else None
                 ),
                 "schema": (
-                    ModelSchema.from_dict(obj.get("schema"))
-                    if obj.get("schema") is not None
-                    else None
+                    ModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None
                 ),
-                "minOccurs": (
-                    obj.get("minOccurs") if obj.get("minOccurs") is not None else 1
-                ),
+                "minOccurs": (obj.get("minOccurs") if obj.get("minOccurs") is not None else 1),
                 "maxOccurs": (
                     InputDescriptionAllOfMaxOccurs.from_dict(obj.get("maxOccurs"))
                     if obj.get("maxOccurs") is not None

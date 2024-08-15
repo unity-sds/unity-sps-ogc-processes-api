@@ -40,7 +40,7 @@ class QualifiedInputValueWorkflows(BaseModel):
 
     media_type: Optional[StrictStr] = Field(default=None, alias="mediaType")
     encoding: Optional[StrictStr] = None
-    schema: Optional[FormatSchema] = Field(default=None, alias="schema")
+    schema_: Optional[FormatSchema] = Field(default=None, alias="schema")
     filter: Optional[StrictStr] = None
     properties: Optional[FieldsModifiersProperties] = None
     sort_by: Optional[List[StrictStr]] = Field(default=None, alias="sortBy")
@@ -91,8 +91,8 @@ class QualifiedInputValueWorkflows(BaseModel):
             exclude_none=True,
         )
         # override the default output from pydantic by calling `to_dict()` of schema
-        if self.schema:
-            _dict["schema"] = self.schema.to_dict()
+        if self.schema_:
+            _dict["schema"] = self.schema_.to_dict()
         # override the default output from pydantic by calling `to_dict()` of properties
         if self.properties:
             _dict["properties"] = self.properties.to_dict()
@@ -115,9 +115,7 @@ class QualifiedInputValueWorkflows(BaseModel):
                 "mediaType": obj.get("mediaType"),
                 "encoding": obj.get("encoding"),
                 "schema": (
-                    FormatSchema.from_dict(obj.get("schema"))
-                    if obj.get("schema") is not None
-                    else None
+                    FormatSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None
                 ),
                 "filter": obj.get("filter"),
                 "properties": (
@@ -127,9 +125,7 @@ class QualifiedInputValueWorkflows(BaseModel):
                 ),
                 "sortBy": obj.get("sortBy"),
                 "value": (
-                    InputValueWorkflows.from_dict(obj.get("value"))
-                    if obj.get("value") is not None
-                    else None
+                    InputValueWorkflows.from_dict(obj.get("value")) if obj.get("value") is not None else None
                 ),
             }
         )
