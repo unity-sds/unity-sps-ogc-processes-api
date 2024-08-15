@@ -4,28 +4,47 @@ import json
 import pprint
 from typing import Any, Dict, List, Union
 
-from pydantic import RootModel, ValidationError, model_validator
+from pydantic import RootModel, model_validator
 
-from unity_sps_ogc_processes_api.models.inline_or_ref_data1 import InlineOrRefData1
+from unity_sps_ogc_processes_api.models.bbox1 import Bbox1
+from unity_sps_ogc_processes_api.models.link import Link
+from unity_sps_ogc_processes_api.models.qualified_input_value1 import (
+    QualifiedInputValue1,
+)
 
 
 class Input(RootModel):
-    root: Union[InlineOrRefData1, List[InlineOrRefData1]]
+    root: Union[
+        Bbox1,
+        List[Any],
+        bool,
+        float,
+        int,
+        str,
+        Link,
+        QualifiedInputValue1,
+        List[
+            Union[Bbox1, List[Any], bool, float, int, str, Link, QualifiedInputValue1]
+        ],
+    ]
 
     @model_validator(mode="before")
     @classmethod
     def validate_type(cls, value):
         if isinstance(value, dict):
-            try:
-                return InlineOrRefData1(**value)
-            except ValidationError:
-                pass
+            if all(k in value for k in ["mediaType", "encoding", "schema", "value"]):
+                return QualifiedInputValue1(**value)
+            if "bbox" in value:
+                return Bbox1(**value)
+            if "href" in value:
+                return Link(**value)
         elif isinstance(value, list):
-            try:
-                return [InlineOrRefData1(**item) for item in value]
-            except ValidationError:
-                pass
-        elif isinstance(value, InlineOrRefData1):
+            return [cls.validate_type(item) for item in value]
+        elif isinstance(
+            value, (bool, int, float, str, Bbox1, Link, QualifiedInputValue1)
+        ):
+            return value
+        elif isinstance(value, List):
             return value
         raise ValueError(f"Invalid type for Input: {type(value)}")
 

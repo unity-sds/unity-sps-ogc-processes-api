@@ -23,12 +23,16 @@ from pydantic import RootModel, ValidationError, model_validator
 
 from unity_sps_ogc_processes_api.models.execution_unit import ExecutionUnit
 from unity_sps_ogc_processes_api.models.link import Link
-from unity_sps_ogc_processes_api.models.ogcapppkg_array_inner import OgcapppkgArrayInner
 from unity_sps_ogc_processes_api.models.qualified_input_value import QualifiedInputValue
 
 
 class OgcapppkgExecutionUnit(RootModel):
-    root: Union[ExecutionUnit, Link, List[OgcapppkgArrayInner], QualifiedInputValue]
+    root: Union[
+        ExecutionUnit,
+        Link,
+        QualifiedInputValue,
+        List[Union[ExecutionUnit, Link, QualifiedInputValue]],
+    ]
 
     @model_validator(mode="before")
     @classmethod
@@ -39,17 +43,10 @@ class OgcapppkgExecutionUnit(RootModel):
                     return schema(**value)
                 except ValidationError:
                     pass
-            try:
-                return [OgcapppkgArrayInner(**item) for item in value]
-            except ValidationError:
-                pass
+        elif isinstance(value, list):
+            return [cls.validate_type(item) for item in value]
         elif isinstance(value, (ExecutionUnit, Link, QualifiedInputValue)):
             return value
-        elif isinstance(value, list):
-            try:
-                return [OgcapppkgArrayInner(**item) for item in value]
-            except ValidationError:
-                pass
         raise ValueError(f"Invalid type for OgcapppkgExecutionUnit: {type(value)}")
 
     @classmethod

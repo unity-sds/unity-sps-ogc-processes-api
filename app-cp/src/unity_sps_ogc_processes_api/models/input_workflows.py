@@ -17,160 +17,114 @@ from __future__ import annotations
 
 import json
 import pprint
-import re  # noqa: F401
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
-from pydantic import BaseModel, ValidationError, field_validator
-from typing_extensions import Literal
+from pydantic import RootModel, ValidationError, model_validator
 
-from unity_sps_ogc_processes_api.models.inline_or_ref_data_workflows import (
-    InlineOrRefDataWorkflows,
+from unity_sps_ogc_processes_api.models.bbox1 import Bbox1
+from unity_sps_ogc_processes_api.models.input_collection import InputCollection
+from unity_sps_ogc_processes_api.models.input_parameterized import InputParameterized
+from unity_sps_ogc_processes_api.models.input_process import InputProcess
+from unity_sps_ogc_processes_api.models.link import Link
+from unity_sps_ogc_processes_api.models.qualified_input_value_workflows import (
+    QualifiedInputValueWorkflows,
 )
 
-try:
-    from typing import Self
-except ImportError:
-    from typing_extensions import Self
 
-INPUTWORKFLOWS_ONE_OF_SCHEMAS = [
-    "InlineOrRefDataWorkflows",
-    "List[InlineOrRefDataWorkflows]",
-]
-
-
-class InputWorkflows(BaseModel):
-    """
-    InputWorkflows
-    """
-
-    # data type: InlineOrRefDataWorkflows
-    oneof_schema_1_validator: Optional[InlineOrRefDataWorkflows] = None
-    # data type: List[InlineOrRefDataWorkflows]
-    oneof_schema_2_validator: Optional[List[InlineOrRefDataWorkflows]] = None
-    actual_instance: Optional[
-        Union[InlineOrRefDataWorkflows, List[InlineOrRefDataWorkflows]]
-    ] = None
-    one_of_schemas: List[str] = Literal[
-        "InlineOrRefDataWorkflows", "List[InlineOrRefDataWorkflows]"
+class InputWorkflows(RootModel):
+    root: Union[
+        Bbox1,
+        InputCollection,
+        InputParameterized,
+        InputProcess,
+        List[Any],
+        bool,
+        float,
+        int,
+        str,
+        Link,
+        QualifiedInputValueWorkflows,
+        List[
+            Union[
+                Bbox1,
+                InputCollection,
+                InputParameterized,
+                InputProcess,
+                List[Any],
+                bool,
+                float,
+                int,
+                str,
+                Link,
+                QualifiedInputValueWorkflows,
+            ]
+        ],
     ]
 
-    model_config = {
-        "validate_assignment": True,
-        "protected_namespaces": (),
-    }
-
-    def __init__(self, *args, **kwargs) -> None:
-        if args:
-            if len(args) > 1:
-                raise ValueError(
-                    "If a position argument is used, only 1 is allowed to set `actual_instance`"
-                )
-            if kwargs:
-                raise ValueError(
-                    "If a position argument is used, keyword arguments cannot be used."
-                )
-            super().__init__(actual_instance=args[0])
-        else:
-            super().__init__(**kwargs)
-
-    @field_validator("actual_instance")
-    def actual_instance_must_validate_oneof(cls, v):
-        instance = InputWorkflows.model_construct()
-        error_messages = []
-        match = 0
-        # validate data type: InlineOrRefDataWorkflows
-        if not isinstance(v, InlineOrRefDataWorkflows):
-            error_messages.append(
-                f"Error! Input type `{type(v)}` is not `InlineOrRefDataWorkflows`"
-            )
-        else:
-            match += 1
-        # validate data type: List[InlineOrRefDataWorkflows]
-        try:
-            instance.oneof_schema_2_validator = v
-            match += 1
-        except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        if match > 1:
-            # more than 1 match
-            raise ValueError(
-                "Multiple matches found when setting `actual_instance` in InputWorkflows with oneOf schemas: InlineOrRefDataWorkflows, List[InlineOrRefDataWorkflows]. Details: "
-                + ", ".join(error_messages)
-            )
-        elif match == 0:
-            # no match
-            raise ValueError(
-                "No match found when setting `actual_instance` in InputWorkflows with oneOf schemas: InlineOrRefDataWorkflows, List[InlineOrRefDataWorkflows]. Details: "
-                + ", ".join(error_messages)
-            )
-        else:
-            return v
+    @model_validator(mode="before")
+    @classmethod
+    def validate_type(cls, value):
+        if isinstance(value, dict):
+            for schema in [
+                Bbox1,
+                InputCollection,
+                InputParameterized,
+                InputProcess,
+                Link,
+                QualifiedInputValueWorkflows,
+            ]:
+                try:
+                    return schema(**value)
+                except ValidationError:
+                    pass
+        elif isinstance(value, list):
+            return [cls.validate_type(item) for item in value]
+        elif isinstance(
+            value,
+            (
+                bool,
+                int,
+                float,
+                str,
+                Bbox1,
+                InputCollection,
+                InputParameterized,
+                InputProcess,
+                Link,
+                QualifiedInputValueWorkflows,
+            ),
+        ):
+            return value
+        elif isinstance(value, List):
+            return value
+        raise ValueError(f"Invalid type for InputWorkflows: {type(value)}")
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
-        return cls.from_json(json.dumps(obj))
+    def from_dict(cls, obj: Dict[str, Any]) -> InputWorkflows:
+        return cls(root=cls.validate_type(obj))
 
     @classmethod
-    def from_json(cls, json_str: str) -> Self:
-        """Returns the object represented by the json string"""
-        instance = cls.model_construct()
-        error_messages = []
-        match = 0
+    def from_json(cls, json_str: str) -> InputWorkflows:
+        return cls.from_dict(json.loads(json_str))
 
-        # deserialize data into InlineOrRefDataWorkflows
-        try:
-            instance.actual_instance = InlineOrRefDataWorkflows.from_json(json_str)
-            match += 1
-        except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # deserialize data into List[InlineOrRefDataWorkflows]
-        try:
-            # validation
-            instance.oneof_schema_2_validator = json.loads(json_str)
-            # assign value to actual_instance
-            instance.actual_instance = instance.oneof_schema_2_validator
-            match += 1
-        except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
+    def to_dict(self) -> Dict[str, Any]:
+        if isinstance(self.root, list):
+            return [self._item_to_dict(item) for item in self.root]
+        return self._item_to_dict(self.root)
 
-        if match > 1:
-            # more than 1 match
-            raise ValueError(
-                "Multiple matches found when deserializing the JSON string into InputWorkflows with oneOf schemas: InlineOrRefDataWorkflows, List[InlineOrRefDataWorkflows]. Details: "
-                + ", ".join(error_messages)
-            )
-        elif match == 0:
-            # no match
-            raise ValueError(
-                "No match found when deserializing the JSON string into InputWorkflows with oneOf schemas: InlineOrRefDataWorkflows, List[InlineOrRefDataWorkflows]. Details: "
-                + ", ".join(error_messages)
-            )
-        else:
-            return instance
+    def _item_to_dict(self, item):
+        if hasattr(item, "model_dump"):
+            return item.model_dump()
+        return item
 
     def to_json(self) -> str:
-        """Returns the JSON representation of the actual instance"""
-        if self.actual_instance is None:
-            return "null"
+        return json.dumps(self.to_dict())
 
-        to_json = getattr(self.actual_instance, "to_json", None)
-        if callable(to_json):
-            return self.actual_instance.to_json()
-        else:
-            return json.dumps(self.actual_instance)
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.root, name)
 
-    def to_dict(self) -> Dict:
-        """Returns the dict representation of the actual instance"""
-        if self.actual_instance is None:
-            return None
-
-        to_dict = getattr(self.actual_instance, "to_dict", None)
-        if callable(to_dict):
-            return self.actual_instance.to_dict()
-        else:
-            # primitive type
-            return self.actual_instance
+    def __repr__(self) -> str:
+        return f"InputWorkflows({self.root!r})"
 
     def to_str(self) -> str:
-        """Returns the string representation of the actual instance"""
         return pprint.pformat(self.model_dump())
