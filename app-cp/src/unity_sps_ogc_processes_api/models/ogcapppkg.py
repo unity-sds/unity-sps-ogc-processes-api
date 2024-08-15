@@ -17,8 +17,7 @@ from __future__ import annotations
 
 import json
 import pprint
-import re  # noqa: F401
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -38,9 +37,7 @@ class Ogcapppkg(BaseModel):
     Ogcapppkg
     """  # noqa: E501
 
-    process_description: Optional[Process] = Field(
-        default=None, alias="processDescription"
-    )
+    process_description: Process = Field(alias="processDescription")
     execution_unit: OgcapppkgExecutionUnit = Field(alias="executionUnit")
     __properties: ClassVar[List[str]] = ["processDescription", "executionUnit"]
 

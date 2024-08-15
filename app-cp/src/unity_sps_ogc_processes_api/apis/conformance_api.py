@@ -2,26 +2,13 @@
 
 import importlib
 import pkgutil
-from typing import Dict, List  # noqa: F401
 
-from fastapi import (  # noqa: F401
-    APIRouter,
-    Body,
-    Cookie,
-    Depends,
-    Form,
-    Header,
-    Path,
-    Query,
-    Response,
-    Security,
-    status,
-)
+from fastapi import APIRouter, Query
 
 import openapi_server.impl
+from unity_sps_ogc_processes_api.apis.conformance_api_base import BaseConformanceApi
 from unity_sps_ogc_processes_api.models.conf_classes import ConfClasses
 from unity_sps_ogc_processes_api.models.exception import Exception
-from unity_sps_ogc_processes_api.models.extra_models import TokenModel  # noqa: F401
 
 router = APIRouter()
 
@@ -53,4 +40,5 @@ async def get_conformance(
         description="The format of the response. If no value is provided, the accept header is used to determine the format. Accepted values are &#39;json&#39; or &#39;html&#39;.",
         alias="f",
     ),
-) -> ConfClasses: ...
+) -> ConfClasses:
+    return BaseConformanceApi.subclasses[0]().get_conformance()

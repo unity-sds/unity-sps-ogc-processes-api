@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from typing import ClassVar, Dict, List, Tuple  # noqa: F401
+from typing import ClassVar, Dict, Tuple
 
 from unity_sps_ogc_processes_api.models.inline_or_ref_data import InlineOrRefData
 from unity_sps_ogc_processes_api.models.job_list import JobList
