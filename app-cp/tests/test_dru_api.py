@@ -58,7 +58,9 @@ def sample_ogcapppkg():
                     description="Description of Input 1",
                     min_occurs=1,
                     max_occurs=1,
-                    schema=ModelSchema(Reference(ref="#/components/schemas/ExampleSchema")),
+                    schema=ModelSchema(
+                        Reference(ref="#/components/schemas/ExampleSchema")
+                    ),
                     formats=[
                         {
                             "mediaType": "application/json",
@@ -72,7 +74,11 @@ def sample_ogcapppkg():
                 "output1": OutputDescription(
                     title="Output 1 Title",
                     description="Description of Output 1",
-                    schema=ModelSchema(actual_instance=Reference(ref="#/components/schemas/ExampleSchema")),
+                    schema=ModelSchema(
+                        actual_instance=Reference(
+                            ref="#/components/schemas/ExampleSchema"
+                        )
+                    ),
                     formats=[
                         {
                             "mediaType": "application/json",
@@ -88,7 +94,11 @@ def sample_ogcapppkg():
                 type="docker",
                 image="example/image:latest",
                 deployment="cloud",
-                config={"cpu": "2", "memory": "4GiB", "env": {"EXAMPLE_ENV_VAR": "value"}},
+                config={
+                    "cpu": "2",
+                    "memory": "4GiB",
+                    "env": {"EXAMPLE_ENV_VAR": "value"},
+                },
             )
         ),
     )
@@ -96,20 +106,11 @@ def sample_ogcapppkg():
 
 def test_deploy(client: TestClient, sample_ogcapppkg):
     """Test case for deploy"""
-    import pprint
-
-    pprint.pprint(Ogcapppkg.model_validate(sample_ogcapppkg).model_dump(exclude_none=True, by_alias=True))
-
     response = client.post(
         "/processes",
         json=sample_ogcapppkg.model_dump(exclude_none=True, by_alias=True),
     )
-
     assert response.status_code == 201
-    print(response)
-    # pprint.pprint(response.json())
-    # assert response.json()["id"] == "example-process-id"
-    # assert response.json()["title"] == "Example Process Title"
 
 
 # def test_replace(client: TestClient, sample_ogcapppkg):
