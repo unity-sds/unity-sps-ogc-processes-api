@@ -6,6 +6,7 @@ import pkgutil
 from fastapi import APIRouter, Query
 
 import openapi_server.impl
+from unity_sps_ogc_processes_api.apis.api_api_base import BaseAPIApi
 from unity_sps_ogc_processes_api.models.enumeration import Enumeration
 from unity_sps_ogc_processes_api.models.exception import Exception
 
@@ -36,7 +37,8 @@ async def get_api(
         description="The format of the response. If no value is provided, the accept header is used to determine the format. Accepted values are &#39;json&#39; or &#39;html&#39;.",
         alias="f",
     ),
-) -> object: ...
+) -> object:
+    return BaseAPIApi.subclasses[0]().get_api(f)
 
 
 @router.get(
@@ -66,4 +68,5 @@ async def get_api_processes(
         description="The format of the response. If no value is provided, the accept header is used to determine the format. Accepted values are &#39;json&#39; or &#39;html&#39;.",
         alias="f",
     ),
-) -> Enumeration: ...
+) -> Enumeration:
+    return BaseAPIApi.subclasses[0]().get_api_processes(f)

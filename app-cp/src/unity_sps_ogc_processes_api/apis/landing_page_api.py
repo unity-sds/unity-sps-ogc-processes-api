@@ -6,6 +6,7 @@ import pkgutil
 from fastapi import APIRouter, Query
 
 import openapi_server.impl
+from unity_sps_ogc_processes_api.apis.landing_page_api_base import BaseLandingPageApi
 from unity_sps_ogc_processes_api.models.exception import Exception
 from unity_sps_ogc_processes_api.models.landing_page import LandingPage
 
@@ -39,4 +40,5 @@ async def get_landing_page(
         description="The format of the response. If no value is provided, the accept header is used to determine the format. Accepted values are &#39;json&#39; or &#39;html&#39;.",
         alias="f",
     ),
-) -> LandingPage: ...
+) -> LandingPage:
+    return BaseLandingPageApi.subclasses[0]().get_landing_page(f)
