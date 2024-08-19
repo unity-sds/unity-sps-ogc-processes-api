@@ -284,6 +284,7 @@ def deploy_process(
 
     # Acquire lock
     # Create process in DB w/ deployment_status field "deploying"
+    # Check if request is a CWL DAG, template
     # Check if DAG exists in Airflow
     # Check if file exists in DAG folder
     # Check if file exists in DAG catalog
@@ -295,6 +296,10 @@ def deploy_process(
     # Release lock
 
     dag_filename = app.processDescription.id + ".py"
+
+    if os.path.isfile(os.path.join(settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)):
+        # Log warning that file already exists in the deployed dags directory
+        pass
 
     if app.executionUnit.type == "application/cwl":
         cwl_arbitrary_dag.write_dag(
@@ -326,10 +331,6 @@ def deploy_process(
                 status_code=fastapi_status.HTTP_409_CONFLICT,
                 detail=f"The process ID '{app.processDescription.id}' does not have a matching DAG file named '{dag_filename}' in the DAG catalog.\nThe DAG catalog includes the following files:\n{existing_files_str}",
             )
-
-        if os.path.isfile(os.path.join(settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)):
-            # Log warning that file already exists in the deployed dags directory
-            pass
 
         # Copy DAG from the DAG catalog PVC to deployed PVC
         shutil.copy2(
