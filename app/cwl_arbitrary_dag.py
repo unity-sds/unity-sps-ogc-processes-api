@@ -71,8 +71,8 @@ dag_default_args = {{
 }}
 
 dag = DAG(
-    dag_id="cwl_dag",
-    description="CWL DAG",
+    dag_id="{dag_id}",
+    description="{description}",
     tags=["CWL"],
     is_paused_upon_creation=False,
     catchup=False,
