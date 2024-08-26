@@ -299,7 +299,10 @@ def deploy_process(
 
     if os.path.isfile(os.path.join(settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)):
         # Log warning that file already exists in the deployed dags directory
-        pass
+        raise HTTPException(
+            status_code=fastapi_status.HTTP_409_CONFLICT,
+            detail=f"The process ID '{app.processDescription.id}' already has a deployed DAG.",
+        )
 
     if app.executionUnit.type == "application/cwl":
         cwl_arbitrary_dag.write_dag(
