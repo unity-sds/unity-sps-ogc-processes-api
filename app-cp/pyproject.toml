@@ -2,6 +2,41 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "unity-sps-ogc-processes-api"
+version = "1.0.0"
+authors = [
+    { name = "Drew Meyers", email = "drew.meyers@jpl.nasa.gov" },
+]
+description = "The Unity science processing service area's OGC Processes API."
+classifiers = [
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+]
+
+dependencies = [
+    "requests==2.31.0",
+    "fastapi==0.110.0",
+    "pydantic==2.6.4",
+    "SQLAlchemy==2.0.28",
+    "pydantic-settings==2.0.0",
+    "uvicorn==0.27.1",
+    "psycopg2-binary==2.9.9",
+    "redis==5.0.4",
+    "apache-airflow-client @ git+https://github.com/apache/airflow-client-python.git@2.9.0"
+]
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["unity_sps_ogc_processes_api*", "openapi_server*"]
+
+
 [tool.black]
 line-length = 88
 exclude = '''

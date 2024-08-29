@@ -32,12 +32,18 @@ from unity_sps_ogc_processes_api.dependencies import (
     get_settings,
 )
 
-models.Base.metadata.create_all(bind=engine)  # Create database tables
+# Create database tables
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="OGC API - Processes",
-    description="Example API Definition for OGC API - Processes",
-    version="0.1",
+    version="2.0.0",
+    title="Unity Processing API conforming to the Draft of OGC API - Processes - Part 2: Deploy, Replace, Undeploy",
+    description="This document is an API definition document provided alongside the OGC API - Processes standard. The OGC API - Processes Standard specifies a processing interface to communicate over a RESTful protocol using JavaScript Object Notation (JSON) encodings. The specification allows for the wrapping of computational tasks into executable processes that can be offered by a server and be invoked by a client application.",
+    license={
+        "name": "Apache 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+    },
+    servers=[],
 )
 
 app.include_router(APIApiRouter)
