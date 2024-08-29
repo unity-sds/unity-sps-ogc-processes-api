@@ -3,10 +3,18 @@
 import importlib
 import pkgutil
 
-from fastapi import APIRouter, Body, Header, Path, Query
+from fastapi import APIRouter, Body, Depends, Header, Path, Query
+from sqlalchemy.orm import Session
 
 import openapi_server.impl
+from openapi_server.config.config import Settings
+from openapi_server.utils.redis import RedisLock
 from unity_sps_ogc_processes_api.apis.processes_api_base import BaseProcessesApi
+from unity_sps_ogc_processes_api.dependencies import (
+    get_db,
+    get_redis_locking_client,
+    get_settings,
+)
 from unity_sps_ogc_processes_api.models.exception import Exception
 from unity_sps_ogc_processes_api.models.execute200_response import Execute200Response
 from unity_sps_ogc_processes_api.models.execute_workflows import ExecuteWorkflows
@@ -46,6 +54,9 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
     response_model_by_alias=True,
 )
 async def execute(
+    settings: Settings = Depends(get_settings),
+    redis_locking_client: RedisLock = Depends(get_redis_locking_client),
+    db: Session = Depends(get_db),
     processId: str = Path(..., description=""),
     execute_workflows: ExecuteWorkflows = Body(
         None,
@@ -62,9 +73,8 @@ async def execute(
     ),
 ) -> Execute200Response:
     """Executes a process (this may result in the creation of a job resource e.g., for _asynchronous execution_).  For more information, see [Section 7.9](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_create_job)."""
-    return BaseProcessesApi.subclasses[0]().execute(
-        processId, execute_workflows, response, prefer
-    )
+    processes_api = BaseProcessesApi.subclasses[0](settings, redis_locking_client, db)
+    return processes_api.execute(processId, execute_workflows, response, prefer)
 
 
 @router.get(
@@ -81,10 +91,14 @@ async def execute(
     response_model_by_alias=True,
 )
 async def get_process_description(
+    settings: Settings = Depends(get_settings),
+    redis_locking_client: RedisLock = Depends(get_redis_locking_client),
+    db: Session = Depends(get_db),
     processId: str = Path(..., description=""),
 ) -> Process:
     """The process description contains information about inputs and outputs and a link to the execution-endpoint for the process. The Core does not mandate the use of a specific process description to specify the interface of a process. That said, the Core requirements class makes the following recommendation:  Implementations SHOULD consider supporting the OGC process description.  For more information, see [Section 7.8](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_process_description)."""
-    return BaseProcessesApi.subclasses[0]().get_process_description(processId)
+    processes_api = BaseProcessesApi.subclasses[0](settings, redis_locking_client, db)
+    return processes_api.get_process_description(processId)
 
 
 @router.get(
@@ -99,6 +113,11 @@ async def get_process_description(
     summary="retrieve the list of available processes",
     response_model_by_alias=True,
 )
-async def get_processes() -> ProcessList:
+async def get_processes(
+    settings: Settings = Depends(get_settings),
+    redis_locking_client: RedisLock = Depends(get_redis_locking_client),
+    db: Session = Depends(get_db),
+) -> ProcessList:
     """The list of processes contains a summary of each process the OGC API - Processes offers, including the link to a more detailed description of the process.  For more information, see [Section 7.7]https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_process_list)."""
-    return BaseProcessesApi.subclasses[0]().get_processes()
+    processes_api = BaseProcessesApi.subclasses[0](settings, redis_locking_client, db)
+    return processes_api.get_processes()

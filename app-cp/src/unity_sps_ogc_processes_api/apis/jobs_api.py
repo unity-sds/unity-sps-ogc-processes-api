@@ -4,10 +4,18 @@ import importlib
 import pkgutil
 from typing import Dict
 
-from fastapi import APIRouter, Header, Path
+from fastapi import APIRouter, Depends, Header, Path
+from sqlalchemy.orm import Session
 
 import openapi_server.impl
+from openapi_server.config.config import Settings
+from openapi_server.utils.redis import RedisLock
 from unity_sps_ogc_processes_api.apis.jobs_api_base import BaseJobsApi
+from unity_sps_ogc_processes_api.dependencies import (
+    get_db,
+    get_redis_locking_client,
+    get_settings,
+)
 from unity_sps_ogc_processes_api.models.exception import Exception
 from unity_sps_ogc_processes_api.models.extra_models import TokenModel  # noqa: F401
 from unity_sps_ogc_processes_api.models.inline_or_ref_data import InlineOrRefData
@@ -36,10 +44,14 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
     response_model_by_alias=True,
 )
 async def dismiss(
+    settings: Settings = Depends(get_settings),
+    redis_locking_client: RedisLock = Depends(get_redis_locking_client),
+    db: Session = Depends(get_db),
     jobId: str = Path(..., description="local identifier of a job"),
 ) -> StatusInfo:
     """Cancel a job execution and remove it from the jobs list.  For more information, see [Section 14]https://docs.ogc.org/is/18-062r2/18-062r2.html#Dismiss)."""
-    return BaseJobsApi.subclasses[0]().dismiss(jobId)
+    jobs_api = BaseJobsApi.subclasses[0](settings, redis_locking_client, db)
+    return jobs_api.dismiss(jobId)
 
 
 @router.get(
@@ -55,9 +67,14 @@ async def dismiss(
     summary="retrieve the list of jobs.",
     response_model_by_alias=True,
 )
-async def get_jobs() -> JobList:
+async def get_jobs(
+    settings: Settings = Depends(get_settings),
+    redis_locking_client: RedisLock = Depends(get_redis_locking_client),
+    db: Session = Depends(get_db),
+) -> JobList:
     """Lists available jobs.  For more information, see [Section 12](https://docs.ogc.org/is/18-062r2/18-062r2.html#Job_list)."""
-    return BaseJobsApi.subclasses[0]().get_jobs()
+    jobs_api = BaseJobsApi.subclasses[0](settings, redis_locking_client, db)
+    return jobs_api.get_jobs()
 
 
 @router.get(
@@ -78,6 +95,9 @@ async def get_jobs() -> JobList:
     response_model_by_alias=True,
 )
 async def get_result(
+    settings: Settings = Depends(get_settings),
+    redis_locking_client: RedisLock = Depends(get_redis_locking_client),
+    db: Session = Depends(get_db),
     jobId: str = Path(..., description="local identifier of a job"),
     prefer: str = Header(
         None,
@@ -85,7 +105,8 @@ async def get_result(
     ),
 ) -> Dict[str, InlineOrRefData]:
     """Lists available results of a job. In case of a failure, lists exceptions instead.  For more information, see [Section 7.11](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_job_results)."""
-    return BaseJobsApi.subclasses[0]().get_result(jobId, prefer)
+    jobs_api = BaseJobsApi.subclasses[0](settings, redis_locking_client, db)
+    return jobs_api.get_result(jobId, prefer)
 
 
 @router.get(
@@ -103,7 +124,11 @@ async def get_result(
     response_model_by_alias=True,
 )
 async def get_status(
+    settings: Settings = Depends(get_settings),
+    redis_locking_client: RedisLock = Depends(get_redis_locking_client),
+    db: Session = Depends(get_db),
     jobId: str = Path(..., description="local identifier of a job"),
 ) -> StatusInfo:
     """Shows the status of a job.   For more information, see [Section 7.10](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_status_info)."""
-    return BaseJobsApi.subclasses[0]().get_status(jobId)
+    jobs_api = BaseJobsApi.subclasses[0](settings, redis_locking_client, db)
+    return jobs_api.get_status(jobId)
