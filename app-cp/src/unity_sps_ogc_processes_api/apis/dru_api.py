@@ -3,10 +3,18 @@
 import importlib
 import pkgutil
 
-from fastapi import APIRouter, Body, Path, Query
+from fastapi import APIRouter, Body, Depends, Path, Query
+from sqlalchemy.orm import Session
 
 import openapi_server.impl
+from openapi_server.config.config import Settings
+from openapi_server.utils.redis import RedisLock
 from unity_sps_ogc_processes_api.apis.dru_api_base import BaseDRUApi
+from unity_sps_ogc_processes_api.dependencies import (
+    get_db,
+    get_redis_locking_client,
+    get_settings,
+)
 from unity_sps_ogc_processes_api.models.exception import Exception
 from unity_sps_ogc_processes_api.models.ogcapppkg import Ogcapppkg
 
@@ -33,6 +41,9 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
     response_model_by_alias=True,
 )
 async def deploy(
+    settings: Settings = Depends(get_settings),
+    redis_locking_client: RedisLock = Depends(get_redis_locking_client),
+    db: Session = Depends(get_db),
     ogcapppkg: Ogcapppkg = Body(
         None, description="An OGC Application Package used to deploy a new process."
     ),
@@ -43,7 +54,8 @@ async def deploy(
     ),
 ) -> None:
     """Deploys a process.  For more information, see [Section 6.3](http://docs.ogc.org/DRAFTS/20-044.html#_87a6983e-d060-458c-95ab-27e232e64822)."""
-    return BaseDRUApi.subclasses[0]().deploy(ogcapppkg, w)
+    dru_api = BaseDRUApi.subclasses[0](settings, redis_locking_client, db)
+    return dru_api.deploy(ogcapppkg, w)
 
 
 @router.put(
@@ -66,13 +78,17 @@ async def deploy(
     response_model_by_alias=True,
 )
 async def replace(
+    settings: Settings = Depends(get_settings),
+    redis_locking_client: RedisLock = Depends(get_redis_locking_client),
+    db: Session = Depends(get_db),
     processId: str = Path(..., description=""),
     ogcapppkg: Ogcapppkg = Body(
         None, description="An OGC Application Package used to deploy a new process."
     ),
 ) -> None:
     """Replaces a process.  For more information, see [Section 6.4](http://docs.ogc.org/DRAFTS/20-044.html#_18582f42-ebc6-4284-9333-c089068f62b6)."""
-    return BaseDRUApi.subclasses[0]().replace(processId, ogcapppkg)
+    dru_api = BaseDRUApi.subclasses[0](settings, redis_locking_client, db)
+    return dru_api.replace(processId, ogcapppkg)
 
 
 @router.delete(
@@ -91,7 +107,11 @@ async def replace(
     response_model_by_alias=True,
 )
 async def undeploy(
+    settings: Settings = Depends(get_settings),
+    redis_locking_client: RedisLock = Depends(get_redis_locking_client),
+    db: Session = Depends(get_db),
     processId: str = Path(..., description=""),
 ) -> None:
     """Undeploys a process.  For more information, see [Section 6.5](http://docs.ogc.org/DRAFTS/20-044.html#_16391f9e-538f-4a84-9710-72a6bab82842)."""
-    return BaseDRUApi.subclasses[0]().undeploy(processId)
+    dru_api = BaseDRUApi.subclasses[0](settings, redis_locking_client, db)
+    return dru_api.undeploy(processId)

@@ -13,8 +13,9 @@
 """  # noqa: E501
 
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
+from openapi_server.database import engine, models
 from unity_sps_ogc_processes_api.apis.api_api import router as APIApiRouter
 from unity_sps_ogc_processes_api.apis.conformance_api import (
     router as ConformanceApiRouter,
@@ -25,6 +26,13 @@ from unity_sps_ogc_processes_api.apis.landing_page_api import (
     router as LandingPageApiRouter,
 )
 from unity_sps_ogc_processes_api.apis.processes_api import router as ProcessesApiRouter
+from unity_sps_ogc_processes_api.dependencies import (
+    get_db,
+    get_redis_locking_client,
+    get_settings,
+)
+
+models.Base.metadata.create_all(bind=engine)  # Create database tables
 
 app = FastAPI(
     title="OGC API - Processes",
@@ -34,7 +42,14 @@ app = FastAPI(
 
 app.include_router(APIApiRouter)
 app.include_router(ConformanceApiRouter)
-app.include_router(DRUApiRouter)
+app.include_router(
+    DRUApiRouter,
+    dependencies=[
+        Depends(get_settings),
+        Depends(get_redis_locking_client),
+        Depends(get_db),
+    ],
+)
 app.include_router(JobsApiRouter)
 app.include_router(LandingPageApiRouter)
 app.include_router(ProcessesApiRouter)

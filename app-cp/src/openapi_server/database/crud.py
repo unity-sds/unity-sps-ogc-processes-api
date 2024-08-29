@@ -1,13 +1,27 @@
 from sqlalchemy.orm import Session
 
-from unity_sps_ogc_processes_api.models import ogcapppkg
+from unity_sps_ogc_processes_api.models.ogcapppkg import Ogcapppkg
 
 from . import models
 
 
-def create_process(db: Session, process: ogcapppkg.Ogcapppkg):
-    db_process = models.Process(**process.dict())
-    db.add(db_process)
+def create_process(db: Session, ogcapppkg: Ogcapppkg):
+    db_process = models.Process(**ogcapppkg.process_description.model_dump())
+    db_execution_unit = models.ExecutionUnit(**ogcapppkg.execution_unit.model_dump())
+    db_ogcapppkg = models.Ogcapppkg(
+        process=db_process, execution_unit=db_execution_unit
+    )
+    db.add(db_ogcapppkg)
+    db.commit()
+    db.refresh(db_ogcapppkg)
+    return db_ogcapppkg
+
+
+def update_process(db: Session, process_id: str, process_data: dict):
+    db_process = db.query(models.Process).filter(models.Process.id == process_id).one()
+    for key, value in process_data.items():
+        if hasattr(db_process, key):
+            setattr(db_process, key, value)
     db.commit()
     db.refresh(db_process)
     return db_process
@@ -21,8 +35,9 @@ def get_process(db: Session, process_id: str):
     return db.query(models.Process).filter(models.Process.id == process_id).one()
 
 
-def delete_process(db: Session, process: models.Process):
-    db.delete(process)
+def delete_process(db: Session, process_id: str):
+    db_process = db.query(models.Process).filter(models.Process.id == process_id).one()
+    db.delete(db_process)
     db.commit()
 
 
