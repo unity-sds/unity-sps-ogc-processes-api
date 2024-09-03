@@ -61,10 +61,7 @@ class ProcessesApiImpl(BaseProcessesApi):
     ) -> Execute200Response:
         check_process_integrity(self.db, processId, new_process=False)
         # Fetch process description
-        processes_api = ProcessesApiImpl(
-            self.settings, self.redis_locking_client, self.db
-        )
-        process_description = processes_api.get_process(processId)
+        process_description = self.get_process_description(processId)
 
         # Validate inputs against schema
         validated_inputs = {}
