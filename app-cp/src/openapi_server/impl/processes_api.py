@@ -59,8 +59,7 @@ class ProcessesApiImpl(BaseProcessesApi):
         response: str,
         prefer: str,
     ) -> Execute200Response:
-        check_process_integrity(processId, new_process=False)
-
+        check_process_integrity(self.db, processId, new_process=True)
         job_id = str(uuid.uuid4())
         logical_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         data = {
