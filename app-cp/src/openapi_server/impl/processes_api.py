@@ -14,6 +14,10 @@ from openapi_server.utils.redis import RedisLock
 from unity_sps_ogc_processes_api.apis.processes_api_base import BaseProcessesApi
 from unity_sps_ogc_processes_api.models.execute200_response import Execute200Response
 from unity_sps_ogc_processes_api.models.execute_workflows import ExecuteWorkflows
+from unity_sps_ogc_processes_api.models.input_description import InputDescription
+from unity_sps_ogc_processes_api.models.link import Link
+from unity_sps_ogc_processes_api.models.metadata import Metadata
+from unity_sps_ogc_processes_api.models.output_description import OutputDescription
 from unity_sps_ogc_processes_api.models.process import Process
 from unity_sps_ogc_processes_api.models.process_list import ProcessList
 from unity_sps_ogc_processes_api.models.process_summary import ProcessSummary
@@ -35,7 +39,41 @@ class ProcessesApiImpl(BaseProcessesApi):
 
     def get_process_description(self, processId: str) -> Process:
         process = crud.get_process(self.db, processId)
-        return Process.model_validate(process)
+
+        # Convert metadata, links, inputs, and outputs if they exist
+        metadata = (
+            [Metadata.model_validate(m) for m in process.metadata]
+            if process.metadata
+            else None
+        )
+        links = (
+            [Link.model_validate(link) for link in process.links]
+            if process.links
+            else None
+        )
+        inputs = (
+            {k: InputDescription.model_validate(v) for k, v in process.inputs.items()}
+            if process.inputs
+            else None
+        )
+        outputs = (
+            {k: OutputDescription.model_validate(v) for k, v in process.outputs.items()}
+            if process.outputs
+            else None
+        )
+
+        return Process(
+            title=process.title,
+            description=process.description,
+            keywords=process.keywords,
+            metadata=metadata,
+            id=process.id,
+            version=process.version,
+            job_control_options=process.job_control_options,
+            links=links,
+            inputs=inputs,
+            outputs=outputs,
+        )
 
     def get_processes(self) -> ProcessList:
         processes = crud.get_processes(self.db)
