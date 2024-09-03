@@ -28,7 +28,8 @@ dependencies = [
     "uvicorn==0.27.1",
     "psycopg2-binary==2.9.9",
     "redis==5.0.4",
-    "apache-airflow-client @ git+https://github.com/apache/airflow-client-python.git@2.9.0"
+    "apache-airflow-client @ git+https://github.com/apache/airflow-client-python.git@2.9.0",
+    "jsonschema==4.23.0"
 ]
 
 [project.license]
