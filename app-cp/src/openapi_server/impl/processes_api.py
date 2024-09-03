@@ -129,11 +129,7 @@ class ProcessesApiImpl(BaseProcessesApi):
         data = {
             "dag_run_id": job_id,
             "logical_date": logical_date,
-            "conf": (
-                execute_workflows.inputs.model_dump()
-                if execute_workflows.inputs
-                else {}
-            ),
+            "conf": execute_workflows.inputs,
         }
 
         try:
