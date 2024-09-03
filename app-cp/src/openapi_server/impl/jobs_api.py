@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from typing import Dict
 
@@ -12,10 +11,8 @@ from sqlalchemy.orm import Session
 
 from openapi_server.config.config import Settings
 from openapi_server.database import crud
-from openapi_server.impl.processes_api import ProcessesApiImpl
 from openapi_server.utils.redis import RedisLock
 from unity_sps_ogc_processes_api.apis.jobs_api_base import BaseJobsApi
-from unity_sps_ogc_processes_api.models.execute import Execute
 from unity_sps_ogc_processes_api.models.inline_or_ref_data import InlineOrRefData
 from unity_sps_ogc_processes_api.models.job_list import JobList
 from unity_sps_ogc_processes_api.models.status_code import StatusCode
@@ -126,64 +123,3 @@ class JobsApiImpl(BaseJobsApi):
             job.finished = datetime.fromisoformat(end_date_str)
 
         return crud.update_job(self.db, job)
-
-    def execute(self, processId: str, execute: Execute) -> StatusInfo:
-        # Fetch process description
-        processes_api = ProcessesApiImpl(
-            self.settings, self.redis_locking_client, self.db
-        )
-        process_description = processes_api.get_process(processId)
-
-        # Validate inputs against schema
-        validated_inputs = {}
-        for input_id, input_value in execute.inputs.items():
-            input_description = next(
-                (input for input in process_description.inputs if input.id == input_id),
-                None,
-            )
-            if input_description is None:
-                raise HTTPException(
-                    status_code=fastapi_status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid input: {input_id}",
-                )
-
-            # try:
-            #     #validate(instance=input_value.value, schema=input_description.schema_)
-            #     validated_inputs[input_id] = input_value.value
-            # except ValidationError as e:
-            #     raise HTTPException(
-            #         status_code=fastapi_status.HTTP_400_BAD_REQUEST,
-            #         detail=f"Invalid input for {input_id}: {e.message}",
-            #     )
-            validated_inputs[input_id] = input_value.value
-
-        job_id = str(uuid.uuid4())
-        logical_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        data = {
-            "dag_run_id": job_id,
-            "logical_date": logical_date,
-            "conf": validated_inputs,
-        }
-
-        try:
-            response = requests.post(
-                f"{self.settings.EMS_API_URL}/dags/{processId}/dagRuns",
-                json=data,
-                auth=self.ems_api_auth,
-            )
-            response.raise_for_status()
-            self.check_job_integrity(job_id, new_job=True)
-            job = StatusInfo(
-                jobID=job_id,
-                processID=processId,
-                type="process",
-                status=StatusCode.ACCEPTED,
-                created=datetime.now(),
-                updated=datetime.now(),
-            )
-            return crud.create_job(self.db, job)
-        except requests.exceptions.RequestException as e:
-            raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to start DAG run {job_id} with DAG {processId}: {e}",
-            )
