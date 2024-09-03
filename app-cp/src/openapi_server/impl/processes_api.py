@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from openapi_server.config.config import Settings
 from openapi_server.database import crud
+from openapi_server.impl.dru_api import check_process_integrity
 from openapi_server.utils.redis import RedisLock
 from unity_sps_ogc_processes_api.apis.processes_api_base import BaseProcessesApi
 from unity_sps_ogc_processes_api.models.execute200_response import Execute200Response
@@ -58,7 +59,7 @@ class ProcessesApiImpl(BaseProcessesApi):
         response: str,
         prefer: str,
     ) -> Execute200Response:
-        self.check_process_integrity(processId, new_process=False)
+        check_process_integrity(processId, new_process=False)
 
         job_id = str(uuid.uuid4())
         logical_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
