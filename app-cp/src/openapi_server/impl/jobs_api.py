@@ -5,7 +5,8 @@ from typing import Dict
 import requests
 from fastapi import HTTPException
 from fastapi import status as fastapi_status
-from jsonschema import ValidationError, validate
+
+# from jsonschema import ValidationError, validate
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
 
@@ -146,14 +147,15 @@ class JobsApiImpl(BaseJobsApi):
                     detail=f"Invalid input: {input_id}",
                 )
 
-            try:
-                validate(instance=input_value.value, schema=input_description.schema_)
-                validated_inputs[input_id] = input_value.value
-            except ValidationError as e:
-                raise HTTPException(
-                    status_code=fastapi_status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid input for {input_id}: {e.message}",
-                )
+            # try:
+            #     #validate(instance=input_value.value, schema=input_description.schema_)
+            #     validated_inputs[input_id] = input_value.value
+            # except ValidationError as e:
+            #     raise HTTPException(
+            #         status_code=fastapi_status.HTTP_400_BAD_REQUEST,
+            #         detail=f"Invalid input for {input_id}: {e.message}",
+            #     )
+            validated_inputs[input_id] = input_value.value
 
         job_id = str(uuid.uuid4())
         logical_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
