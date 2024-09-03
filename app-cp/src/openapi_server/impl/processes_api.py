@@ -99,37 +99,41 @@ class ProcessesApiImpl(BaseProcessesApi):
     ) -> Execute200Response:
         check_process_integrity(self.db, processId, new_process=False)
         # Fetch process description
-        process_description = self.get_process_description(processId)
+        # process_description = self.get_process_description(processId)
 
         # Validate inputs against schema
-        validated_inputs = {}
-        for input_id, input_value in execute_workflows.inputs.items():
-            input_description = next(
-                (input for input in process_description.inputs if input.id == input_id),
-                None,
-            )
-            if input_description is None:
-                raise HTTPException(
-                    status_code=fastapi_status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid input: {input_id}",
-                )
+        # validated_inputs = {}
+        # for input_id, input_value in execute_workflows.inputs.items():
+        #     input_description = next(
+        #         (input for input in process_description.inputs if input.id == input_id),
+        #         None,
+        #     )
+        #     if input_description is None:
+        #         raise HTTPException(
+        #             status_code=fastapi_status.HTTP_400_BAD_REQUEST,
+        #             detail=f"Invalid input: {input_id}",
+        #         )
 
-            # try:
-            #     #validate(instance=input_value.value, schema=input_description.schema_)
-            #     validated_inputs[input_id] = input_value.value
-            # except ValidationError as e:
-            #     raise HTTPException(
-            #         status_code=fastapi_status.HTTP_400_BAD_REQUEST,
-            #         detail=f"Invalid input for {input_id}: {e.message}",
-            #     )
-            validated_inputs[input_id] = input_value.value
+        #     try:
+        #         #validate(instance=input_value.value, schema=input_description.schema_)
+        #         validated_inputs[input_id] = input_value.value
+        #     except ValidationError as e:
+        #         raise HTTPException(
+        #             status_code=fastapi_status.HTTP_400_BAD_REQUEST,
+        #             detail=f"Invalid input for {input_id}: {e.message}",
+        #         )
+        #     validated_inputs[input_id] = input_value.value
 
         job_id = str(uuid.uuid4())
         logical_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         data = {
             "dag_run_id": job_id,
             "logical_date": logical_date,
-            "conf": validated_inputs,
+            "conf": (
+                execute_workflows.inputs.model_dump()
+                if execute_workflows.inputs
+                else {}
+            ),
         }
 
         try:
