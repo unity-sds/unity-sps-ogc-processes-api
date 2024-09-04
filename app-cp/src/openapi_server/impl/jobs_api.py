@@ -8,6 +8,7 @@ from fastapi import status as fastapi_status
 # from jsonschema import ValidationError, validate
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 from openapi_server.config.config import Settings
 from openapi_server.database import crud
@@ -36,13 +37,13 @@ class JobsApiImpl(BaseJobsApi):
             job = crud.get_job(self.db, job_id)
             if new_job and job is not None:
                 raise ValueError
-        except crud.NoResultFound:
+        except NoResultFound:
             if not new_job:
                 raise HTTPException(
                     status_code=fastapi_status.HTTP_404_NOT_FOUND,
                     detail=f"Job with ID '{job_id}' not found",
                 )
-        except crud.MultipleResultsFound:
+        except MultipleResultsFound:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Multiple jobs found with same ID '{job_id}', data integrity error",
