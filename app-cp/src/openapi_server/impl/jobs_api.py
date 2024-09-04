@@ -157,4 +157,4 @@ class JobsApiImpl(BaseJobsApi):
         if end_date_str:
             job.finished = datetime.fromisoformat(end_date_str)
 
-        return crud.update_job(self.db, job)
+        return crud.update_job(self.db, job.job_id, job.model_dump(by_alias=True))
