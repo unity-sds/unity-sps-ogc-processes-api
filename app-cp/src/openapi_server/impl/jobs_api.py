@@ -130,14 +130,14 @@ class JobsApiImpl(BaseJobsApi):
 
         try:
             response = requests.get(
-                f"{self.settings.EMS_API_URL}/dags/{job.processID}/dagRuns/{job.jobID}",
+                f"{self.settings.EMS_API_URL}/dags/{job.process_id}/dagRuns/{job.job_id}",
                 auth=self.ems_api_auth,
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to fetch DAG run {job.jobID} for DAG {job.processID}: {e}",
+                detail=f"Failed to fetch DAG run {job.job_id} for DAG {job.process_id}: {e}",
             )
 
         execution_status_conversion_dict = {
