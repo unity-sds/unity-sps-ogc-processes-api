@@ -15,7 +15,6 @@ from unity_sps_ogc_processes_api.apis.processes_api_base import BaseProcessesApi
 from unity_sps_ogc_processes_api.models.execute200_response import Execute200Response
 from unity_sps_ogc_processes_api.models.execute_workflows import ExecuteWorkflows
 from unity_sps_ogc_processes_api.models.input_description import InputDescription
-from unity_sps_ogc_processes_api.models.input_workflows import InputWorkflows
 from unity_sps_ogc_processes_api.models.link import Link
 from unity_sps_ogc_processes_api.models.metadata import Metadata
 from unity_sps_ogc_processes_api.models.output_description import OutputDescription
@@ -130,9 +129,9 @@ class ProcessesApiImpl(BaseProcessesApi):
         inputs_dict = {}
         if execute_workflows.inputs:
             for key, value in execute_workflows.inputs.items():
-                if isinstance(value, InputWorkflows):
+                try:
                     inputs_dict[key] = value.model_dump(exclude_unset=True)
-                else:
+                except Exception:
                     inputs_dict[key] = value
 
         data = {
