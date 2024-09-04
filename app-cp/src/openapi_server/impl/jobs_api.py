@@ -69,17 +69,39 @@ class JobsApiImpl(BaseJobsApi):
             )
 
         crud.delete_job(self.db, job)
+        dismissed_datetime = datetime.now()
         return StatusInfo(
-            type="process",
-            job_id=jobId,
+            process_id=job.processID,
+            type=job.type,
+            job_id=job.jobID,
             status=StatusCode.DISMISSED,
             message="Job dismissed",
-            updated=datetime.now(),
+            updated=dismissed_datetime,
+            created=job.created,
+            started=job.started,
+            finished=dismissed_datetime,
+            progress=job.progress,
+            links=job.links,
         )
 
     def get_jobs(self) -> JobList:
         jobs = crud.get_jobs(self.db)
-        job_status_infos = [StatusInfo.model_validate(job) for job in jobs]
+        job_status_infos = [
+            StatusInfo(
+                process_id=job.processID,
+                type=job.type,
+                job_id=job.jobID,
+                status=job.status,
+                message=job.message,
+                updated=job.updated,
+                created=job.created,
+                started=job.started,
+                finished=job.finished,
+                progress=job.progress,
+                links=job.links,
+            )
+            for job in jobs
+        ]
         return JobList(
             jobs=job_status_infos,
             links=[],
@@ -92,7 +114,19 @@ class JobsApiImpl(BaseJobsApi):
 
     def get_status(self, jobId: str) -> StatusInfo:
         job = self.check_job_integrity(jobId, new_job=False)
-        job = StatusInfo.model_validate(job)
+        job = StatusInfo(
+            process_id=job.processID,
+            type=job.type,
+            job_id=job.jobID,
+            status=job.status,
+            message=job.message,
+            updated=job.updated,
+            created=job.created,
+            started=job.started,
+            finished=job.finished,
+            progress=job.progress,
+            links=job.links,
+        )
 
         try:
             response = requests.get(
