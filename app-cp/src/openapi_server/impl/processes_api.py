@@ -149,9 +149,9 @@ class ProcessesApiImpl(BaseProcessesApi):
             airflow_response.raise_for_status()
 
             job = StatusInfo(
-                jobID=job_id,
                 processID=processId,
                 type="process",
+                jobID=job_id,
                 status=StatusCode.ACCEPTED,
                 created=datetime.now(),
                 updated=datetime.now(),
@@ -159,12 +159,7 @@ class ProcessesApiImpl(BaseProcessesApi):
             crud.create_job(self.db, job.model_dump(by_alias=True))
             if prefer == "respond-async":
                 # Asynchronous execution
-                return StatusInfo(
-                    type="process",
-                    job_id=job_id,
-                    status=StatusCode.ACCEPTED,
-                    message="Process execution started asynchronously",
-                )
+                return job
             else:
                 # Synchronous execution
                 # Note: In a real-world scenario, you'd wait for the job to complete
