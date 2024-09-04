@@ -157,7 +157,6 @@ class ProcessesApiImpl(BaseProcessesApi):
                 updated=datetime.now(),
             )
             crud.create_job(self.db, job.model_dump(by_alias=True))
-
             if prefer == "respond-async":
                 # Asynchronous execution
                 return StatusInfo(
@@ -171,7 +170,7 @@ class ProcessesApiImpl(BaseProcessesApi):
                 # Note: In a real-world scenario, you'd wait for the job to complete
                 # and return the actual results. This is a simplified version.
                 return Execute200Response(
-                    outputs={"result": "Sample output for synchronous execution"}
+                    {"result": "Sample output for synchronous execution"}
                 )
 
         except requests.exceptions.RequestException as e:
