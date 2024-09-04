@@ -98,9 +98,9 @@ class ProcessesApiImpl(BaseProcessesApi):
         prefer: str,
     ) -> Execute200Response:
         check_process_integrity(self.db, processId, new_process=False)
+
         # Fetch process description
         # process_description = self.get_process_description(processId)
-
         # Validate inputs against schema
         # validated_inputs = {}
         # for input_id, input_value in execute_workflows.inputs.items():
@@ -113,7 +113,6 @@ class ProcessesApiImpl(BaseProcessesApi):
         #             status_code=fastapi_status.HTTP_400_BAD_REQUEST,
         #             detail=f"Invalid input: {input_id}",
         #         )
-
         #     try:
         #         #validate(instance=input_value.value, schema=input_description.schema_)
         #         validated_inputs[input_id] = input_value.value
@@ -123,6 +122,7 @@ class ProcessesApiImpl(BaseProcessesApi):
         #             detail=f"Invalid input for {input_id}: {e.message}",
         #         )
         #     validated_inputs[input_id] = input_value.value
+
         job_id = str(uuid.uuid4())
         logical_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
@@ -140,12 +140,6 @@ class ProcessesApiImpl(BaseProcessesApi):
             "conf": inputs_dict,
         }
 
-        # data = {
-        #     "dag_run_id": job_id,
-        #     "logical_date": logical_date,
-        #     "conf": execute_workflows.inputs,
-        # }
-
         try:
             airflow_response = requests.post(
                 f"{self.settings.EMS_API_URL}/dags/{processId}/dagRuns",
@@ -162,7 +156,7 @@ class ProcessesApiImpl(BaseProcessesApi):
                 created=datetime.now(),
                 updated=datetime.now(),
             )
-            crud.create_job(self.db, job.model_dump())
+            crud.create_job(self.db, job.model_dump(by_alias=True))
 
             if prefer == "respond-async":
                 # Asynchronous execution
