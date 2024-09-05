@@ -58,10 +58,10 @@ class JobsApiImpl(BaseJobsApi):
     def dismiss(self, jobId: str) -> StatusInfo:
         job_lock_key = f"job:{jobId}"
         try:
-            with self.redis_locking_client.lock(job_lock_key, timeout=60):
+            with self.redis_locking_client.lock(job_lock_key):
                 job = self.check_job_integrity(jobId, new_job=False)
                 process_lock_key = f"process:{job.processID}"
-                with self.redis_locking_client.lock(process_lock_key, timeout=60):
+                with self.redis_locking_client.lock(process_lock_key):
                     response = requests.delete(
                         f"{self.settings.EMS_API_URL}/dags/{job.processID}/dagRuns/{job.jobID}",
                         auth=self.ems_api_auth,
@@ -124,10 +124,10 @@ class JobsApiImpl(BaseJobsApi):
     def get_result(self, jobId: str, prefer: str) -> Dict[str, InlineOrRefData]:
         job_lock_key = f"job:{jobId}"
         try:
-            with self.redis_locking_client.lock(job_lock_key, timeout=60):
+            with self.redis_locking_client.lock(job_lock_key):
                 job = self.check_job_integrity(jobId, new_job=False)
                 process_lock_key = f"process:{job.processID}"
-                with self.redis_locking_client.lock(process_lock_key, timeout=60):
+                with self.redis_locking_client.lock(process_lock_key):
                     results = crud.get_results(self.db, jobId)
                     return {
                         result.name: InlineOrRefData(href=result.href)
@@ -147,10 +147,10 @@ class JobsApiImpl(BaseJobsApi):
     def get_status(self, jobId: str) -> StatusInfo:
         job_lock_key = f"job:{jobId}"
         try:
-            with self.redis_locking_client.lock(job_lock_key, timeout=60):
+            with self.redis_locking_client.lock(job_lock_key):
                 job = self.check_job_integrity(jobId, new_job=False)
                 process_lock_key = f"process:{job.processID}"
-                with self.redis_locking_client.lock(process_lock_key, timeout=60):
+                with self.redis_locking_client.lock(process_lock_key):
                     job = StatusInfo(
                         process_id=job.processID,
                         type=job.type,

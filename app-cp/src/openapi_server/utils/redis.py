@@ -11,10 +11,12 @@ class RedisLock:
         self.client = client
 
     @contextmanager
-    def lock(self, lock_id, timeout=10):
-        """Attempt to acquire a lock within the given timeout period."""
-        lock = self.client.lock(lock_id, timeout=timeout)
-        acquired = lock.acquire(blocking=True, blocking_timeout=timeout)
+    def lock(self, lock_id: str, lock_timeout: int = 10, blocking_timeout: int = 1):
+        # Create a Redis lock object with the specified expiration timeout
+        lock = self.client.lock(lock_id, timeout=lock_timeout)
+
+        # Try to acquire the lock, waiting up to blocking_timeout seconds
+        acquired = lock.acquire(blocking=True, blocking_timeout=blocking_timeout)
         try:
             if acquired:
                 yield lock

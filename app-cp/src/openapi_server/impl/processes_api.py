@@ -40,7 +40,7 @@ class ProcessesApiImpl(BaseProcessesApi):
     def get_process_description(self, processId: str) -> Process:
         lock_key = f"process:{processId}"
         try:
-            with self.redis_locking_client.lock(lock_key, timeout=60):
+            with self.redis_locking_client.lock(lock_key):
                 process = crud.get_process(self.db, processId)
 
                 # Convert metadata, links, inputs, and outputs if they exist
@@ -117,7 +117,7 @@ class ProcessesApiImpl(BaseProcessesApi):
     ) -> Execute200Response:
         lock_key = f"process:{processId}"
         try:
-            with self.redis_locking_client.lock(lock_key, timeout=60):
+            with self.redis_locking_client.lock(lock_key):
                 check_process_integrity(self.db, processId, new_process=False)
 
                 # TODO

@@ -52,7 +52,7 @@ class DRUApiImpl(BaseDRUApi):
     def deploy(self, ogcapppkg: Ogcapppkg, w: str) -> Response:
         lock_key = f"process:{ogcapppkg.process_description.id}"
         try:
-            with self.redis_locking_client.lock(lock_key, timeout=60):
+            with self.redis_locking_client.lock(lock_key, lock_timeout=60):
                 check_process_integrity(
                     self.db, ogcapppkg.process_description.id, new_process=True
                 )
@@ -146,7 +146,7 @@ class DRUApiImpl(BaseDRUApi):
     def replace(self, processId: str, ogcapppkg: Ogcapppkg) -> None:
         lock_key = f"process:{processId}"
         try:
-            with self.redis_locking_client.lock(lock_key, timeout=60):
+            with self.redis_locking_client.lock(lock_key, lock_timeout=60):
                 check_process_integrity(self.db, processId, new_process=False)
                 # Validate the new ogcapppkg
                 if ogcapppkg.process_description.id != processId:
@@ -209,7 +209,7 @@ class DRUApiImpl(BaseDRUApi):
     def undeploy(self, processId: str) -> None:
         lock_key = f"process:{processId}"
         try:
-            with self.redis_locking_client.lock(lock_key, timeout=60):
+            with self.redis_locking_client.lock(lock_key, lock_timeout=60):
                 check_process_integrity(self.db, processId, new_process=False)
 
                 ems_api_auth = HTTPBasicAuth(
