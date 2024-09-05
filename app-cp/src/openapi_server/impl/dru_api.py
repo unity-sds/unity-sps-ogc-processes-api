@@ -3,7 +3,9 @@ import shutil
 import time
 
 import requests
-from fastapi import HTTPException, Response, status
+from fastapi import HTTPException, Response
+from fastapi import status
+from fastapi import status as fastapi_status
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
@@ -49,13 +51,12 @@ class DRUApiImpl(BaseDRUApi):
         self.db = db
 
     def deploy(self, ogcapppkg: Ogcapppkg, w: str) -> Response:
-        check_process_integrity(
-            self.db, ogcapppkg.process_description.id, new_process=True
-        )
+        lock_key = f"process:{ogcapppkg.process_description.id}"
         try:
-            with self.redis_locking_client.lock(
-                "deploy_process_" + ogcapppkg.process_description.id
-            ):
+            with self.redis_locking_client.lock(lock_key, expire=60):
+                check_process_integrity(
+                    self.db, ogcapppkg.process_description.id, new_process=True
+                )
                 # ogcapppkg.process_description.deployment_status = "deploying"
                 crud.create_process(self.db, ogcapppkg)
 
@@ -130,12 +131,21 @@ class DRUApiImpl(BaseDRUApi):
                 status_code=status.HTTP_201_CREATED,
                 content=f"Process {ogcapppkg.process_description.id} deployed successfully",
             )
+        except self.redis_locking_client.LockError:
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Unable to acquire lock. Please try again later.",
+            )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     def replace(self, processId: str, ogcapppkg: Ogcapppkg) -> None:
+        lock_key = f"process:{processId}"
         try:
-            with self.redis_locking_client.lock(f"replace_process_{processId}"):
+            with self.redis_locking_client.lock(lock_key):
+                check_process_integrity(self.db, processId, new_process=False)
                 # Validate the new ogcapppkg
                 if ogcapppkg.process_description.id != processId:
                     raise HTTPException(
@@ -181,13 +191,21 @@ class DRUApiImpl(BaseDRUApi):
                 status_code=status.HTTP_204_NO_CONTENT,
                 content=f"Process {processId} replaced successfully",
             )
+        except self.redis_locking_client.LockError:
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Unable to acquire lock. Please try again later.",
+            )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     def undeploy(self, processId: str) -> None:
-        check_process_integrity(self.db, processId, new_process=False)
+        lock_key = f"process:{processId}"
         try:
-            with self.redis_locking_client.lock(f"undeploy_process_{processId}"):
+            with self.redis_locking_client.lock(lock_key):
+                check_process_integrity(self.db, processId, new_process=False)
                 # Remove the DAG file from the deployed directory
                 dag_filename = f"{processId}.py"
                 deployed_dag_path = os.path.join(
@@ -214,5 +232,12 @@ class DRUApiImpl(BaseDRUApi):
                 status_code=status.HTTP_204_NO_CONTENT,
                 content=f"Process {processId} undeployed successfully",
             )
+        except self.redis_locking_client.LockError:
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Unable to acquire lock. Please try again later.",
+            )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )

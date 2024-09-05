@@ -56,34 +56,47 @@ class JobsApiImpl(BaseJobsApi):
         return job
 
     def dismiss(self, jobId: str) -> StatusInfo:
-        job = self.check_job_integrity(jobId, new_job=False)
+        job_lock_key = f"job:{jobId}"
         try:
-            response = requests.delete(
-                f"{self.settings.EMS_API_URL}/dags/{job.processID}/dagRuns/{job.jobID}",
-                auth=self.ems_api_auth,
+            with self.redis_locking_client.lock(job_lock_key, expire=60):
+                job = self.check_job_integrity(jobId, new_job=False)
+                process_lock_key = f"process:{job.processID}"
+                with self.redis_locking_client.lock(process_lock_key, expire=60):
+                    response = requests.delete(
+                        f"{self.settings.EMS_API_URL}/dags/{job.processID}/dagRuns/{job.jobID}",
+                        auth=self.ems_api_auth,
+                    )
+                    response.raise_for_status()
+                    crud.delete_job(self.db, job)
+                    dismissed_datetime = datetime.now()
+                    return StatusInfo(
+                        process_id=job.processID,
+                        type=job.type,
+                        job_id=job.jobID,
+                        status=StatusCode.DISMISSED,
+                        message="Job dismissed",
+                        updated=dismissed_datetime,
+                        created=job.created,
+                        started=job.started,
+                        finished=dismissed_datetime,
+                        progress=job.progress,
+                        links=job.links,
+                    )
+
+        except self.redis_locking_client.LockError:
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Unable to acquire lock. Please try again later.",
             )
-            response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to delete DAG run {job.jobID} for DAG {job.processID}: {e}",
             )
-
-        crud.delete_job(self.db, job)
-        dismissed_datetime = datetime.now()
-        return StatusInfo(
-            process_id=job.processID,
-            type=job.type,
-            job_id=job.jobID,
-            status=StatusCode.DISMISSED,
-            message="Job dismissed",
-            updated=dismissed_datetime,
-            created=job.created,
-            started=job.started,
-            finished=dismissed_datetime,
-            progress=job.progress,
-            links=job.links,
-        )
+        except Exception as e:
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     def get_jobs(self) -> JobList:
         jobs = crud.get_jobs(self.db)
@@ -109,52 +122,88 @@ class JobsApiImpl(BaseJobsApi):
         )
 
     def get_result(self, jobId: str, prefer: str) -> Dict[str, InlineOrRefData]:
-        self.check_job_integrity(jobId, new_job=False)
-        results = crud.get_results(self.db, jobId)
-        return {result.name: InlineOrRefData(href=result.href) for result in results}
+        job_lock_key = f"job:{jobId}"
+        try:
+            with self.redis_locking_client.lock(job_lock_key, expire=60):
+                job = self.check_job_integrity(jobId, new_job=False)
+                process_lock_key = f"process:{job.processID}"
+                with self.redis_locking_client.lock(process_lock_key, expire=60):
+                    results = crud.get_results(self.db, jobId)
+                    return {
+                        result.name: InlineOrRefData(href=result.href)
+                        for result in results
+                    }
+
+        except self.redis_locking_client.LockError:
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Unable to acquire lock. Please try again later.",
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     def get_status(self, jobId: str) -> StatusInfo:
-        job = self.check_job_integrity(jobId, new_job=False)
-        job = StatusInfo(
-            process_id=job.processID,
-            type=job.type,
-            job_id=job.jobID,
-            status=job.status,
-            message=job.message,
-            updated=job.updated,
-            created=job.created,
-            started=job.started,
-            finished=job.finished,
-            progress=job.progress,
-            links=job.links,
-        )
-
+        job_lock_key = f"job:{jobId}"
         try:
-            response = requests.get(
-                f"{self.settings.EMS_API_URL}/dags/{job.process_id}/dagRuns/{job.job_id}",
-                auth=self.ems_api_auth,
+            with self.redis_locking_client.lock(job_lock_key, expire=60):
+                job = self.check_job_integrity(jobId, new_job=False)
+                process_lock_key = f"process:{job.processID}"
+                with self.redis_locking_client.lock(process_lock_key, expire=60):
+                    job = StatusInfo(
+                        process_id=job.processID,
+                        type=job.type,
+                        job_id=job.jobID,
+                        status=job.status,
+                        message=job.message,
+                        updated=job.updated,
+                        created=job.created,
+                        started=job.started,
+                        finished=job.finished,
+                        progress=job.progress,
+                        links=job.links,
+                    )
+
+                    response = requests.get(
+                        f"{self.settings.EMS_API_URL}/dags/{job.process_id}/dagRuns/{job.job_id}",
+                        auth=self.ems_api_auth,
+                    )
+                    response.raise_for_status()
+
+                    execution_status_conversion_dict = {
+                        "queued": StatusCode.ACCEPTED,
+                        "running": StatusCode.RUNNING,
+                        "success": StatusCode.SUCCESSFUL,
+                        "failed": StatusCode.FAILED,
+                    }
+                    data = response.json()
+                    current_execution_status = execution_status_conversion_dict[
+                        data["state"]
+                    ]
+                    if job.status != current_execution_status:
+                        job.status = current_execution_status
+                        job.updated = datetime.now()
+
+                    end_date_str = data.get("end_date", None)
+                    if end_date_str:
+                        job.finished = datetime.fromisoformat(end_date_str)
+
+                    return crud.update_job(
+                        self.db, job.job_id, job.model_dump(by_alias=True)
+                    )
+
+        except self.redis_locking_client.LockError:
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Unable to acquire lock. Please try again later.",
             )
-            response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to fetch DAG run {job.job_id} for DAG {job.process_id}: {e}",
             )
-
-        execution_status_conversion_dict = {
-            "queued": StatusCode.ACCEPTED,
-            "running": StatusCode.RUNNING,
-            "success": StatusCode.SUCCESSFUL,
-            "failed": StatusCode.FAILED,
-        }
-        data = response.json()
-        current_execution_status = execution_status_conversion_dict[data["state"]]
-        if job.status != current_execution_status:
-            job.status = current_execution_status
-            job.updated = datetime.now()
-
-        end_date_str = data.get("end_date", None)
-        if end_date_str:
-            job.finished = datetime.fromisoformat(end_date_str)
-
-        return crud.update_job(self.db, job.job_id, job.model_dump(by_alias=True))
+        except Exception as e:
+            raise HTTPException(
+                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
