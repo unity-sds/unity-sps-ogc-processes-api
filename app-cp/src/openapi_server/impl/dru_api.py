@@ -206,7 +206,7 @@ class DRUApiImpl(BaseDRUApi):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
 
-    def undeploy(self, processId: str) -> None:
+    def undeploy(self, processId: str, force: bool = False) -> None:
         lock_key = f"process:{processId}"
         try:
             with self.redis_locking_client.lock(lock_key, lock_timeout=60):
@@ -217,15 +217,26 @@ class DRUApiImpl(BaseDRUApi):
                     self.settings.EMS_API_AUTH_PASSWORD.get_secret_value(),
                 )
 
-                # Pause the DAG first
+                # Check for active DAG runs
+                active_dag_runs = self.list_active_dag_runs(
+                    self.settings.EMS_API_URL, processId, ems_api_auth
+                )
+                if active_dag_runs and not force:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Process has active DAG runs. Set 'force' to true to override and stop all active DAG runs and tasks.",
+                    )
+
+                # Pause the DAG
                 self.pause_dag(
                     self.settings.EMS_API_URL, processId, ems_api_auth, pause=True
                 )
 
-                # List and stop active DAG runs
+                # Get active DAG runs again after the DAG is paused
                 active_dag_runs = self.list_active_dag_runs(
                     self.settings.EMS_API_URL, processId, ems_api_auth
                 )
+
                 for dag_run in active_dag_runs:
                     self.stop_dag_run(
                         self.settings.EMS_API_URL,

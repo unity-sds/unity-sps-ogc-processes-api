@@ -100,6 +100,10 @@ async def replace(
             "model": Exception,
             "description": "The requested resource does not exist on the server. For example, a path parameter had an incorrect value.",
         },
+        409: {
+            "model": Exception,
+            "description": "The process has active DAG runs and force is not set to true.",
+        },
         500: {"model": Exception, "description": "A server error occurred."},
     },
     tags=["DRU"],
@@ -111,7 +115,10 @@ async def undeploy(
     redis_locking_client: RedisLock = Depends(get_redis_locking_client),
     db: Session = Depends(get_db),
     processId: str = Path(..., description=""),
+    force: bool = Query(
+        False, description="Force undeployment even if there are active DAG runs"
+    ),
 ) -> None:
-    """Undeploys a process.  For more information, see [Section 6.5](http://docs.ogc.org/DRAFTS/20-044.html#_16391f9e-538f-4a84-9710-72a6bab82842)."""
+    """Undeploys a process. For more information, see [Section 6.5](http://docs.ogc.org/DRAFTS/20-044.html#_16391f9e-538f-4a84-9710-72a6bab82842)."""
     dru_api = BaseDRUApi.subclasses[0](settings, redis_locking_client, db)
-    return dru_api.undeploy(processId)
+    return dru_api.undeploy(processId, force)
