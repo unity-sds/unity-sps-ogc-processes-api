@@ -5,7 +5,7 @@ FROM python:3.12-slim
 RUN apt-get update && apt-get install -y git gcc libpq-dev
 
 # Copy the current directory contents into the container at /app
-COPY ./app-cp /app
+COPY ./app /app
 
 WORKDIR /app
 
