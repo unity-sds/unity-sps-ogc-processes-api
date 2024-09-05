@@ -45,6 +45,7 @@ class ExecutionUnit(Base):
     config = Column(JSON)
     additional_properties = Column(JSON)
     ogcapppkg_id = Column(Integer, ForeignKey("ogcapppkgs._id", ondelete="CASCADE"))
+    ogcapppkg = relationship("Ogcapppkg", back_populates="execution_unit")
 
 
 class Ogcapppkg(Base):
