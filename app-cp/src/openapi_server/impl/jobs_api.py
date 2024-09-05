@@ -4,6 +4,7 @@ from typing import Dict
 import requests
 from fastapi import HTTPException
 from fastapi import status as fastapi_status
+from redis.exceptions import LockError
 
 # from jsonschema import ValidationError, validate
 from requests.auth import HTTPBasicAuth
@@ -58,10 +59,10 @@ class JobsApiImpl(BaseJobsApi):
     def dismiss(self, jobId: str) -> StatusInfo:
         job_lock_key = f"job:{jobId}"
         try:
-            with self.redis_locking_client.lock(job_lock_key, expire=60):
+            with self.redis_locking_client.lock(job_lock_key, timeout=60):
                 job = self.check_job_integrity(jobId, new_job=False)
                 process_lock_key = f"process:{job.processID}"
-                with self.redis_locking_client.lock(process_lock_key, expire=60):
+                with self.redis_locking_client.lock(process_lock_key, timeout=60):
                     response = requests.delete(
                         f"{self.settings.EMS_API_URL}/dags/{job.processID}/dagRuns/{job.jobID}",
                         auth=self.ems_api_auth,
@@ -83,7 +84,7 @@ class JobsApiImpl(BaseJobsApi):
                         links=job.links,
                     )
 
-        except self.redis_locking_client.LockError:
+        except LockError:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
@@ -124,17 +125,17 @@ class JobsApiImpl(BaseJobsApi):
     def get_result(self, jobId: str, prefer: str) -> Dict[str, InlineOrRefData]:
         job_lock_key = f"job:{jobId}"
         try:
-            with self.redis_locking_client.lock(job_lock_key, expire=60):
+            with self.redis_locking_client.lock(job_lock_key, timeout=60):
                 job = self.check_job_integrity(jobId, new_job=False)
                 process_lock_key = f"process:{job.processID}"
-                with self.redis_locking_client.lock(process_lock_key, expire=60):
+                with self.redis_locking_client.lock(process_lock_key, timeout=60):
                     results = crud.get_results(self.db, jobId)
                     return {
                         result.name: InlineOrRefData(href=result.href)
                         for result in results
                     }
 
-        except self.redis_locking_client.LockError:
+        except LockError:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
@@ -147,10 +148,10 @@ class JobsApiImpl(BaseJobsApi):
     def get_status(self, jobId: str) -> StatusInfo:
         job_lock_key = f"job:{jobId}"
         try:
-            with self.redis_locking_client.lock(job_lock_key, expire=60):
+            with self.redis_locking_client.lock(job_lock_key, timeout=60):
                 job = self.check_job_integrity(jobId, new_job=False)
                 process_lock_key = f"process:{job.processID}"
-                with self.redis_locking_client.lock(process_lock_key, expire=60):
+                with self.redis_locking_client.lock(process_lock_key, timeout=60):
                     job = StatusInfo(
                         process_id=job.processID,
                         type=job.type,
@@ -193,7 +194,7 @@ class JobsApiImpl(BaseJobsApi):
                         self.db, job.job_id, job.model_dump(by_alias=True)
                     )
 
-        except self.redis_locking_client.LockError:
+        except LockError:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",

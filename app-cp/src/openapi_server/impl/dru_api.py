@@ -6,6 +6,7 @@ import requests
 from fastapi import HTTPException, Response
 from fastapi import status
 from fastapi import status as fastapi_status
+from redis.exceptions import LockError
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
@@ -53,7 +54,7 @@ class DRUApiImpl(BaseDRUApi):
     def deploy(self, ogcapppkg: Ogcapppkg, w: str) -> Response:
         lock_key = f"process:{ogcapppkg.process_description.id}"
         try:
-            with self.redis_locking_client.lock(lock_key, expire=60):
+            with self.redis_locking_client.lock(lock_key, timeout=60):
                 check_process_integrity(
                     self.db, ogcapppkg.process_description.id, new_process=True
                 )
@@ -131,7 +132,7 @@ class DRUApiImpl(BaseDRUApi):
                 status_code=status.HTTP_201_CREATED,
                 content=f"Process {ogcapppkg.process_description.id} deployed successfully",
             )
-        except self.redis_locking_client.LockError:
+        except LockError:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
@@ -144,7 +145,7 @@ class DRUApiImpl(BaseDRUApi):
     def replace(self, processId: str, ogcapppkg: Ogcapppkg) -> None:
         lock_key = f"process:{processId}"
         try:
-            with self.redis_locking_client.lock(lock_key):
+            with self.redis_locking_client.lock(lock_key, timeout=60):
                 check_process_integrity(self.db, processId, new_process=False)
                 # Validate the new ogcapppkg
                 if ogcapppkg.process_description.id != processId:
@@ -191,7 +192,7 @@ class DRUApiImpl(BaseDRUApi):
                 status_code=status.HTTP_204_NO_CONTENT,
                 content=f"Process {processId} replaced successfully",
             )
-        except self.redis_locking_client.LockError:
+        except LockError:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
@@ -204,7 +205,7 @@ class DRUApiImpl(BaseDRUApi):
     def undeploy(self, processId: str) -> None:
         lock_key = f"process:{processId}"
         try:
-            with self.redis_locking_client.lock(lock_key):
+            with self.redis_locking_client.lock(lock_key, timeout=60):
                 check_process_integrity(self.db, processId, new_process=False)
                 # Remove the DAG file from the deployed directory
                 dag_filename = f"{processId}.py"
@@ -232,7 +233,7 @@ class DRUApiImpl(BaseDRUApi):
                 status_code=status.HTTP_204_NO_CONTENT,
                 content=f"Process {processId} undeployed successfully",
             )
-        except self.redis_locking_client.LockError:
+        except LockError:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",

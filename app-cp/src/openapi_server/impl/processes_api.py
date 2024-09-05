@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 from fastapi import HTTPException
 from fastapi import status as fastapi_status
+from redis.exceptions import LockError
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
 
@@ -40,7 +41,7 @@ class ProcessesApiImpl(BaseProcessesApi):
     def get_process_description(self, processId: str) -> Process:
         lock_key = f"process:{processId}"
         try:
-            with self.redis_locking_client.lock(lock_key, expire=60):
+            with self.redis_locking_client.lock(lock_key, timeout=60):
                 process = crud.get_process(self.db, processId)
 
                 # Convert metadata, links, inputs, and outputs if they exist
@@ -83,7 +84,7 @@ class ProcessesApiImpl(BaseProcessesApi):
                     inputs=inputs,
                     outputs=outputs,
                 )
-        except self.redis_locking_client.LockError:
+        except LockError:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
@@ -117,7 +118,7 @@ class ProcessesApiImpl(BaseProcessesApi):
     ) -> Execute200Response:
         lock_key = f"process:{processId}"
         try:
-            with self.redis_locking_client.lock(lock_key, expire=60):
+            with self.redis_locking_client.lock(lock_key, timeout=60):
                 check_process_integrity(self.db, processId, new_process=False)
 
                 # TODO
@@ -192,7 +193,7 @@ class ProcessesApiImpl(BaseProcessesApi):
                         {"result": "Sample output for synchronous execution"}
                     )
 
-        except self.redis_locking_client.LockError:
+        except LockError:
             raise HTTPException(
                 status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
