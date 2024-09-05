@@ -2,8 +2,7 @@ from datetime import datetime
 from typing import Dict
 
 import requests
-from fastapi import HTTPException
-from fastapi import status as fastapi_status
+from fastapi import HTTPException, status
 from redis.exceptions import LockError
 
 # from jsonschema import ValidationError, validate
@@ -41,17 +40,17 @@ class JobsApiImpl(BaseJobsApi):
         except NoResultFound:
             if not new_job:
                 raise HTTPException(
-                    status_code=fastapi_status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Job with ID '{job_id}' not found",
                 )
         except MultipleResultsFound:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Multiple jobs found with same ID '{job_id}', data integrity error",
             )
         except ValueError:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Existing job with ID '{job_id}' already exists",
             )
         return job
@@ -86,17 +85,17 @@ class JobsApiImpl(BaseJobsApi):
 
         except LockError:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
             )
         except requests.exceptions.HTTPError as e:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to delete DAG run {job.jobID} for DAG {job.processID}: {e}",
             )
         except Exception as e:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
 
     def get_jobs(self) -> JobList:
@@ -137,12 +136,12 @@ class JobsApiImpl(BaseJobsApi):
 
         except LockError:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
             )
         except Exception as e:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
 
     def get_status(self, jobId: str) -> StatusInfo:
@@ -196,15 +195,15 @@ class JobsApiImpl(BaseJobsApi):
 
         except LockError:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
             )
         except requests.exceptions.HTTPError as e:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to fetch DAG run {job.job_id} for DAG {job.process_id}: {e}",
             )
         except Exception as e:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )

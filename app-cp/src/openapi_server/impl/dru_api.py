@@ -3,9 +3,7 @@ import shutil
 import time
 
 import requests
-from fastapi import HTTPException, Response
-from fastapi import status
-from fastapi import status as fastapi_status
+from fastapi import HTTPException, Response, status
 from redis.exceptions import LockError
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
@@ -134,12 +132,15 @@ class DRUApiImpl(BaseDRUApi):
             )
         except LockError:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
             )
+        except HTTPException:
+            # Re-raise HTTPExceptions without wrapping them
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
 
     def replace(self, processId: str, ogcapppkg: Ogcapppkg) -> None:
@@ -194,12 +195,15 @@ class DRUApiImpl(BaseDRUApi):
             )
         except LockError:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
             )
+        except HTTPException:
+            # Re-raise HTTPExceptions without wrapping them
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
 
     def undeploy(self, processId: str) -> None:
@@ -207,27 +211,71 @@ class DRUApiImpl(BaseDRUApi):
         try:
             with self.redis_locking_client.lock(lock_key, timeout=60):
                 check_process_integrity(self.db, processId, new_process=False)
+
+                ems_api_auth = HTTPBasicAuth(
+                    self.settings.EMS_API_AUTH_USERNAME,
+                    self.settings.EMS_API_AUTH_PASSWORD.get_secret_value(),
+                )
+
+                # Pause the DAG first
+                self.pause_dag(
+                    self.settings.EMS_API_URL, processId, ems_api_auth, pause=True
+                )
+
+                # List and stop active DAG runs
+                active_dag_runs = self.list_active_dag_runs(
+                    self.settings.EMS_API_URL, processId, ems_api_auth
+                )
+                for dag_run in active_dag_runs:
+                    self.stop_dag_run(
+                        self.settings.EMS_API_URL,
+                        processId,
+                        dag_run["dag_run_id"],
+                        ems_api_auth,
+                    )
+                    self.stop_task_instances(
+                        self.settings.EMS_API_URL,
+                        processId,
+                        dag_run["dag_run_id"],
+                        ems_api_auth,
+                    )
+
                 # Remove the DAG file from the deployed directory
                 dag_filename = f"{processId}.py"
                 deployed_dag_path = os.path.join(
                     self.settings.DEPLOYED_DAGS_DIRECTORY, dag_filename
                 )
-                if os.path.exists(deployed_dag_path):
-                    os.remove(deployed_dag_path)
+                if os.path.isfile(deployed_dag_path):
+                    try:
+                        os.remove(deployed_dag_path)
+                    except OSError as e:
+                        raise HTTPException(
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Failed to remove DAG file from deployed DAGs directory: {e.strerror}",
+                        )
+
+                # Poll for the removal of the DAG from the Airflow API
+                timeout = 20
+                start_time = time.time()
+                while time.time() - start_time < timeout:
+                    response = requests.get(
+                        f"{self.settings.EMS_API_URL}/dags/{processId}",
+                        auth=ems_api_auth,
+                    )
+                    data = response.json()
+                    if response.status_code == 404:
+                        break
+                    elif not data["is_active"]:
+                        break
+                    time.sleep(0.5)
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                        detail="Timeout waiting for DAG to be fully removed from Airflow.",
+                    )
 
                 # Delete the process from the database
                 crud.delete_process(self.db, processId)
-
-                # Optionally, you might want to pause or delete the DAG in Airflow
-                ems_api_auth = HTTPBasicAuth(
-                    self.settings.EMS_API_AUTH_USERNAME,
-                    self.settings.EMS_API_AUTH_PASSWORD.get_secret_value(),
-                )
-                response = requests.delete(
-                    f"{self.settings.EMS_API_URL}/dags/{processId}",
-                    auth=ems_api_auth,
-                )
-                response.raise_for_status()
 
             return Response(
                 status_code=status.HTTP_204_NO_CONTENT,
@@ -235,10 +283,46 @@ class DRUApiImpl(BaseDRUApi):
             )
         except LockError:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
             )
+        except HTTPException:
+            # Re-raise HTTPExceptions without wrapping them
+            raise
         except Exception as e:
+            # For any other exception, wrap it in a generic HTTPException
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
+
+    def pause_dag(self, airflow_url, dag_id, auth, pause=True):
+        endpoint = f"{airflow_url}/dags/{dag_id}"
+        data = {"is_paused": pause}
+        response = requests.patch(endpoint, auth=auth, json=data)
+        response.raise_for_status()
+
+    def list_active_dag_runs(self, airflow_url, dag_id, auth):
+        endpoint = f"{airflow_url}/dags/{dag_id}/dagRuns"
+        params = {"state": "running"}
+        response = requests.get(endpoint, auth=auth, params=params)
+        response.raise_for_status()
+        return response.json()["dag_runs"]
+
+    def stop_dag_run(self, airflow_url, dag_id, dag_run_id, auth):
+        endpoint = f"{airflow_url}/dags/{dag_id}/dagRuns/{dag_run_id}"
+        data = {"state": "failed"}
+        response = requests.patch(endpoint, auth=auth, json=data)
+        response.raise_for_status()
+
+    def stop_task_instances(self, airflow_url, dag_id, dag_run_id, auth):
+        endpoint = f"{airflow_url}/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances"
+        tasks = requests.get(endpoint, auth=auth)
+        tasks.raise_for_status()
+
+        for task in tasks.json()["task_instances"]:
+            task_instance_endpoint = f"{airflow_url}/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task['task_id']}"
+            update_data = {"dry_run": False, "new_state": "failed"}
+            update_response = requests.patch(
+                task_instance_endpoint, auth=auth, json=update_data
+            )
+            update_response.raise_for_status()

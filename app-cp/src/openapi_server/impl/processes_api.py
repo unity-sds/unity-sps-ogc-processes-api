@@ -2,8 +2,7 @@ import uuid
 from datetime import datetime
 
 import requests
-from fastapi import HTTPException
-from fastapi import status as fastapi_status
+from fastapi import HTTPException, status
 from redis.exceptions import LockError
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
@@ -86,12 +85,12 @@ class ProcessesApiImpl(BaseProcessesApi):
                 )
         except LockError:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
             )
         except Exception as e:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
 
     def get_processes(self) -> ProcessList:
@@ -135,7 +134,7 @@ class ProcessesApiImpl(BaseProcessesApi):
                 #     )
                 #     if input_description is None:
                 #         raise HTTPException(
-                #             status_code=fastapi_status.HTTP_400_BAD_REQUEST,
+                #             status_code=status.HTTP_400_BAD_REQUEST,
                 #             detail=f"Invalid input: {input_id}",
                 #         )
                 #     try:
@@ -143,7 +142,7 @@ class ProcessesApiImpl(BaseProcessesApi):
                 #         validated_inputs[input_id] = input_value.value
                 #     except ValidationError as e:
                 #         raise HTTPException(
-                #             status_code=fastapi_status.HTTP_400_BAD_REQUEST,
+                #             status_code=status.HTTP_400_BAD_REQUEST,
                 #             detail=f"Invalid input for {input_id}: {e.message}",
                 #         )
                 #     validated_inputs[input_id] = input_value.value
@@ -195,11 +194,11 @@ class ProcessesApiImpl(BaseProcessesApi):
 
         except LockError:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_503_SERVICE_UNAVAILABLE,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to acquire lock. Please try again later.",
             )
         except requests.exceptions.RequestException as e:
-            status_code_to_raise = fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR
+            status_code_to_raise = status.HTTP_500_INTERNAL_SERVER_ERROR
             detail_message = (
                 f"Failed to start DAG run {job_id} with DAG {processId}: {str(e)}"
             )
@@ -210,5 +209,5 @@ class ProcessesApiImpl(BaseProcessesApi):
             raise HTTPException(status_code=status_code_to_raise, detail=detail_message)
         except Exception as e:
             raise HTTPException(
-                status_code=fastapi_status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
             )
