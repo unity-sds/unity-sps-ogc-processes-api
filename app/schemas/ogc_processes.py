@@ -323,6 +323,7 @@ class Results(RootModel):
 class Type3(Enum):
     docker = "docker"
     oci = "oci"
+    catalog = "catalog"
 
 
 class Deployment(Enum):
