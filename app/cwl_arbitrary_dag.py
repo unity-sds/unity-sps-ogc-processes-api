@@ -81,9 +81,6 @@ dag = DAG(
     max_active_tasks=30,
     default_args=dag_default_args,
     params={{
-        "cwl_workflow": Param(
-            DEFAULT_CWL_WORKFLOW, type="string", title="CWL workflow", description="The CWL workflow URL"
-        ),
         "cwl_args": Param(
             DEFAULT_CWL_ARGUMENTS,
             type="string",
@@ -151,7 +148,7 @@ cwl_task = SpsKubernetesPodOperator(
     in_cluster=True,
     get_logs=True,
     startup_timeout_seconds=1800,
-    arguments=["{{{{params.cwl_workflow}}}}", "{{{{params.cwl_args}}}}"],
+    arguments=["{{{{DEFAULT_CWL_WORKFLOW}}}}", "{{{{params.cwl_args}}}}"],
     container_security_context={{"privileged": True}},
     container_resources=CONTAINER_RESOURCES,
     container_logs=True,

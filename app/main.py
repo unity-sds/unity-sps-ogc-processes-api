@@ -309,7 +309,7 @@ def deploy_process(
             os.path.join(settings.DEPLOYED_DAGS_DIRECTORY, dag_filename),
             app.processDescription.id,
             app.executionUnit.href,
-            dict(),
+            app.processDescription.inputs,
             app.processDescription.description,
         )
     elif app.executionUnit.mediaType == "application/cwl+json":
@@ -317,7 +317,7 @@ def deploy_process(
             os.path.join(settings.DEPLOYED_DAGS_DIRECTORY, dag_filename),
             app.processDescription.id,
             app.executionUnit.value,
-            dict(),
+            app.processDescription.inputs,
             app.processDescription.description,
         )
     else:
