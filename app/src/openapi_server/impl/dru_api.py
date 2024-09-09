@@ -4,13 +4,14 @@ import time
 
 import requests
 from fastapi import HTTPException, Response, status
-from openapi_server.config.config import Settings
-from openapi_server.database import crud
-from openapi_server.utils.redis import RedisLock
 from redis.exceptions import LockError
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
+
+from openapi_server.config.config import Settings
+from openapi_server.database import crud
+from openapi_server.utils.redis import RedisLock
 from unity_sps_ogc_processes_api.apis.dru_api_base import BaseDRUApi
 from unity_sps_ogc_processes_api.models.ogcapppkg import Ogcapppkg
 
@@ -41,7 +42,9 @@ def check_process_integrity(db: Session, process_id: str, new_process: bool):
 
 
 class DRUApiImpl(BaseDRUApi):
-    def __init__(self, settings: Settings, redis_locking_client: RedisLock, db: Session):
+    def __init__(
+        self, settings: Settings, redis_locking_client: RedisLock, db: Session
+    ):
         self.settings = settings
         self.redis_locking_client = redis_locking_client
         self.db = db
@@ -50,12 +53,14 @@ class DRUApiImpl(BaseDRUApi):
         lock_key = f"process:{ogcapppkg.process_description.id}"
         try:
             with self.redis_locking_client.lock(lock_key, lock_timeout=60):
-                check_process_integrity(self.db, ogcapppkg.process_description.id, new_process=True)
-                # ogcapppkg.process_description.deployment_status = "deploying"
-                crud.create_process(self.db, ogcapppkg)
+                check_process_integrity(
+                    self.db, ogcapppkg.process_description.id, new_process=True
+                )
 
                 dag_filename = ogcapppkg.process_description.id + ".py"
-                dag_catalog_filepath = os.path.join(self.settings.DAG_CATALOG_DIRECTORY, dag_filename)
+                dag_catalog_filepath = os.path.join(
+                    self.settings.DAG_CATALOG_DIRECTORY, dag_filename
+                )
                 if not os.path.isfile(dag_catalog_filepath):
                     existing_files = os.listdir(self.settings.DAG_CATALOG_DIRECTORY)
                     existing_files_str = "\n".join(existing_files)
@@ -64,7 +69,9 @@ class DRUApiImpl(BaseDRUApi):
                         detail=f"The process ID '{ogcapppkg.process_description.id}' does not have a matching DAG file named '{dag_filename}' in the DAG catalog.\nThe DAG catalog includes the following files:\n{existing_files_str}",
                     )
 
-                if os.path.isfile(os.path.join(self.settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)):
+                if os.path.isfile(
+                    os.path.join(self.settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)
+                ):
                     # TODO Log warning that file already exists in the deployed dags directory
                     pass
 
@@ -73,7 +80,9 @@ class DRUApiImpl(BaseDRUApi):
                     self.settings.DEPLOYED_DAGS_DIRECTORY,
                 )
 
-                if not os.path.isfile(os.path.join(self.settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)):
+                if not os.path.isfile(
+                    os.path.join(self.settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)
+                ):
                     raise HTTPException(
                         status_code=status.HTTP_409_CONFLICT,
                         detail="Failed to copy DAG file to deployed directory",
@@ -108,12 +117,7 @@ class DRUApiImpl(BaseDRUApi):
                         status_code=status.HTTP_504_GATEWAY_TIMEOUT,
                         detail=f"Timeout waiting for DAG '{ogcapppkg.process_description.id}' to be available in Airflow.",
                     )
-
-                crud.update_process(
-                    self.db,
-                    ogcapppkg.process_description.id,
-                    {"deployment_status": "deployed"},
-                )
+                crud.create_process(self.db, ogcapppkg)
 
             return Response(
                 status_code=status.HTTP_201_CREATED,
@@ -128,7 +132,9 @@ class DRUApiImpl(BaseDRUApi):
             # Re-raise HTTPExceptions without wrapping them
             raise
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     def replace(self, processId: str, ogcapppkg: Ogcapppkg) -> None:
         lock_key = f"process:{processId}"
@@ -143,12 +149,18 @@ class DRUApiImpl(BaseDRUApi):
                     )
 
                 # Update the existing process with new data
-                crud.update_process(self.db, processId, ogcapppkg.process_description.model_dump())
+                crud.update_process(
+                    self.db, processId, ogcapppkg.process_description.model_dump()
+                )
 
                 # Update the DAG file
                 dag_filename = f"{processId}.py"
-                dag_catalog_filepath = os.path.join(self.settings.DAG_CATALOG_DIRECTORY, dag_filename)
-                deployed_dag_path = os.path.join(self.settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)
+                dag_catalog_filepath = os.path.join(
+                    self.settings.DAG_CATALOG_DIRECTORY, dag_filename
+                )
+                deployed_dag_path = os.path.join(
+                    self.settings.DEPLOYED_DAGS_DIRECTORY, dag_filename
+                )
 
                 if os.path.exists(dag_catalog_filepath):
                     shutil.copy2(dag_catalog_filepath, deployed_dag_path)
@@ -183,7 +195,9 @@ class DRUApiImpl(BaseDRUApi):
             # Re-raise HTTPExceptions without wrapping them
             raise
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     def undeploy(self, processId: str, force: bool = False) -> None:
         lock_key = f"process:{processId}"
@@ -207,7 +221,9 @@ class DRUApiImpl(BaseDRUApi):
                     )
 
                 # Pause the DAG
-                self.pause_dag(self.settings.EMS_API_URL, processId, ems_api_auth, pause=True)
+                self.pause_dag(
+                    self.settings.EMS_API_URL, processId, ems_api_auth, pause=True
+                )
 
                 # Get active DAG runs again after the DAG is paused
                 active_dag_runs = self.list_active_dag_runs(
@@ -230,7 +246,9 @@ class DRUApiImpl(BaseDRUApi):
 
                 # Remove the DAG file from the deployed directory
                 dag_filename = f"{processId}.py"
-                deployed_dag_path = os.path.join(self.settings.DEPLOYED_DAGS_DIRECTORY, dag_filename)
+                deployed_dag_path = os.path.join(
+                    self.settings.DEPLOYED_DAGS_DIRECTORY, dag_filename
+                )
                 if os.path.isfile(deployed_dag_path):
                     try:
                         os.remove(deployed_dag_path)
@@ -277,7 +295,9 @@ class DRUApiImpl(BaseDRUApi):
             raise
         except Exception as e:
             # For any other exception, wrap it in a generic HTTPException
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     def pause_dag(self, airflow_url, dag_id, auth, pause=True):
         endpoint = f"{airflow_url}/dags/{dag_id}"
@@ -304,9 +324,9 @@ class DRUApiImpl(BaseDRUApi):
         tasks.raise_for_status()
 
         for task in tasks.json()["task_instances"]:
-            task_instance_endpoint = (
-                f"{airflow_url}/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task['task_id']}"
-            )
+            task_instance_endpoint = f"{airflow_url}/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task['task_id']}"
             update_data = {"dry_run": False, "new_state": "failed"}
-            update_response = requests.patch(task_instance_endpoint, auth=auth, json=update_data)
+            update_response = requests.patch(
+                task_instance_endpoint, auth=auth, json=update_data
+            )
             update_response.raise_for_status()

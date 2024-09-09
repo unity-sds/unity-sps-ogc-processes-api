@@ -17,7 +17,6 @@ class Process(Base):
     links = Column(JSON)
     inputs = Column(JSON)
     outputs = Column(JSON)
-    deployment_status = Column(String, default="pending")
     jobs = relationship(
         "Job",
         back_populates="process",
@@ -51,7 +50,9 @@ class ExecutionUnit(Base):
 class Ogcapppkg(Base):
     __tablename__ = "ogcapppkgs"
     _id = Column(Integer, primary_key=True)
-    process_id = Column(String, ForeignKey("processes.id", ondelete="CASCADE"), nullable=False)
+    process_id = Column(
+        String, ForeignKey("processes.id", ondelete="CASCADE"), nullable=False
+    )
     process = relationship("Process", back_populates="ogcapppkg", passive_deletes=True)
     execution_unit = relationship(
         "ExecutionUnit",
