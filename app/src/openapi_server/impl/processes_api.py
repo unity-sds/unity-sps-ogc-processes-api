@@ -3,13 +3,14 @@ from datetime import datetime
 
 import requests
 from fastapi import HTTPException, status
+from redis.exceptions import LockError
+from requests.auth import HTTPBasicAuth
+from sqlalchemy.orm import Session
+
 from openapi_server.config.config import Settings
 from openapi_server.database import crud
 from openapi_server.impl.dru_api import check_process_integrity
 from openapi_server.utils.redis import RedisLock
-from redis.exceptions import LockError
-from requests.auth import HTTPBasicAuth
-from sqlalchemy.orm import Session
 from unity_sps_ogc_processes_api.apis.processes_api_base import BaseProcessesApi
 from unity_sps_ogc_processes_api.models.execute200_response import Execute200Response
 from unity_sps_ogc_processes_api.models.execute_workflows import ExecuteWorkflows
@@ -25,7 +26,9 @@ from unity_sps_ogc_processes_api.models.status_info import StatusInfo
 
 
 class ProcessesApiImpl(BaseProcessesApi):
-    def __init__(self, settings: Settings, redis_locking_client: RedisLock, db: Session):
+    def __init__(
+        self, settings: Settings, redis_locking_client: RedisLock, db: Session
+    ):
         self.settings = settings
         self.redis_locking_client = redis_locking_client
         self.db = db
@@ -42,16 +45,28 @@ class ProcessesApiImpl(BaseProcessesApi):
 
                 # Convert metadata, links, inputs, and outputs if they exist
                 metadata = (
-                    [Metadata.model_validate(m) for m in process.metadata] if process.metadata else None
+                    [Metadata.model_validate(m) for m in process.metadata]
+                    if process.metadata
+                    else None
                 )
-                links = [Link.model_validate(link) for link in process.links] if process.links else None
+                links = (
+                    [Link.model_validate(link) for link in process.links]
+                    if process.links
+                    else None
+                )
                 inputs = (
-                    {k: InputDescription.model_validate(v) for k, v in process.inputs.items()}
+                    {
+                        k: InputDescription.model_validate(v)
+                        for k, v in process.inputs.items()
+                    }
                     if process.inputs
                     else None
                 )
                 outputs = (
-                    {k: OutputDescription.model_validate(v) for k, v in process.outputs.items()}
+                    {
+                        k: OutputDescription.model_validate(v)
+                        for k, v in process.outputs.items()
+                    }
                     if process.outputs
                     else None
                 )
@@ -74,7 +89,9 @@ class ProcessesApiImpl(BaseProcessesApi):
                 detail="Unable to acquire lock. Please try again later.",
             )
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     def get_processes(self) -> ProcessList:
         processes = crud.get_processes(self.db)
@@ -84,7 +101,11 @@ class ProcessesApiImpl(BaseProcessesApi):
                     id=process.id,
                     title=process.title,
                     description=process.description,
+                    keywords=process.keywords,
+                    metadata=process.metadata,
                     version=process.version,
+                    job_control_options=process.job_control_options,
+                    links=process.links,
                 )
                 for process in processes
             ],
@@ -171,7 +192,9 @@ class ProcessesApiImpl(BaseProcessesApi):
                     # Note: In a real-world scenario, you'd wait for the job to complete
                     # and return the actual results. This is a simplified version.
                     # TODO get result from job using the result endpoint and return it here.
-                    return Execute200Response({"result": "Sample output for synchronous execution"})
+                    return Execute200Response(
+                        {"result": "Sample output for synchronous execution"}
+                    )
 
         except LockError:
             raise HTTPException(
@@ -180,11 +203,15 @@ class ProcessesApiImpl(BaseProcessesApi):
             )
         except requests.exceptions.RequestException as e:
             status_code_to_raise = status.HTTP_500_INTERNAL_SERVER_ERROR
-            detail_message = f"Failed to start DAG run {job_id} with DAG {processId}: {str(e)}"
+            detail_message = (
+                f"Failed to start DAG run {job_id} with DAG {processId}: {str(e)}"
+            )
 
             if hasattr(e, "response"):
                 detail_message = f"Failed to start DAG run {job_id} with DAG {processId}: {e.response.status_code} {e.response.reason}"
 
             raise HTTPException(status_code=status_code_to_raise, detail=detail_message)
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
