@@ -41,11 +41,11 @@ class ExtentSpatialGridInner(BaseModel):
     ExtentSpatialGridInner
     """  # noqa: E501
 
-    coordinates: Optional[Annotated[List[ExtentSpatialGridInnerCoordinatesInner], Field(min_length=1)]] = (
-        Field(
-            default=None,
-            description="List of coordinates along the dimension for which data organized as an irregular grid in the collection is available (e.g., 2, 10, 80, 100).",
-        )
+    coordinates: Optional[
+        Annotated[List[ExtentSpatialGridInnerCoordinatesInner], Field(min_length=1)]
+    ] = Field(
+        default=None,
+        description="List of coordinates along the dimension for which data organized as an irregular grid in the collection is available (e.g., 2, 10, 80, 100).",
     )
     cells_count: Optional[StrictInt] = Field(
         default=None,

@@ -61,14 +61,18 @@ def fake_filesystem(fs_session, test_directory):  # pylint:disable=invalid-name
     """Variable name 'fs' causes a pylint warning. Provide a longer name
     acceptable to pylint for use in tests.
     """
-    fs_session.add_real_directory(os.path.join(test_directory, "..", "..", "process_descriptions"))
+    fs_session.add_real_directory(
+        os.path.join(test_directory, "..", "..", "process_descriptions")
+    )
     fs_session.add_real_directory(os.path.join(test_directory), "test_data")
     fs_session.create_dir(settings.DAG_CATALOG_DIRECTORY)
     fs_session.create_file(
         os.path.join(settings.DAG_CATALOG_DIRECTORY, "cwltool_help_dag.py"),
         contents="test",
     )
-    fs_session.create_file(os.path.join(settings.DAG_CATALOG_DIRECTORY, "EchoProcess.py"), contents="test")
+    fs_session.create_file(
+        os.path.join(settings.DAG_CATALOG_DIRECTORY, "EchoProcess.py"), contents="test"
+    )
     fs_session.create_dir(settings.DEPLOYED_DAGS_DIRECTORY)
     yield fs_session
 
@@ -377,7 +381,9 @@ def mock_delete_existing_dag_dagrun(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_get_existing_running_dag_dagrun_tasks(requests_mock):
     return requests_mock.get(
-        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns/([^/]*)/taskInstances$"),
+        re.compile(
+            f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns/([^/]*)/taskInstances$"
+        ),
         json={
             "task_instances": [
                 {
@@ -444,7 +450,9 @@ def mock_get_existing_running_dag_dagrun_tasks(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_patch_existing_running_dag_dagrun_task(requests_mock):
     return requests_mock.patch(
-        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns/([^/]*)/taskInstances/([^/]*)$"),
+        re.compile(
+            f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns/([^/]*)/taskInstances/([^/]*)$"
+        ),
         json={
             "task_id": "string",
             "dag_id": "string",
@@ -456,7 +464,9 @@ def mock_patch_existing_running_dag_dagrun_task(requests_mock):
 
 @pytest.fixture(scope="function")
 def deploy_process(test_directory, client):
-    data_filename = os.path.join(test_directory, "..", "process_descriptions", "cwltool_help_dag.json")
+    data_filename = os.path.join(
+        test_directory, "..", "process_descriptions", "cwltool_help_dag.json"
+    )
     f = open(data_filename)
     process_json = json.load(f)
     process = Process.model_validate(process_json)

@@ -38,9 +38,11 @@ class ExtentTemporalGrid(BaseModel):
     Provides information about the limited availability of data within the collection organized as a grid (regular or irregular) along the temporal dimension.
     """  # noqa: E501
 
-    coordinates: Optional[Annotated[List[Optional[StrictStr]], Field(min_length=1)]] = Field(
-        default=None,
-        description='List of coordinates along the temporal dimension for which data organized as an irregular grid in the collection is available (e.g., "2017-11-14T09:00Z","2017-11-14T12:00Z","2017-11-14T15:00Z","2017-11-14T18:00Z","2017-11-14T21:00Z").',
+    coordinates: Optional[Annotated[List[Optional[StrictStr]], Field(min_length=1)]] = (
+        Field(
+            default=None,
+            description='List of coordinates along the temporal dimension for which data organized as an irregular grid in the collection is available (e.g., "2017-11-14T09:00Z","2017-11-14T12:00Z","2017-11-14T15:00Z","2017-11-14T18:00Z","2017-11-14T21:00Z").',
+        )
     )
     cells_count: Optional[StrictInt] = Field(
         default=None,

@@ -93,9 +93,13 @@ class GeoJSONFeatureGeometry(BaseModel):
     def __init__(self, *args, **kwargs) -> None:
         if args:
             if len(args) > 1:
-                raise ValueError("If a position argument is used, only 1 is allowed to set `actual_instance`")
+                raise ValueError(
+                    "If a position argument is used, only 1 is allowed to set `actual_instance`"
+                )
             if kwargs:
-                raise ValueError("If a position argument is used, keyword arguments cannot be used.")
+                raise ValueError(
+                    "If a position argument is used, keyword arguments cannot be used."
+                )
             super().__init__(actual_instance=args[0])
         else:
             super().__init__(**kwargs)
@@ -107,32 +111,44 @@ class GeoJSONFeatureGeometry(BaseModel):
         match = 0
         # validate data type: GeoJSONPoint
         if not isinstance(v, GeoJSONPoint):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `GeoJSONPoint`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `GeoJSONPoint`"
+            )
         else:
             match += 1
         # validate data type: GeoJSONLineString
         if not isinstance(v, GeoJSONLineString):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `GeoJSONLineString`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `GeoJSONLineString`"
+            )
         else:
             match += 1
         # validate data type: GeoJSONPolygon
         if not isinstance(v, GeoJSONPolygon):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `GeoJSONPolygon`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `GeoJSONPolygon`"
+            )
         else:
             match += 1
         # validate data type: GeoJSONMultiPoint
         if not isinstance(v, GeoJSONMultiPoint):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `GeoJSONMultiPoint`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `GeoJSONMultiPoint`"
+            )
         else:
             match += 1
         # validate data type: GeoJSONMultiLineString
         if not isinstance(v, GeoJSONMultiLineString):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `GeoJSONMultiLineString`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `GeoJSONMultiLineString`"
+            )
         else:
             match += 1
         # validate data type: GeoJSONMultiPolygon
         if not isinstance(v, GeoJSONMultiPolygon):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `GeoJSONMultiPolygon`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `GeoJSONMultiPolygon`"
+            )
         else:
             match += 1
         if match > 1:

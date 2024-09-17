@@ -66,7 +66,9 @@ class InputDescription(BaseModel):
 
         for i in value:
             if i not in ("byValue", "byReference"):
-                raise ValueError("each list item must be one of ('byValue', 'byReference')")
+                raise ValueError(
+                    "each list item must be one of ('byValue', 'byReference')"
+                )
         return value
 
     model_config = {
@@ -139,9 +141,13 @@ class InputDescription(BaseModel):
                     else None
                 ),
                 "schema": (
-                    ModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None
+                    ModelSchema.from_dict(obj.get("schema"))
+                    if obj.get("schema") is not None
+                    else None
                 ),
-                "minOccurs": (obj.get("minOccurs") if obj.get("minOccurs") is not None else 1),
+                "minOccurs": (
+                    obj.get("minOccurs") if obj.get("minOccurs") is not None else 1
+                ),
                 "maxOccurs": (
                     InputDescriptionAllOfMaxOccurs.from_dict(obj.get("maxOccurs"))
                     if obj.get("maxOccurs") is not None

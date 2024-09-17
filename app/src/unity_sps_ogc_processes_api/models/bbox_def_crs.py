@@ -37,9 +37,13 @@ class BboxDefCrs(BaseModel):
     """
 
     # data type: str
-    anyof_schema_1_validator: Optional[StrictStr] = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    anyof_schema_1_validator: Optional[StrictStr] = (
+        "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    )
     # data type: str
-    anyof_schema_2_validator: Optional[StrictStr] = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    anyof_schema_2_validator: Optional[StrictStr] = (
+        "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+    )
     if TYPE_CHECKING:
         actual_instance: Optional[Union[str]] = None
     else:
@@ -54,9 +58,13 @@ class BboxDefCrs(BaseModel):
     def __init__(self, *args, **kwargs) -> None:
         if args:
             if len(args) > 1:
-                raise ValueError("If a position argument is used, only 1 is allowed to set `actual_instance`")
+                raise ValueError(
+                    "If a position argument is used, only 1 is allowed to set `actual_instance`"
+                )
             if kwargs:
-                raise ValueError("If a position argument is used, keyword arguments cannot be used.")
+                raise ValueError(
+                    "If a position argument is used, keyword arguments cannot be used."
+                )
             super().__init__(actual_instance=args[0])
         else:
             super().__init__(**kwargs)

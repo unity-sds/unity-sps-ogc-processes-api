@@ -43,8 +43,12 @@ class InputWorkflows1(BaseModel):
     oneof_schema_1_validator: Optional[InlineOrRefDataWorkflows] = None
     # data type: List[InlineOrRefDataWorkflows]
     oneof_schema_2_validator: Optional[List[InlineOrRefDataWorkflows]] = None
-    actual_instance: Optional[Union[InlineOrRefDataWorkflows, List[InlineOrRefDataWorkflows]]] = None
-    one_of_schemas: List[str] = Literal["InlineOrRefDataWorkflows", "List[InlineOrRefDataWorkflows]"]
+    actual_instance: Optional[
+        Union[InlineOrRefDataWorkflows, List[InlineOrRefDataWorkflows]]
+    ] = None
+    one_of_schemas: List[str] = Literal[
+        "InlineOrRefDataWorkflows", "List[InlineOrRefDataWorkflows]"
+    ]
 
     model_config = {
         "validate_assignment": True,
@@ -54,9 +58,13 @@ class InputWorkflows1(BaseModel):
     def __init__(self, *args, **kwargs) -> None:
         if args:
             if len(args) > 1:
-                raise ValueError("If a position argument is used, only 1 is allowed to set `actual_instance`")
+                raise ValueError(
+                    "If a position argument is used, only 1 is allowed to set `actual_instance`"
+                )
             if kwargs:
-                raise ValueError("If a position argument is used, keyword arguments cannot be used.")
+                raise ValueError(
+                    "If a position argument is used, keyword arguments cannot be used."
+                )
             super().__init__(actual_instance=args[0])
         else:
             super().__init__(**kwargs)
@@ -68,7 +76,9 @@ class InputWorkflows1(BaseModel):
         match = 0
         # validate data type: InlineOrRefDataWorkflows
         if not isinstance(v, InlineOrRefDataWorkflows):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `InlineOrRefDataWorkflows`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `InlineOrRefDataWorkflows`"
+            )
         else:
             match += 1
         # validate data type: List[InlineOrRefDataWorkflows]

@@ -137,7 +137,9 @@ class StatusInfo(BaseModel):
                 "status": obj.get("status"),
                 "message": obj.get("message"),
                 "exception": (
-                    Exception.from_dict(obj.get("exception")) if obj.get("exception") is not None else None
+                    Exception.from_dict(obj.get("exception"))
+                    if obj.get("exception") is not None
+                    else None
                 ),
                 "created": obj.get("created"),
                 "started": obj.get("started"),

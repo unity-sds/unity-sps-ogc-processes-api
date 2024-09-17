@@ -137,17 +137,25 @@ class ExecuteWorkflows(BaseModel):
                 "sortBy": obj.get("sortBy"),
                 "process": obj.get("process"),
                 "inputs": (
-                    dict((_k, InputWorkflows.from_dict(_v)) for _k, _v in obj.get("inputs").items())
+                    dict(
+                        (_k, InputWorkflows.from_dict(_v))
+                        for _k, _v in obj.get("inputs").items()
+                    )
                     if obj.get("inputs") is not None
                     else None
                 ),
                 "outputs": (
-                    dict((_k, OutputWorkflows.from_dict(_v)) for _k, _v in obj.get("outputs").items())
+                    dict(
+                        (_k, OutputWorkflows.from_dict(_v))
+                        for _k, _v in obj.get("outputs").items()
+                    )
                     if obj.get("outputs") is not None
                     else None
                 ),
                 "subscriber": (
-                    Subscriber.from_dict(obj.get("subscriber")) if obj.get("subscriber") is not None else None
+                    Subscriber.from_dict(obj.get("subscriber"))
+                    if obj.get("subscriber") is not None
+                    else None
                 ),
             }
         )

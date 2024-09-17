@@ -33,7 +33,9 @@ class CrsOneOfOneOf(BaseModel):
     CrsOneOfOneOf
     """  # noqa: E501
 
-    uri: StrictStr = Field(description="Reference to one coordinate reference system (CRS)")
+    uri: StrictStr = Field(
+        description="Reference to one coordinate reference system (CRS)"
+    )
     __properties: ClassVar[List[str]] = ["uri"]
 
     model_config = {

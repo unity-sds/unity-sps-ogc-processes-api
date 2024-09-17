@@ -112,9 +112,13 @@ class InputValueNoObjectWorkflows(BaseModel):
     def __init__(self, *args, **kwargs) -> None:
         if args:
             if len(args) > 1:
-                raise ValueError("If a position argument is used, only 1 is allowed to set `actual_instance`")
+                raise ValueError(
+                    "If a position argument is used, only 1 is allowed to set `actual_instance`"
+                )
             if kwargs:
-                raise ValueError("If a position argument is used, keyword arguments cannot be used.")
+                raise ValueError(
+                    "If a position argument is used, keyword arguments cannot be used."
+                )
             super().__init__(actual_instance=args[0])
         else:
             super().__init__(**kwargs)
@@ -167,17 +171,23 @@ class InputValueNoObjectWorkflows(BaseModel):
             match += 1
         # validate data type: InputCollection
         if not isinstance(v, InputCollection):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `InputCollection`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `InputCollection`"
+            )
         else:
             match += 1
         # validate data type: InputProcess
         if not isinstance(v, InputProcess):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `InputProcess`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `InputProcess`"
+            )
         else:
             match += 1
         # validate data type: InputParameterized
         if not isinstance(v, InputParameterized):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `InputParameterized`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `InputParameterized`"
+            )
         else:
             match += 1
         if match > 1:

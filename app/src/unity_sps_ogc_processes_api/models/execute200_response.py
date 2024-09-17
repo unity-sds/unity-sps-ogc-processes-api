@@ -50,7 +50,9 @@ class Execute200Response(RootModel):
         if isinstance(v, dict):
             for key, value in v.items():
                 if not isinstance(key, str):
-                    raise ValueError(f"Dictionary keys must be strings, got {type(key)}")
+                    raise ValueError(
+                        f"Dictionary keys must be strings, got {type(key)}"
+                    )
                 if not isinstance(
                     value,
                     (Bbox, list, bool, float, int, str, Link, QualifiedInputValue),

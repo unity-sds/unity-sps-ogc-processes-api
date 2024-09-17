@@ -44,7 +44,9 @@ async def deploy(
     settings: Settings = Depends(get_settings),
     redis_locking_client: RedisLock = Depends(get_redis_locking_client),
     db: Session = Depends(get_db),
-    ogcapppkg: Ogcapppkg = Body(None, description="An OGC Application Package used to deploy a new process."),
+    ogcapppkg: Ogcapppkg = Body(
+        None, description="An OGC Application Package used to deploy a new process."
+    ),
     w: str = Query(
         None,
         description="Point to the workflow identifier for deploying a CWL containing multiple workflow definitions",
@@ -80,7 +82,9 @@ async def replace(
     redis_locking_client: RedisLock = Depends(get_redis_locking_client),
     db: Session = Depends(get_db),
     processId: str = Path(..., description=""),
-    ogcapppkg: Ogcapppkg = Body(None, description="An OGC Application Package used to deploy a new process."),
+    ogcapppkg: Ogcapppkg = Body(
+        None, description="An OGC Application Package used to deploy a new process."
+    ),
 ) -> None:
     """Replaces a process.  For more information, see [Section 6.4](http://docs.ogc.org/DRAFTS/20-044.html#_18582f42-ebc6-4284-9333-c089068f62b6)."""
     dru_api = BaseDRUApi.subclasses[0](settings, redis_locking_client, db)
@@ -111,7 +115,9 @@ async def undeploy(
     redis_locking_client: RedisLock = Depends(get_redis_locking_client),
     db: Session = Depends(get_db),
     processId: str = Path(..., description=""),
-    force: bool = Query(False, description="Force undeployment even if there are active DAG runs"),
+    force: bool = Query(
+        False, description="Force undeployment even if there are active DAG runs"
+    ),
 ) -> None:
     """Undeploys a process. For more information, see [Section 6.5](http://docs.ogc.org/DRAFTS/20-044.html#_16391f9e-538f-4a84-9710-72a6bab82842)."""
     dru_api = BaseDRUApi.subclasses[0](settings, redis_locking_client, db)

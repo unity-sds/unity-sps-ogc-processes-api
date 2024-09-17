@@ -88,6 +88,12 @@ class Output(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate(
-            {"format": (Format.from_dict(obj.get("format")) if obj.get("format") is not None else None)}
+            {
+                "format": (
+                    Format.from_dict(obj.get("format"))
+                    if obj.get("format") is not None
+                    else None
+                )
+            }
         )
         return _obj

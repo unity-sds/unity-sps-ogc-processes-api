@@ -39,7 +39,9 @@ class ExtentTemporal(BaseModel):
 
     interval: Optional[
         Annotated[
-            List[Annotated[List[Optional[datetime]], Field(min_length=2, max_length=2)]],
+            List[
+                Annotated[List[Optional[datetime]], Field(min_length=2, max_length=2)]
+            ],
             Field(min_length=1),
         ]
     ] = Field(
@@ -123,7 +125,9 @@ class ExtentTemporal(BaseModel):
                     else "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
                 ),
                 "grid": (
-                    ExtentTemporalGrid.from_dict(obj.get("grid")) if obj.get("grid") is not None else None
+                    ExtentTemporalGrid.from_dict(obj.get("grid"))
+                    if obj.get("grid") is not None
+                    else None
                 ),
             }
         )

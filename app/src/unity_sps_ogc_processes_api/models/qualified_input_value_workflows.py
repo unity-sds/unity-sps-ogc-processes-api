@@ -115,7 +115,9 @@ class QualifiedInputValueWorkflows(BaseModel):
                 "mediaType": obj.get("mediaType"),
                 "encoding": obj.get("encoding"),
                 "schema": (
-                    FormatSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None
+                    FormatSchema.from_dict(obj.get("schema"))
+                    if obj.get("schema") is not None
+                    else None
                 ),
                 "filter": obj.get("filter"),
                 "properties": (
@@ -125,7 +127,9 @@ class QualifiedInputValueWorkflows(BaseModel):
                 ),
                 "sortBy": obj.get("sortBy"),
                 "value": (
-                    InputValueWorkflows.from_dict(obj.get("value")) if obj.get("value") is not None else None
+                    InputValueWorkflows.from_dict(obj.get("value"))
+                    if obj.get("value") is not None
+                    else None
                 ),
             }
         )

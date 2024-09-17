@@ -36,7 +36,9 @@ class ExecutionUnit(BaseModel):
     """  # noqa: E501
 
     type: StrictStr = Field(description="Type of execution unit.")
-    image: StrictStr = Field(description="Container image reference for the execution unit.")
+    image: StrictStr = Field(
+        description="Container image reference for the execution unit."
+    )
     deployment: Optional[StrictStr] = Field(
         default=None, description="Deployment information for the execution unit."
     )
@@ -58,7 +60,9 @@ class ExecutionUnit(BaseModel):
             return value
 
         if value not in ("local", "remote", "hpc", "cloud"):
-            raise ValueError("must be one of enum values ('local', 'remote', 'hpc', 'cloud')")
+            raise ValueError(
+                "must be one of enum values ('local', 'remote', 'hpc', 'cloud')"
+            )
         return value
 
     model_config = {

@@ -43,7 +43,9 @@ class ProcessSummary(BaseModel):
     metadata: Optional[List[Metadata]] = None
     id: StrictStr
     version: StrictStr
-    job_control_options: Optional[List[JobControlOptions]] = Field(default=None, alias="jobControlOptions")
+    job_control_options: Optional[List[JobControlOptions]] = Field(
+        default=None, alias="jobControlOptions"
+    )
     links: Optional[List[Link]] = None
     __properties: ClassVar[List[str]] = [
         "title",

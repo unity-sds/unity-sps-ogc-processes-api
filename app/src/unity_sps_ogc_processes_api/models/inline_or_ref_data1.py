@@ -54,8 +54,12 @@ class InlineOrRefData1(BaseModel):
     oneof_schema_2_validator: Optional[QualifiedInputValue1] = None
     # data type: Link
     oneof_schema_3_validator: Optional[Link] = None
-    actual_instance: Optional[Union[InputValueNoObject1, Link, QualifiedInputValue1]] = None
-    one_of_schemas: List[str] = Literal["InputValueNoObject1", "Link", "QualifiedInputValue1"]
+    actual_instance: Optional[
+        Union[InputValueNoObject1, Link, QualifiedInputValue1]
+    ] = None
+    one_of_schemas: List[str] = Literal[
+        "InputValueNoObject1", "Link", "QualifiedInputValue1"
+    ]
 
     model_config = {
         "validate_assignment": True,
@@ -65,9 +69,13 @@ class InlineOrRefData1(BaseModel):
     def __init__(self, *args, **kwargs) -> None:
         if args:
             if len(args) > 1:
-                raise ValueError("If a position argument is used, only 1 is allowed to set `actual_instance`")
+                raise ValueError(
+                    "If a position argument is used, only 1 is allowed to set `actual_instance`"
+                )
             if kwargs:
-                raise ValueError("If a position argument is used, keyword arguments cannot be used.")
+                raise ValueError(
+                    "If a position argument is used, keyword arguments cannot be used."
+                )
             super().__init__(actual_instance=args[0])
         else:
             super().__init__(**kwargs)
@@ -79,12 +87,16 @@ class InlineOrRefData1(BaseModel):
         match = 0
         # validate data type: InputValueNoObject1
         if not isinstance(v, InputValueNoObject1):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `InputValueNoObject1`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `InputValueNoObject1`"
+            )
         else:
             match += 1
         # validate data type: QualifiedInputValue1
         if not isinstance(v, QualifiedInputValue1):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `QualifiedInputValue1`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `QualifiedInputValue1`"
+            )
         else:
             match += 1
         # validate data type: Link

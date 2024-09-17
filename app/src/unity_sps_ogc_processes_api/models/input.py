@@ -23,7 +23,9 @@ class Input(RootModel):
         str,
         Link,
         QualifiedInputValue1,
-        List[Union[Bbox1, List[Any], bool, float, int, str, Link, QualifiedInputValue1]],
+        List[
+            Union[Bbox1, List[Any], bool, float, int, str, Link, QualifiedInputValue1]
+        ],
     ]
 
     @model_validator(mode="before")
@@ -38,7 +40,9 @@ class Input(RootModel):
                 return Link(**value)
         elif isinstance(value, list):
             return [cls.validate_type(item) for item in value]
-        elif isinstance(value, (bool, int, float, str, Bbox1, Link, QualifiedInputValue1)):
+        elif isinstance(
+            value, (bool, int, float, str, Bbox1, Link, QualifiedInputValue1)
+        ):
             return value
         elif isinstance(value, List):
             return value

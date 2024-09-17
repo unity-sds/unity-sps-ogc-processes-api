@@ -21,7 +21,9 @@ from unity_sps_ogc_processes_api.models.status_info import StatusInfo
 
 
 class JobsApiImpl(BaseJobsApi):
-    def __init__(self, settings: Settings, redis_locking_client: RedisLock, db: Session):
+    def __init__(
+        self, settings: Settings, redis_locking_client: RedisLock, db: Session
+    ):
         self.settings = settings
         self.redis_locking_client = redis_locking_client
         self.db = db
@@ -92,7 +94,9 @@ class JobsApiImpl(BaseJobsApi):
                 detail=f"Failed to delete DAG run {job.jobID} for DAG {job.processID}: {e}",
             )
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     def get_jobs(self) -> JobList:
         jobs = crud.get_jobs(self.db)
@@ -125,7 +129,10 @@ class JobsApiImpl(BaseJobsApi):
                 process_lock_key = f"process:{job.processID}"
                 with self.redis_locking_client.lock(process_lock_key):
                     results = crud.get_results(self.db, jobId)
-                    return {result.name: InlineOrRefData(href=result.href) for result in results}
+                    return {
+                        result.name: InlineOrRefData(href=result.href)
+                        for result in results
+                    }
 
         except LockError:
             raise HTTPException(
@@ -133,7 +140,9 @@ class JobsApiImpl(BaseJobsApi):
                 detail="Unable to acquire lock. Please try again later.",
             )
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     def get_status(self, jobId: str) -> StatusInfo:
         job_lock_key = f"job:{jobId}"
@@ -169,7 +178,9 @@ class JobsApiImpl(BaseJobsApi):
                         "failed": StatusCode.FAILED,
                     }
                     data = response.json()
-                    current_execution_status = execution_status_conversion_dict[data["state"]]
+                    current_execution_status = execution_status_conversion_dict[
+                        data["state"]
+                    ]
                     if job.status != current_execution_status:
                         job.status = current_execution_status
                         job.updated = datetime.now()
@@ -178,7 +189,9 @@ class JobsApiImpl(BaseJobsApi):
                     if end_date_str:
                         job.finished = datetime.fromisoformat(end_date_str)
 
-                    return crud.update_job(self.db, job.job_id, job.model_dump(by_alias=True))
+                    return crud.update_job(
+                        self.db, job.job_id, job.model_dump(by_alias=True)
+                    )
 
         except LockError:
             raise HTTPException(
@@ -191,4 +204,6 @@ class JobsApiImpl(BaseJobsApi):
                 detail=f"Failed to fetch DAG run {job.job_id} for DAG {job.process_id}: {e}",
             )
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )

@@ -8,7 +8,9 @@ from . import models
 def create_process(db: Session, ogcapppkg: Ogcapppkg):
     db_process = models.Process(**ogcapppkg.process_description.model_dump())
     db_execution_unit = models.ExecutionUnit(**ogcapppkg.execution_unit.model_dump())
-    db_ogcapppkg = models.Ogcapppkg(process=db_process, execution_unit=db_execution_unit)
+    db_ogcapppkg = models.Ogcapppkg(
+        process=db_process, execution_unit=db_execution_unit
+    )
     db.add(db_ogcapppkg)
     db.commit()
     db.refresh(db_ogcapppkg)

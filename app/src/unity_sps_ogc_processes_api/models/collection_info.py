@@ -40,8 +40,12 @@ class CollectionInfo(BaseModel):
     CollectionInfo
     """  # noqa: E501
 
-    id: StrictStr = Field(description="identifier of the collection used, for example, in URIs")
-    title: Optional[StrictStr] = Field(default=None, description="human readable title of the collection")
+    id: StrictStr = Field(
+        description="identifier of the collection used, for example, in URIs"
+    )
+    title: Optional[StrictStr] = Field(
+        default=None, description="human readable title of the collection"
+    )
     description: Optional[StrictStr] = Field(
         default=None, description="a description of the data in the collection"
     )
@@ -57,10 +61,12 @@ class CollectionInfo(BaseModel):
         description="the list of coordinate reference systems supported by the API; the first item is the default coordinate reference system",
     )
     data_type: Optional[CollectionInfoDataType] = Field(default=None, alias="dataType")
-    geometry_dimension: Optional[Annotated[int, Field(le=3, strict=True, ge=0)]] = Field(
-        default=None,
-        description="The geometry dimension of the features shown in this layer (0: points, 1: curves, 2: surfaces, 3: solids), unspecified: mixed or unknown",
-        alias="geometryDimension",
+    geometry_dimension: Optional[Annotated[int, Field(le=3, strict=True, ge=0)]] = (
+        Field(
+            default=None,
+            description="The geometry dimension of the features shown in this layer (0: points, 1: curves, 2: surfaces, 3: solids), unspecified: mixed or unknown",
+            alias="geometryDimension",
+        )
     )
     min_scale_denominator: Optional[Union[StrictFloat, StrictInt]] = Field(
         default=None,
@@ -167,8 +173,16 @@ class CollectionInfo(BaseModel):
                     if obj.get("links") is not None
                     else None
                 ),
-                "extent": (ExtentUad.from_dict(obj.get("extent")) if obj.get("extent") is not None else None),
-                "itemType": (obj.get("itemType") if obj.get("itemType") is not None else "unknown"),
+                "extent": (
+                    ExtentUad.from_dict(obj.get("extent"))
+                    if obj.get("extent") is not None
+                    else None
+                ),
+                "itemType": (
+                    obj.get("itemType")
+                    if obj.get("itemType") is not None
+                    else "unknown"
+                ),
                 "crs": obj.get("crs"),
                 "dataType": (
                     CollectionInfoDataType.from_dict(obj.get("dataType"))

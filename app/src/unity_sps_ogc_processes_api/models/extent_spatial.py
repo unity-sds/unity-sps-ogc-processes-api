@@ -45,7 +45,9 @@ class ExtentSpatial(BaseModel):
     The spatial extent of the data in the collection.
     """  # noqa: E501
 
-    bbox: Optional[Annotated[List[List[Union[StrictFloat, StrictInt]]], Field(min_length=1)]] = Field(
+    bbox: Optional[
+        Annotated[List[List[Union[StrictFloat, StrictInt]]], Field(min_length=1)]
+    ] = Field(
         default=None,
         description="One or more bounding boxes that describe the spatial extent of the dataset. In the Core only a single bounding box is supported.  Extensions may support additional areas. The first bounding box describes the overall spatial extent of the data. All subsequent bounding boxes describe more precise bounding boxes, e.g., to identify clusters of data. Clients only interested in the overall spatial extent will only need to access the first item in each array.",
     )
@@ -53,7 +55,9 @@ class ExtentSpatial(BaseModel):
         default="1.3/CRS84",
         description="Coordinate reference system of the coordinates in the spatial extent (property `bbox`). The default reference system is WGS 84 longitude/latitude. In the Core the only other supported coordinate reference system is WGS 84 longitude/latitude/ellipsoidal height for coordinates with height. Extensions may support additional coordinate reference systems and add additional enum values.",
     )
-    grid: Optional[Annotated[List[ExtentSpatialGridInner], Field(min_length=2, max_length=3)]] = Field(
+    grid: Optional[
+        Annotated[List[ExtentSpatialGridInner], Field(min_length=2, max_length=3)]
+    ] = Field(
         default=None,
         description="Provides information about the limited availability of data within the collection organized as a grid (regular or irregular) along each spatial dimension.",
     )
@@ -132,7 +136,10 @@ class ExtentSpatial(BaseModel):
                 "bbox": obj.get("bbox"),
                 "crs": obj.get("crs") if obj.get("crs") is not None else "1.3/CRS84",
                 "grid": (
-                    [ExtentSpatialGridInner.from_dict(_item) for _item in obj.get("grid")]
+                    [
+                        ExtentSpatialGridInner.from_dict(_item)
+                        for _item in obj.get("grid")
+                    ]
                     if obj.get("grid") is not None
                     else None
                 ),

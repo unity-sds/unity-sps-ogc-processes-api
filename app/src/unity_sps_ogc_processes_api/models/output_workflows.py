@@ -90,7 +90,11 @@ class OutputWorkflows(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "format": (Format.from_dict(obj.get("format")) if obj.get("format") is not None else None),
+                "format": (
+                    Format.from_dict(obj.get("format"))
+                    if obj.get("format") is not None
+                    else None
+                ),
                 "$output": obj.get("$output"),
             }
         )

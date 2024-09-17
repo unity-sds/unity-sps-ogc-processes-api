@@ -43,7 +43,9 @@ class StaticIndicator(BaseModel):
     metadata: Optional[List[Metadata]] = None
     id: StrictStr
     version: StrictStr
-    job_control_options: Optional[List[JobControlOptions]] = Field(default=None, alias="jobControlOptions")
+    job_control_options: Optional[List[JobControlOptions]] = Field(
+        default=None, alias="jobControlOptions"
+    )
     links: Optional[List[Link]] = None
     mutable: Optional[StrictBool] = True
     __properties: ClassVar[List[str]] = [
@@ -136,7 +138,9 @@ class StaticIndicator(BaseModel):
                     if obj.get("links") is not None
                     else None
                 ),
-                "mutable": (obj.get("mutable") if obj.get("mutable") is not None else True),
+                "mutable": (
+                    obj.get("mutable") if obj.get("mutable") is not None else True
+                ),
             }
         )
         return _obj

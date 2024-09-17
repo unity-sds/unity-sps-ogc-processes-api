@@ -95,10 +95,14 @@ class ExtentUad(BaseModel):
         _obj = cls.model_validate(
             {
                 "spatial": (
-                    ExtentSpatial.from_dict(obj.get("spatial")) if obj.get("spatial") is not None else None
+                    ExtentSpatial.from_dict(obj.get("spatial"))
+                    if obj.get("spatial") is not None
+                    else None
                 ),
                 "temporal": (
-                    ExtentTemporal.from_dict(obj.get("temporal")) if obj.get("temporal") is not None else None
+                    ExtentTemporal.from_dict(obj.get("temporal"))
+                    if obj.get("temporal") is not None
+                    else None
                 ),
             }
         )

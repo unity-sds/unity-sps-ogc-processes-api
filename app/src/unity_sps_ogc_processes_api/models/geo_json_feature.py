@@ -50,7 +50,9 @@ class GeoJSONFeature(BaseModel):
     id: Optional[GeoJSONFeatureId] = None
     properties: Optional[Dict[str, Any]]
     geometry: GeoJSONFeatureGeometry
-    bbox: Optional[Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=4)]] = None
+    bbox: Optional[
+        Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=4)]
+    ] = None
     __properties: ClassVar[List[str]] = ["type", "id", "properties", "geometry", "bbox"]
 
     @field_validator("type")
@@ -120,7 +122,11 @@ class GeoJSONFeature(BaseModel):
         _obj = cls.model_validate(
             {
                 "type": obj.get("type"),
-                "id": (GeoJSONFeatureId.from_dict(obj.get("id")) if obj.get("id") is not None else None),
+                "id": (
+                    GeoJSONFeatureId.from_dict(obj.get("id"))
+                    if obj.get("id") is not None
+                    else None
+                ),
                 "properties": obj.get("properties"),
                 "geometry": (
                     GeoJSONFeatureGeometry.from_dict(obj.get("geometry"))

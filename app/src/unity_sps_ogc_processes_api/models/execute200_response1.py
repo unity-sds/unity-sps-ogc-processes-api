@@ -45,7 +45,9 @@ class Execute200Response1(BaseModel):
 
     type: StrictStr
     features: List[GeoJSONFeature]
-    bbox: Optional[Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=4)]] = None
+    bbox: Optional[
+        Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=4)]
+    ] = None
     __properties: ClassVar[List[str]] = ["type", "features", "bbox"]
 
     @field_validator("type")

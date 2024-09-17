@@ -50,14 +50,26 @@ class SchemaOneOf(BaseModel):
         ]
     ] = Field(default=None, alias="multipleOf")
     maximum: Optional[Union[StrictFloat, StrictInt]] = None
-    exclusive_maximum: Optional[StrictBool] = Field(default=False, alias="exclusiveMaximum")
+    exclusive_maximum: Optional[StrictBool] = Field(
+        default=False, alias="exclusiveMaximum"
+    )
     minimum: Optional[Union[StrictFloat, StrictInt]] = None
-    exclusive_minimum: Optional[StrictBool] = Field(default=False, alias="exclusiveMinimum")
-    max_length: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(default=None, alias="maxLength")
-    min_length: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(default=0, alias="minLength")
+    exclusive_minimum: Optional[StrictBool] = Field(
+        default=False, alias="exclusiveMinimum"
+    )
+    max_length: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(
+        default=None, alias="maxLength"
+    )
+    min_length: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(
+        default=0, alias="minLength"
+    )
     pattern: Optional[StrictStr] = None
-    max_items: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(default=None, alias="maxItems")
-    min_items: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(default=0, alias="minItems")
+    max_items: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(
+        default=None, alias="maxItems"
+    )
+    min_items: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(
+        default=0, alias="minItems"
+    )
     unique_items: Optional[StrictBool] = Field(default=False, alias="uniqueItems")
     max_properties: Optional[Annotated[int, Field(strict=True, ge=0)]] = Field(
         default=None, alias="maxProperties"
@@ -85,7 +97,9 @@ class SchemaOneOf(BaseModel):
     write_only: Optional[StrictBool] = Field(default=False, alias="writeOnly")
     example: Optional[Dict[str, Any]] = None
     deprecated: Optional[StrictBool] = False
-    content_media_type: Optional[StrictStr] = Field(default=None, alias="contentMediaType")
+    content_media_type: Optional[StrictStr] = Field(
+        default=None, alias="contentMediaType"
+    )
     content_encoding: Optional[StrictStr] = Field(default=None, alias="contentEncoding")
     content_schema: Optional[StrictStr] = Field(default=None, alias="contentSchema")
     __properties: ClassVar[List[str]] = [
@@ -227,24 +241,44 @@ class SchemaOneOf(BaseModel):
                 "multipleOf": obj.get("multipleOf"),
                 "maximum": obj.get("maximum"),
                 "exclusiveMaximum": (
-                    obj.get("exclusiveMaximum") if obj.get("exclusiveMaximum") is not None else False
+                    obj.get("exclusiveMaximum")
+                    if obj.get("exclusiveMaximum") is not None
+                    else False
                 ),
                 "minimum": obj.get("minimum"),
                 "exclusiveMinimum": (
-                    obj.get("exclusiveMinimum") if obj.get("exclusiveMinimum") is not None else False
+                    obj.get("exclusiveMinimum")
+                    if obj.get("exclusiveMinimum") is not None
+                    else False
                 ),
                 "maxLength": obj.get("maxLength"),
-                "minLength": (obj.get("minLength") if obj.get("minLength") is not None else 0),
+                "minLength": (
+                    obj.get("minLength") if obj.get("minLength") is not None else 0
+                ),
                 "pattern": obj.get("pattern"),
                 "maxItems": obj.get("maxItems"),
-                "minItems": (obj.get("minItems") if obj.get("minItems") is not None else 0),
-                "uniqueItems": (obj.get("uniqueItems") if obj.get("uniqueItems") is not None else False),
+                "minItems": (
+                    obj.get("minItems") if obj.get("minItems") is not None else 0
+                ),
+                "uniqueItems": (
+                    obj.get("uniqueItems")
+                    if obj.get("uniqueItems") is not None
+                    else False
+                ),
                 "maxProperties": obj.get("maxProperties"),
-                "minProperties": (obj.get("minProperties") if obj.get("minProperties") is not None else 0),
+                "minProperties": (
+                    obj.get("minProperties")
+                    if obj.get("minProperties") is not None
+                    else 0
+                ),
                 "required": obj.get("required"),
                 "enum": obj.get("enum"),
                 "type": obj.get("type"),
-                "not": (Schema1.from_dict(obj.get("not")) if obj.get("not") is not None else None),
+                "not": (
+                    Schema1.from_dict(obj.get("not"))
+                    if obj.get("not") is not None
+                    else None
+                ),
                 "allOf": (
                     [Schema1.from_dict(_item) for _item in obj.get("allOf")]
                     if obj.get("allOf") is not None
@@ -260,25 +294,44 @@ class SchemaOneOf(BaseModel):
                     if obj.get("anyOf") is not None
                     else None
                 ),
-                "items": (Schema1.from_dict(obj.get("items")) if obj.get("items") is not None else None),
+                "items": (
+                    Schema1.from_dict(obj.get("items"))
+                    if obj.get("items") is not None
+                    else None
+                ),
                 "properties": (
-                    dict((_k, Schema1.from_dict(_v)) for _k, _v in obj.get("properties").items())
+                    dict(
+                        (_k, Schema1.from_dict(_v))
+                        for _k, _v in obj.get("properties").items()
+                    )
                     if obj.get("properties") is not None
                     else None
                 ),
                 "additionalProperties": (
-                    SchemaOneOfAdditionalProperties.from_dict(obj.get("additionalProperties"))
+                    SchemaOneOfAdditionalProperties.from_dict(
+                        obj.get("additionalProperties")
+                    )
                     if obj.get("additionalProperties") is not None
                     else None
                 ),
                 "description": obj.get("description"),
                 "format": obj.get("format"),
                 "default": obj.get("default"),
-                "nullable": (obj.get("nullable") if obj.get("nullable") is not None else False),
-                "readOnly": (obj.get("readOnly") if obj.get("readOnly") is not None else False),
-                "writeOnly": (obj.get("writeOnly") if obj.get("writeOnly") is not None else False),
+                "nullable": (
+                    obj.get("nullable") if obj.get("nullable") is not None else False
+                ),
+                "readOnly": (
+                    obj.get("readOnly") if obj.get("readOnly") is not None else False
+                ),
+                "writeOnly": (
+                    obj.get("writeOnly") if obj.get("writeOnly") is not None else False
+                ),
                 "example": obj.get("example"),
-                "deprecated": (obj.get("deprecated") if obj.get("deprecated") is not None else False),
+                "deprecated": (
+                    obj.get("deprecated")
+                    if obj.get("deprecated") is not None
+                    else False
+                ),
                 "contentMediaType": obj.get("contentMediaType"),
                 "contentEncoding": obj.get("contentEncoding"),
                 "contentSchema": obj.get("contentSchema"),

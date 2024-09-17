@@ -94,7 +94,9 @@ class Format(BaseModel):
                 "mediaType": obj.get("mediaType"),
                 "encoding": obj.get("encoding"),
                 "schema": (
-                    FormatSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None
+                    FormatSchema.from_dict(obj.get("schema"))
+                    if obj.get("schema") is not None
+                    else None
                 ),
             }
         )

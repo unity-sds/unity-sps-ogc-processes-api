@@ -40,7 +40,9 @@ class InlineOrRefData(RootModel):
             if "bbox" in value:
                 return Bbox(**value)
             return value  # Handle other dict cases
-        elif isinstance(value, (Bbox, Link, QualifiedInputValue, bool, int, float, str)):
+        elif isinstance(
+            value, (Bbox, Link, QualifiedInputValue, bool, int, float, str)
+        ):
             return value
         elif isinstance(value, list):
             return value

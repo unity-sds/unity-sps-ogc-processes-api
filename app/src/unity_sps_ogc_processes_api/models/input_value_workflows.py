@@ -51,9 +51,13 @@ class InputValueWorkflows(BaseModel):
     def __init__(self, *args, **kwargs) -> None:
         if args:
             if len(args) > 1:
-                raise ValueError("If a position argument is used, only 1 is allowed to set `actual_instance`")
+                raise ValueError(
+                    "If a position argument is used, only 1 is allowed to set `actual_instance`"
+                )
             if kwargs:
-                raise ValueError("If a position argument is used, keyword arguments cannot be used.")
+                raise ValueError(
+                    "If a position argument is used, keyword arguments cannot be used."
+                )
             super().__init__(actual_instance=args[0])
         else:
             super().__init__(**kwargs)
@@ -65,7 +69,9 @@ class InputValueWorkflows(BaseModel):
         match = 0
         # validate data type: InputValueNoObjectWorkflows
         if not isinstance(v, InputValueNoObjectWorkflows):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `InputValueNoObjectWorkflows`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `InputValueNoObjectWorkflows`"
+            )
         else:
             match += 1
         # validate data type: object

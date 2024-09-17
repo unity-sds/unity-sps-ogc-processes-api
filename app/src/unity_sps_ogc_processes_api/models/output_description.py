@@ -116,7 +116,9 @@ class OutputDescription(BaseModel):
                     else None
                 ),
                 "schema": (
-                    ModelSchema.from_dict(obj.get("schema")) if obj.get("schema") is not None else None
+                    ModelSchema.from_dict(obj.get("schema"))
+                    if obj.get("schema") is not None
+                    else None
                 ),
             }
         )

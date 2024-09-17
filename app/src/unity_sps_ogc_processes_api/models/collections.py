@@ -126,7 +126,10 @@ class Collections(BaseModel):
                 "numberMatched": obj.get("numberMatched"),
                 "numberReturned": obj.get("numberReturned"),
                 "collections": (
-                    [CollectionInfo.from_dict(_item) for _item in obj.get("collections")]
+                    [
+                        CollectionInfo.from_dict(_item)
+                        for _item in obj.get("collections")
+                    ]
                     if obj.get("collections") is not None
                     else None
                 ),

@@ -9,7 +9,9 @@ class LandingPageApiImpl(BaseLandingPageApi):
             title="OGC API - Processes",
             description="This is the landing page for the OGC API - Processes implementation.",
             links=[
-                Link(href="/", rel="self", type="application/json", title="This document"),
+                Link(
+                    href="/", rel="self", type="application/json", title="This document"
+                ),
                 Link(
                     href="/api",  # Assuming the API definition is at /api
                     rel="service-desc",

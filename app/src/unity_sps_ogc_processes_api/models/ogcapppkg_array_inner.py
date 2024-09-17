@@ -57,9 +57,13 @@ class OgcapppkgArrayInner(BaseModel):
     def __init__(self, *args, **kwargs) -> None:
         if args:
             if len(args) > 1:
-                raise ValueError("If a position argument is used, only 1 is allowed to set `actual_instance`")
+                raise ValueError(
+                    "If a position argument is used, only 1 is allowed to set `actual_instance`"
+                )
             if kwargs:
-                raise ValueError("If a position argument is used, keyword arguments cannot be used.")
+                raise ValueError(
+                    "If a position argument is used, keyword arguments cannot be used."
+                )
             super().__init__(actual_instance=args[0])
         else:
             super().__init__(**kwargs)
@@ -71,7 +75,9 @@ class OgcapppkgArrayInner(BaseModel):
         match = 0
         # validate data type: ExecutionUnit
         if not isinstance(v, ExecutionUnit):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ExecutionUnit`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `ExecutionUnit`"
+            )
         else:
             match += 1
         # validate data type: Link
@@ -81,7 +87,9 @@ class OgcapppkgArrayInner(BaseModel):
             match += 1
         # validate data type: QualifiedInputValue
         if not isinstance(v, QualifiedInputValue):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `QualifiedInputValue`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `QualifiedInputValue`"
+            )
         else:
             match += 1
         if match > 1:

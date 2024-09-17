@@ -45,7 +45,9 @@ class Process(BaseModel):
     metadata: Optional[List[Metadata]] = None
     id: StrictStr
     version: StrictStr
-    job_control_options: Optional[List[JobControlOptions]] = Field(default=None, alias="jobControlOptions")
+    job_control_options: Optional[List[JobControlOptions]] = Field(
+        default=None, alias="jobControlOptions"
+    )
     links: Optional[List[Link]] = None
     inputs: Optional[Dict[str, InputDescription]] = None
     outputs: Optional[Dict[str, OutputDescription]] = None
@@ -155,12 +157,18 @@ class Process(BaseModel):
                     else None
                 ),
                 "inputs": (
-                    dict((_k, InputDescription.from_dict(_v)) for _k, _v in obj.get("inputs").items())
+                    dict(
+                        (_k, InputDescription.from_dict(_v))
+                        for _k, _v in obj.get("inputs").items()
+                    )
                     if obj.get("inputs") is not None
                     else None
                 ),
                 "outputs": (
-                    dict((_k, OutputDescription.from_dict(_v)) for _k, _v in obj.get("outputs").items())
+                    dict(
+                        (_k, OutputDescription.from_dict(_v))
+                        for _k, _v in obj.get("outputs").items()
+                    )
                     if obj.get("outputs") is not None
                     else None
                 ),

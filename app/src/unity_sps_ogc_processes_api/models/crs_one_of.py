@@ -46,8 +46,12 @@ class CrsOneOf(BaseModel):
     oneof_schema_2_validator: Optional[CrsOneOfOneOf1] = None
     # data type: CrsOneOfOneOf2
     oneof_schema_3_validator: Optional[CrsOneOfOneOf2] = None
-    actual_instance: Optional[Union[CrsOneOfOneOf, CrsOneOfOneOf1, CrsOneOfOneOf2]] = None
-    one_of_schemas: List[str] = Literal["CrsOneOfOneOf", "CrsOneOfOneOf1", "CrsOneOfOneOf2"]
+    actual_instance: Optional[Union[CrsOneOfOneOf, CrsOneOfOneOf1, CrsOneOfOneOf2]] = (
+        None
+    )
+    one_of_schemas: List[str] = Literal[
+        "CrsOneOfOneOf", "CrsOneOfOneOf1", "CrsOneOfOneOf2"
+    ]
 
     model_config = {
         "validate_assignment": True,
@@ -57,9 +61,13 @@ class CrsOneOf(BaseModel):
     def __init__(self, *args, **kwargs) -> None:
         if args:
             if len(args) > 1:
-                raise ValueError("If a position argument is used, only 1 is allowed to set `actual_instance`")
+                raise ValueError(
+                    "If a position argument is used, only 1 is allowed to set `actual_instance`"
+                )
             if kwargs:
-                raise ValueError("If a position argument is used, keyword arguments cannot be used.")
+                raise ValueError(
+                    "If a position argument is used, keyword arguments cannot be used."
+                )
             super().__init__(actual_instance=args[0])
         else:
             super().__init__(**kwargs)
@@ -71,17 +79,23 @@ class CrsOneOf(BaseModel):
         match = 0
         # validate data type: CrsOneOfOneOf
         if not isinstance(v, CrsOneOfOneOf):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `CrsOneOfOneOf`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `CrsOneOfOneOf`"
+            )
         else:
             match += 1
         # validate data type: CrsOneOfOneOf1
         if not isinstance(v, CrsOneOfOneOf1):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `CrsOneOfOneOf1`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `CrsOneOfOneOf1`"
+            )
         else:
             match += 1
         # validate data type: CrsOneOfOneOf2
         if not isinstance(v, CrsOneOfOneOf2):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `CrsOneOfOneOf2`")
+            error_messages.append(
+                f"Error! Input type `{type(v)}` is not `CrsOneOfOneOf2`"
+            )
         else:
             match += 1
         if match > 1:

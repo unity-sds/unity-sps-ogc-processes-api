@@ -69,7 +69,9 @@ class InputValueNoObject1(BaseModel):
     # data type: Bbox1
     oneof_schema_7_validator: Optional[Bbox1] = None
     actual_instance: Optional[Union[Bbox1, List[object], bool, float, int, str]] = None
-    one_of_schemas: List[str] = Literal["Bbox1", "List[object]", "bool", "float", "int", "str"]
+    one_of_schemas: List[str] = Literal[
+        "Bbox1", "List[object]", "bool", "float", "int", "str"
+    ]
 
     model_config = {
         "validate_assignment": True,
@@ -79,9 +81,13 @@ class InputValueNoObject1(BaseModel):
     def __init__(self, *args, **kwargs) -> None:
         if args:
             if len(args) > 1:
-                raise ValueError("If a position argument is used, only 1 is allowed to set `actual_instance`")
+                raise ValueError(
+                    "If a position argument is used, only 1 is allowed to set `actual_instance`"
+                )
             if kwargs:
-                raise ValueError("If a position argument is used, keyword arguments cannot be used.")
+                raise ValueError(
+                    "If a position argument is used, keyword arguments cannot be used."
+                )
             super().__init__(actual_instance=args[0])
         else:
             super().__init__(**kwargs)

@@ -48,7 +48,9 @@ class GeoJSONMultiLineString(BaseModel):
             Field(min_length=2),
         ]
     ]
-    bbox: Optional[Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=4)]] = None
+    bbox: Optional[
+        Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=4)]
+    ] = None
     __properties: ClassVar[List[str]] = ["type", "coordinates", "bbox"]
 
     @field_validator("type")

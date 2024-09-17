@@ -91,7 +91,11 @@ class BboxProcesses(BaseModel):
         _obj = cls.model_validate(
             {
                 "bbox": obj.get("bbox"),
-                "crs": (BboxDefCrs.from_dict(obj.get("crs")) if obj.get("crs") is not None else None),
+                "crs": (
+                    BboxDefCrs.from_dict(obj.get("crs"))
+                    if obj.get("crs") is not None
+                    else None
+                ),
             }
         )
         return _obj

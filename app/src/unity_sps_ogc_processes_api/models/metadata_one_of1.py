@@ -98,7 +98,9 @@ class MetadataOneOf1(BaseModel):
                 "title": obj.get("title"),
                 "lang": obj.get("lang"),
                 "value": (
-                    MetadataOneOf1Value.from_dict(obj.get("value")) if obj.get("value") is not None else None
+                    MetadataOneOf1Value.from_dict(obj.get("value"))
+                    if obj.get("value") is not None
+                    else None
                 ),
             }
         )

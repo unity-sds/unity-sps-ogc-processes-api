@@ -42,8 +42,12 @@ class GeoJSONMultiPoint(BaseModel):
     """  # noqa: E501
 
     type: StrictStr
-    coordinates: List[Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=2)]]
-    bbox: Optional[Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=4)]] = None
+    coordinates: List[
+        Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=2)]
+    ]
+    bbox: Optional[
+        Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=4)]
+    ] = None
     __properties: ClassVar[List[str]] = ["type", "coordinates", "bbox"]
 
     @field_validator("type")
