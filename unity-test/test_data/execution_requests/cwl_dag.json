@@ -1,0 +1,12 @@
+{
+  "inputs": {
+    "complexObjectInput": {
+      "value": {
+        "message": "Hello Unity"
+      }
+    }
+  },
+  "outputs": {
+    "stringOutput": {}
+  }
+}
