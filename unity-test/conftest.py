@@ -5,16 +5,17 @@ import re
 import fakeredis
 import pytest
 from fastapi import status
-from fastapi.encoders import jsonable_encoder
+
+# from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
+from openapi_server.database import Base
+from openapi_server.database.models import Process
+from openapi_server.utils.redis import RedisLock
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-
-from app.database import Base
-from app.main import app, get_db, get_redis_locking_client, get_settings
-from app.redis import RedisLock
-from app.schemas.ogc_processes import Execute, Process, StatusCode, StatusInfo
+from unity_sps_ogc_processes_api.dependencies import get_db, get_redis_locking_client, get_settings
+from unity_sps_ogc_processes_api.main import app
 
 settings = get_settings()
 SQLALCHEMY_DATABASE_URL = settings.DB_URL
@@ -59,7 +60,8 @@ def fake_filesystem(fs_session, test_directory):  # pylint:disable=invalid-name
     fs_session.add_real_directory(os.path.join(test_directory), "test_data")
     fs_session.create_dir(settings.DAG_CATALOG_DIRECTORY)
     fs_session.create_file(
-        os.path.join(settings.DAG_CATALOG_DIRECTORY, "cwltool_help_dag.py"), contents="test"
+        os.path.join(settings.DAG_CATALOG_DIRECTORY, "cwltool_help_dag.py"),
+        contents="test",
     )
     fs_session.create_file(os.path.join(settings.DAG_CATALOG_DIRECTORY, "EchoProcess.py"), contents="test")
     fs_session.create_dir(settings.DEPLOYED_DAGS_DIRECTORY)
@@ -94,7 +96,12 @@ def mock_get_existing_dag(requests_mock):
                     "file_token": "string",
                     "owners": ["string"],
                     "description": "string",
-                    "schedule_interval": {"__type": "string", "days": 0, "seconds": 0, "microseconds": 0},
+                    "schedule_interval": {
+                        "__type": "string",
+                        "days": 0,
+                        "seconds": 0,
+                        "microseconds": 0,
+                    },
                     "timetable_description": "string",
                     "tags": [{"name": "string"}],
                     "max_active_tasks": 0,
@@ -125,7 +132,12 @@ def mock_get_existing_dag(requests_mock):
                     "file_token": "string",
                     "owners": ["string"],
                     "description": "string",
-                    "schedule_interval": {"__type": "string", "days": 0, "seconds": 0, "microseconds": 0},
+                    "schedule_interval": {
+                        "__type": "string",
+                        "days": 0,
+                        "seconds": 0,
+                        "microseconds": 0,
+                    },
                     "timetable_description": "string",
                     "tags": [{"name": "string"}],
                     "max_active_tasks": 0,
@@ -165,7 +177,12 @@ def mock_patch_existing_dag(requests_mock):
                     "file_token": "string",
                     "owners": ["string"],
                     "description": "string",
-                    "schedule_interval": {"__type": "string", "days": 0, "seconds": 0, "microseconds": 0},
+                    "schedule_interval": {
+                        "__type": "string",
+                        "days": 0,
+                        "seconds": 0,
+                        "microseconds": 0,
+                    },
                     "timetable_description": "string",
                     "tags": [{"name": "string"}],
                     "max_active_tasks": 0,
@@ -196,7 +213,12 @@ def mock_patch_existing_dag(requests_mock):
                     "file_token": "string",
                     "owners": ["string"],
                     "description": "string",
-                    "schedule_interval": {"__type": "string", "days": 0, "seconds": 0, "microseconds": 0},
+                    "schedule_interval": {
+                        "__type": "string",
+                        "days": 0,
+                        "seconds": 0,
+                        "microseconds": 0,
+                    },
                     "timetable_description": "string",
                     "tags": [{"name": "string"}],
                     "max_active_tasks": 0,
@@ -216,7 +238,8 @@ def mock_patch_existing_dag(requests_mock):
 @pytest.fixture(scope="function", autouse=True)
 def mock_delete_existing_dag(requests_mock):
     return requests_mock.delete(
-        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)$"), status_code=status.HTTP_204_NO_CONTENT
+        re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)$"),
+        status_code=status.HTTP_204_NO_CONTENT,
     )
 
 
@@ -417,7 +440,12 @@ def mock_get_existing_running_dag_dagrun_tasks(requests_mock):
 def mock_patch_existing_running_dag_dagrun_task(requests_mock):
     return requests_mock.patch(
         re.compile(f"{settings.EMS_API_URL}/dags/([^/]*)/dagRuns/([^/]*)/taskInstances/([^/]*)$"),
-        json={"task_id": "string", "dag_id": "string", "execution_date": "string", "dag_run_id": "string"},
+        json={
+            "task_id": "string",
+            "dag_id": "string",
+            "execution_date": "string",
+            "dag_run_id": "string",
+        },
     )
 
 
@@ -439,21 +467,27 @@ def deploy_process(test_directory, client):
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
-@pytest.fixture(scope="function")
-def execute_process(test_directory, mock_post_existing_dag_new_dagrun, client, deploy_process):
-    data_filename = os.path.join(test_directory, "test_data/execution_requests/execute_cwltool_help_dag.json")
-    f = open(data_filename)
-    execute_json = json.load(f)
-    execute = Execute.model_validate(execute_json)
-    response = client.post(f"/processes/{deploy_process.id}/execution", json=jsonable_encoder(execute))
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    status_info = StatusInfo.model_validate(data)
+# @pytest.fixture(scope="function")
+# def execute_process(
+#     test_directory, mock_post_existing_dag_new_dagrun, client, deploy_process
+# ):
+#     data_filename = os.path.join(
+#         test_directory, "test_data/execution_requests/execute_cwltool_help_dag.json"
+#     )
+#     f = open(data_filename)
+#     execute_json = json.load(f)
+#     execute = Execute.model_validate(execute_json)
+#     response = client.post(
+#         f"/processes/{deploy_process.id}/execution", json=jsonable_encoder(execute)
+#     )
+#     assert response.status_code == status.HTTP_200_OK
+#     data = response.json()
+#     status_info = StatusInfo.model_validate(data)
 
-    yield status_info
+#     yield status_info
 
-    response = client.delete(f"/jobs/{status_info.jobID}")
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    status_info = StatusInfo.model_validate(data)
-    assert status_info.status == StatusCode.dismissed.value
+#     response = client.delete(f"/jobs/{status_info.jobID}")
+#     assert response.status_code == status.HTTP_200_OK
+#     data = response.json()
+#     status_info = StatusInfo.model_validate(data)
+#     assert status_info.status == StatusCode.dismissed.value
