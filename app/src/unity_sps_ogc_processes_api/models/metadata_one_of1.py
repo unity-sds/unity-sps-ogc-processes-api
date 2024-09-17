@@ -21,7 +21,10 @@ import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional
 
 from pydantic import BaseModel, StrictStr
-from unity_sps_ogc_processes_api.models.metadata_one_of1_value import MetadataOneOf1Value
+
+from unity_sps_ogc_processes_api.models.metadata_one_of1_value import (
+    MetadataOneOf1Value,
+)
 
 try:
     from typing import Self

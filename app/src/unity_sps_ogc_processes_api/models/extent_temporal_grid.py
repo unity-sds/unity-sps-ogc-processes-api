@@ -22,7 +22,10 @@ from typing import Any, ClassVar, Dict, List, Optional
 
 from pydantic import BaseModel, Field, StrictInt, StrictStr
 from typing_extensions import Annotated
-from unity_sps_ogc_processes_api.models.extent_temporal_grid_resolution import ExtentTemporalGridResolution
+
+from unity_sps_ogc_processes_api.models.extent_temporal_grid_resolution import (
+    ExtentTemporalGridResolution,
+)
 
 try:
     from typing import Self

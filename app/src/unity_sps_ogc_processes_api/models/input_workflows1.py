@@ -162,7 +162,9 @@ class InputWorkflows1(BaseModel):
         return pprint.pformat(self.model_dump())
 
 
-from unity_sps_ogc_processes_api.models.inline_or_ref_data_workflows import InlineOrRefDataWorkflows
+from unity_sps_ogc_processes_api.models.inline_or_ref_data_workflows import (
+    InlineOrRefDataWorkflows,
+)
 
 # TODO: Rewrite to not use raise_errors
 InputWorkflows1.model_rebuild(raise_errors=False)

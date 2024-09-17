@@ -22,7 +22,10 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, StrictFloat, StrictInt, StrictStr
 from typing_extensions import Annotated
-from unity_sps_ogc_processes_api.models.collection_info_data_type import CollectionInfoDataType
+
+from unity_sps_ogc_processes_api.models.collection_info_data_type import (
+    CollectionInfoDataType,
+)
 from unity_sps_ogc_processes_api.models.extent_uad import ExtentUad
 from unity_sps_ogc_processes_api.models.link import Link
 

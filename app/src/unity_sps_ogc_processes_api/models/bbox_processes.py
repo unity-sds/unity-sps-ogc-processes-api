@@ -21,6 +21,7 @@ import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Union
 
 from pydantic import BaseModel, StrictFloat, StrictInt
+
 from unity_sps_ogc_processes_api.models.bbox_def_crs import BboxDefCrs
 
 try:

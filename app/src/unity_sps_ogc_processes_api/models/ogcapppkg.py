@@ -20,7 +20,10 @@ import pprint
 from typing import Any, ClassVar, Dict, List
 
 from pydantic import BaseModel, Field
-from unity_sps_ogc_processes_api.models.ogcapppkg_execution_unit import OgcapppkgExecutionUnit
+
+from unity_sps_ogc_processes_api.models.ogcapppkg_execution_unit import (
+    OgcapppkgExecutionUnit,
+)
 from unity_sps_ogc_processes_api.models.process import Process
 
 try:

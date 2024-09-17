@@ -3,8 +3,9 @@
 import importlib
 import pkgutil
 
-import openapi_server.impl
 from fastapi import APIRouter
+
+import openapi_server.impl
 from unity_sps_ogc_processes_api.apis.health_api_base import BaseHealthApi
 from unity_sps_ogc_processes_api.models.exception import Exception
 from unity_sps_ogc_processes_api.models.health_check import HealthCheck

@@ -4,16 +4,17 @@ import re
 
 import fakeredis
 import pytest
-from app.database import Base
-from app.main import app, get_db, get_redis_locking_client, get_settings
-from app.redis import RedisLock
-from app.schemas.ogc_processes import Execute, Process, StatusCode, StatusInfo
 from fastapi import status
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+from app.database import Base
+from app.main import app, get_db, get_redis_locking_client, get_settings
+from app.redis import RedisLock
+from app.schemas.ogc_processes import Execute, Process, StatusCode, StatusInfo
 
 settings = get_settings()
 SQLALCHEMY_DATABASE_URL = settings.DB_URL

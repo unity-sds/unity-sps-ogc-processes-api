@@ -4,13 +4,18 @@ import importlib
 import pkgutil
 from typing import Dict
 
-import openapi_server.impl
 from fastapi import APIRouter, Depends, Header, Path
+from sqlalchemy.orm import Session
+
+import openapi_server.impl
 from openapi_server.config.config import Settings
 from openapi_server.utils.redis import RedisLock
-from sqlalchemy.orm import Session
 from unity_sps_ogc_processes_api.apis.jobs_api_base import BaseJobsApi
-from unity_sps_ogc_processes_api.dependencies import get_db, get_redis_locking_client, get_settings
+from unity_sps_ogc_processes_api.dependencies import (
+    get_db,
+    get_redis_locking_client,
+    get_settings,
+)
 from unity_sps_ogc_processes_api.models.exception import Exception
 from unity_sps_ogc_processes_api.models.extra_models import TokenModel  # noqa: F401
 from unity_sps_ogc_processes_api.models.inline_or_ref_data import InlineOrRefData

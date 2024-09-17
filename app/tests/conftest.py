@@ -8,13 +8,18 @@ from fastapi import status
 
 # from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
-from openapi_server.database import Base
-from openapi_server.database.models import Process
-from openapi_server.utils.redis import RedisLock
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from unity_sps_ogc_processes_api.dependencies import get_db, get_redis_locking_client, get_settings
+
+from openapi_server.database import Base
+from openapi_server.database.models import Process
+from openapi_server.utils.redis import RedisLock
+from unity_sps_ogc_processes_api.dependencies import (
+    get_db,
+    get_redis_locking_client,
+    get_settings,
+)
 from unity_sps_ogc_processes_api.main import app
 
 settings = get_settings()

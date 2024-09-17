@@ -3,15 +3,16 @@ from typing import Dict
 
 import requests
 from fastapi import HTTPException, status
-from openapi_server.config.config import Settings
-from openapi_server.database import crud
-from openapi_server.utils.redis import RedisLock
 from redis.exceptions import LockError
 
 # from jsonschema import ValidationError, validate
 from requests.auth import HTTPBasicAuth
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
+
+from openapi_server.config.config import Settings
+from openapi_server.database import crud
+from openapi_server.utils.redis import RedisLock
 from unity_sps_ogc_processes_api.apis.jobs_api_base import BaseJobsApi
 from unity_sps_ogc_processes_api.models.inline_or_ref_data import InlineOrRefData
 from unity_sps_ogc_processes_api.models.job_list import JobList

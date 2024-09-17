@@ -5,9 +5,12 @@ import pprint
 from typing import Any, Dict, List, Union
 
 from pydantic import RootModel, model_validator
+
 from unity_sps_ogc_processes_api.models.bbox1 import Bbox1
 from unity_sps_ogc_processes_api.models.link import Link
-from unity_sps_ogc_processes_api.models.qualified_input_value1 import QualifiedInputValue1
+from unity_sps_ogc_processes_api.models.qualified_input_value1 import (
+    QualifiedInputValue1,
+)
 
 
 class Input(RootModel):

@@ -20,7 +20,14 @@ import pprint
 import re  # noqa: F401
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel, StrictFloat, StrictInt, StrictStr, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
+    ValidationError,
+    field_validator,
+)
 from typing_extensions import Literal
 
 try:

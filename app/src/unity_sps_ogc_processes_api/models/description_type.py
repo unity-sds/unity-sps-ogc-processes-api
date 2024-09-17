@@ -21,6 +21,7 @@ import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional
 
 from pydantic import BaseModel, StrictStr
+
 from unity_sps_ogc_processes_api.models.metadata import Metadata
 
 try:

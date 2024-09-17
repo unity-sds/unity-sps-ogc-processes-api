@@ -2,6 +2,9 @@ import json
 import os
 
 import pytest
+from fastapi import status
+from fastapi.encoders import jsonable_encoder
+
 from app.schemas.ogc_processes import (
     ConfClasses,
     Execute,
@@ -14,8 +17,6 @@ from app.schemas.ogc_processes import (
     StatusInfo,
 )
 from app.schemas.unity_sps import HealthCheck
-from fastapi import status
-from fastapi.encoders import jsonable_encoder
 
 
 def test_get_landing_page(client):

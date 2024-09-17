@@ -22,6 +22,7 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, ValidationError, field_validator
 from typing_extensions import Literal
+
 from unity_sps_ogc_processes_api.models.link import Link
 
 try:
@@ -173,8 +174,12 @@ class InlineOrRefDataWorkflows(BaseModel):
         return pprint.pformat(self.model_dump())
 
 
-from unity_sps_ogc_processes_api.models.input_value_no_object_workflows import InputValueNoObjectWorkflows
-from unity_sps_ogc_processes_api.models.qualified_input_value_workflows import QualifiedInputValueWorkflows
+from unity_sps_ogc_processes_api.models.input_value_no_object_workflows import (
+    InputValueNoObjectWorkflows,
+)
+from unity_sps_ogc_processes_api.models.qualified_input_value_workflows import (
+    QualifiedInputValueWorkflows,
+)
 
 # TODO: Rewrite to not use raise_errors
 InlineOrRefDataWorkflows.model_rebuild(raise_errors=False)

@@ -20,12 +20,15 @@ import pprint
 from typing import Any, Dict, List, Union
 
 from pydantic import RootModel, ValidationError, model_validator
+
 from unity_sps_ogc_processes_api.models.bbox1 import Bbox1
 from unity_sps_ogc_processes_api.models.input_collection import InputCollection
 from unity_sps_ogc_processes_api.models.input_parameterized import InputParameterized
 from unity_sps_ogc_processes_api.models.input_process import InputProcess
 from unity_sps_ogc_processes_api.models.link import Link
-from unity_sps_ogc_processes_api.models.qualified_input_value_workflows import QualifiedInputValueWorkflows
+from unity_sps_ogc_processes_api.models.qualified_input_value_workflows import (
+    QualifiedInputValueWorkflows,
+)
 
 
 class InputWorkflows(RootModel):

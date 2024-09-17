@@ -159,7 +159,9 @@ class InputValueWorkflows(BaseModel):
         return pprint.pformat(self.model_dump())
 
 
-from unity_sps_ogc_processes_api.models.input_value_no_object_workflows import InputValueNoObjectWorkflows
+from unity_sps_ogc_processes_api.models.input_value_no_object_workflows import (
+    InputValueNoObjectWorkflows,
+)
 
 # TODO: Rewrite to not use raise_errors
 InputValueWorkflows.model_rebuild(raise_errors=False)

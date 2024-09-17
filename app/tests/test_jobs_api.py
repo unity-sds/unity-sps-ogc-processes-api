@@ -1,8 +1,11 @@
 # coding: utf-8
 
 from fastapi.testclient import TestClient
+
 from unity_sps_ogc_processes_api.models.exception import Exception  # noqa: F401
-from unity_sps_ogc_processes_api.models.inline_or_ref_data import InlineOrRefData  # noqa: F401
+from unity_sps_ogc_processes_api.models.inline_or_ref_data import (  # noqa: F401
+    InlineOrRefData,
+)
 from unity_sps_ogc_processes_api.models.job_list import JobList  # noqa: F401
 from unity_sps_ogc_processes_api.models.status_info import StatusInfo  # noqa: F401
 

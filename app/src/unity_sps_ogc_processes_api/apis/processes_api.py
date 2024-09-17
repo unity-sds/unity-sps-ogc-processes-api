@@ -3,13 +3,18 @@
 import importlib
 import pkgutil
 
-import openapi_server.impl
 from fastapi import APIRouter, Body, Depends, Header, Path, Query
+from sqlalchemy.orm import Session
+
+import openapi_server.impl
 from openapi_server.config.config import Settings
 from openapi_server.utils.redis import RedisLock
-from sqlalchemy.orm import Session
 from unity_sps_ogc_processes_api.apis.processes_api_base import BaseProcessesApi
-from unity_sps_ogc_processes_api.dependencies import get_db, get_redis_locking_client, get_settings
+from unity_sps_ogc_processes_api.dependencies import (
+    get_db,
+    get_redis_locking_client,
+    get_settings,
+)
 from unity_sps_ogc_processes_api.models.exception import Exception
 from unity_sps_ogc_processes_api.models.execute200_response import Execute200Response
 from unity_sps_ogc_processes_api.models.execute_workflows import ExecuteWorkflows

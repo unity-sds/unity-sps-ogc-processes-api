@@ -14,15 +14,24 @@
 
 
 from fastapi import Depends, FastAPI
+
 from openapi_server.database import engine, models
 from unity_sps_ogc_processes_api.apis.api_api import router as APIApiRouter
-from unity_sps_ogc_processes_api.apis.conformance_api import router as ConformanceApiRouter
+from unity_sps_ogc_processes_api.apis.conformance_api import (
+    router as ConformanceApiRouter,
+)
 from unity_sps_ogc_processes_api.apis.dru_api import router as DRUApiRouter
 from unity_sps_ogc_processes_api.apis.health_api import router as HealthApiRouter
 from unity_sps_ogc_processes_api.apis.jobs_api import router as JobsApiRouter
-from unity_sps_ogc_processes_api.apis.landing_page_api import router as LandingPageApiRouter
+from unity_sps_ogc_processes_api.apis.landing_page_api import (
+    router as LandingPageApiRouter,
+)
 from unity_sps_ogc_processes_api.apis.processes_api import router as ProcessesApiRouter
-from unity_sps_ogc_processes_api.dependencies import get_db, get_redis_locking_client, get_settings
+from unity_sps_ogc_processes_api.dependencies import (
+    get_db,
+    get_redis_locking_client,
+    get_settings,
+)
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
