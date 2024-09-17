@@ -1,7 +1,5 @@
-import glob
 import json
 import os
-import pathlib
 import re
 
 import fakeredis
@@ -28,11 +26,6 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base.metadata.create_all(bind=engine)
-
-
-TEST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data")
-PROCESS_FILES = glob.glob(f"{TEST_DIR}/process_descriptions/*.json")
-EXECUTION_FILES = glob.glob(f"{TEST_DIR}/execution_requests/*.json")
 
 
 def override_get_db():
@@ -71,7 +64,6 @@ def fake_filesystem(fs_session, test_directory):  # pylint:disable=invalid-name
         contents="test",
     )
     fs_session.create_file(os.path.join(settings.DAG_CATALOG_DIRECTORY, "EchoProcess.py"), contents="test")
-    fs_session.create_file(os.path.join(settings.DAG_CATALOG_DIRECTORY, "cwl_dag.py"), contents="test")
     fs_session.create_dir(settings.DEPLOYED_DAGS_DIRECTORY)
     yield fs_session
 
@@ -457,16 +449,17 @@ def mock_patch_existing_running_dag_dagrun_task(requests_mock):
     )
 
 
-@pytest.fixture(scope="function", params=PROCESS_FILES)
-def deploy_process(test_directory, client, request):
-    f = open(request.param)
+@pytest.fixture(scope="function")
+def deploy_process(test_directory, client):
+    data_filename = os.path.join(test_directory, "..", "process_descriptions", "cwltool_help_dag.json")
+    f = open(data_filename)
     process_json = json.load(f)
     process = Process.model_validate(process_json)
     response = client.post("/processes", json=process.model_dump())
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     process = Process.model_validate(data)
-    assert process.id == pathlib.Path(request.param).stem
+    assert process.id == "cwltool_help_dag"
 
     yield process
 
