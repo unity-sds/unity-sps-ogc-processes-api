@@ -1,0 +1,3441 @@
+openapi: 3.0.0
+info:
+  contact:
+    email: info@ogc.org
+    name: Open Geospatial Consortium
+  description: Example API Definition for OGC API - Processes
+  license:
+    name: OGC License
+    url: http://www.opengeospatial.org/legal/
+  title: OGC API - Processes
+  version: "0.1"
+servers:
+- description: "Example Server 1 (GNOSIS, supporting Part 1: Core /Sync and Part 3:\
+    \ Workflows)"
+  url: https://maps.gnosis.earth/ogcapi
+paths:
+  /:
+    get:
+      operationId: getLandingPage
+      parameters:
+      - description: "The format of the response. If no value is provided, the accept\
+          \ header is used to determine the format. Accepted values are 'json' or\
+          \ 'html'."
+        explode: false
+        in: query
+        name: f
+        required: false
+        schema:
+          enum:
+          - json
+          - html
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/landingPage'
+            text/html:
+              schema:
+                type: string
+          description: |-
+            The landing page provides links to the API definition (link relation `service-desc`, in this case path `/api`),
+            to the Conformance declaration (path `/conformance`, link relation `http://www.opengis.net/def/rel/ogc/1.0/conformance`), and to other resources.
+        "406":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "Content negotiation failed. For example, the `Accept` header\
+            \ submitted in the request did not support any of the media types supported\
+            \ by the server for the requested resource."
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: Retrieve the OGC API landing page for this service.
+      tags:
+      - Landing Page
+  /conformance:
+    get:
+      operationId: getConformance
+      parameters:
+      - description: "The format of the response. If no value is provided, the accept\
+          \ header is used to determine the format. Accepted values are 'json' or\
+          \ 'html'."
+        explode: false
+        in: query
+        name: f
+        required: false
+        schema:
+          enum:
+          - json
+          - html
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/confClasses'
+                example:
+                  conformsTo:
+                  - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core
+                  - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/json
+                  - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/html
+                  - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/oas30
+                  - http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/collections
+                  - http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/core
+                  - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/nested-processes
+                  - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/remote-core-processes
+                  - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/collection-input
+                  - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/remote-collections
+                  - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/input-fields-modifiers
+                  - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/output-fields-modifiers
+                  - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/deployable-workflows
+                  - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/collection-output
+                  - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/cwl-workflows
+                  - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/openeo-workflows
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/core
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/tileset
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/tilesets-list
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/geodata-tilesets
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/dataset-tilesets
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/geodata-selection
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/jpeg
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/png
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/mvt
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/geojson
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/tiff
+                  - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/netcdf
+          description: |-
+            The URIs of all conformance classes supported by the server
+
+            To support "generic" clients that want to access multiple
+            OGC API - Processes implementations - and not "just" a specific
+            API / server, the server declares the conformance
+            classes it implements and conforms to.
+        "406":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "Content negotiation failed. For example, the `Accept` header\
+            \ submitted in the request did not support any of the media types supported\
+            \ by the server for the requested resource."
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: Retrieve the set of OGC API conformance classes that are supported
+        by this service.
+      tags:
+      - Conformance
+  /api:
+    get:
+      operationId: getAPI
+      parameters:
+      - description: "The format of the response. If no value is provided, the accept\
+          \ header is used to determine the format. Accepted values are 'json' or\
+          \ 'html'."
+        explode: false
+        in: query
+        name: f
+        required: false
+        schema:
+          enum:
+          - json
+          - html
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/vnd.oai.openapi+json;version=3.0:
+              schema:
+                type: object
+            text/html:
+              schema:
+                type: string
+          description: The OpenAPI definition of the API.
+        "406":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "Content negotiation failed. For example, the `Accept` header\
+            \ submitted in the request did not support any of the media types supported\
+            \ by the server for the requested resource."
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: Retrieve this API definition.
+      tags:
+      - API
+  /api/processes-list:
+    get:
+      operationId: getAPIProcesses
+      parameters:
+      - description: "The format of the response. If no value is provided, the accept\
+          \ header is used to determine the format. Accepted values are 'json' or\
+          \ 'html'."
+        explode: false
+        in: query
+        name: f
+        required: false
+        schema:
+          enum:
+          - json
+          - html
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/enumeration'
+            text/html:
+              schema:
+                type: string
+          description: An enumerated list of valid string values for API parameters.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "The requested resource does not exist on the server. For example,\
+            \ a path parameter had an incorrect value."
+        "406":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "Content negotiation failed. For example, the `Accept` header\
+            \ submitted in the request did not support any of the media types supported\
+            \ by the server for the requested resource."
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: Retrieve the list of processes available from this API implementation
+        & deployment.
+      tags:
+      - API
+  /processes:
+    get:
+      description: |
+        The list of processes contains a summary of each process the OGC API - Processes offers, including the link to a more detailed description of the process.
+
+        For more information, see [Section 7.7]https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_process_list).
+      operationId: getProcesses
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/processList'
+          description: Information about the available processes
+      summary: retrieve the list of available processes
+      tags:
+      - Processes
+    post:
+      description: |
+        Deploys a process.
+
+        For more information, see [Section 6.3](http://docs.ogc.org/DRAFTS/20-044.html#_87a6983e-d060-458c-95ab-27e232e64822).
+      operationId: deploy
+      parameters:
+      - description: Point to the workflow identifier for deploying a CWL containing
+          multiple workflow definitions
+        in: query
+        name: w
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/ogcapppkg+json:
+            schema:
+              $ref: '#/components/schemas/ogcapppkg'
+          application/cwl:
+            schema:
+              $ref: '#/components/schemas/cwl'
+          application/cwl+json:
+            schema:
+              $ref: '#/components/schemas/cwl'
+          application/cwl+yaml:
+            schema:
+              $ref: '#/components/schemas/cwl'
+        description: An OGC Application Package used to deploy a new process.
+        required: true
+      responses:
+        "201": {}
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: the processes is not mutable
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: the processes being added is already deployed (i.e. duplicate)
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: deploy a process.
+      tags:
+      - DRU
+  /processes/{processId}:
+    delete:
+      description: |
+        Undeploys a process.
+
+        For more information, see [Section 6.5](http://docs.ogc.org/DRAFTS/20-044.html#_16391f9e-538f-4a84-9710-72a6bab82842).
+      operationId: undeploy
+      parameters:
+      - in: path
+        name: processId
+        required: true
+        schema:
+          $ref: '#/components/schemas/processes-list'
+      responses:
+        "204":
+          description: successful operation (no response body)
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: the processes is not mutable
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "The requested resource does not exist on the server. For example,\
+            \ a path parameter had an incorrect value."
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: undeploy a process.
+      tags:
+      - DRU
+    get:
+      description: |
+        The process description contains information about inputs and outputs and a link to the execution-endpoint for the process. The Core does not mandate the use of a specific process description to specify the interface of a process. That said, the Core requirements class makes the following recommendation:
+
+        Implementations SHOULD consider supporting the OGC process description.
+
+        For more information, see [Section 7.8](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_process_description).
+      operationId: getProcessDescription
+      parameters:
+      - in: path
+        name: processId
+        required: true
+        schema:
+          $ref: '#/components/schemas/processes-list'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/process'
+          description: A process description.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "The requested resource does not exist on the server. For example,\
+            \ a path parameter had an incorrect value."
+      summary: retrieve a process description
+      tags:
+      - Processes
+    put:
+      description: |
+        Replaces a process.
+
+        For more information, see [Section 6.4](http://docs.ogc.org/DRAFTS/20-044.html#_18582f42-ebc6-4284-9333-c089068f62b6).
+      operationId: replace
+      parameters:
+      - in: path
+        name: processId
+        required: true
+        schema:
+          $ref: '#/components/schemas/processes-list'
+      requestBody:
+        content:
+          application/ogcapppkg+json:
+            schema:
+              $ref: '#/components/schemas/ogcapppkg'
+          application/cwl:
+            schema:
+              $ref: '#/components/schemas/cwl'
+          application/cwl+json:
+            schema:
+              $ref: '#/components/schemas/cwl'
+          application/cwl+yaml:
+            schema:
+              $ref: '#/components/schemas/cwl'
+        description: An OGC Application Package used to deploy a new process.
+        required: true
+      responses:
+        "204":
+          description: successful operation (no response body)
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: the processes is not mutable
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "The requested resource does not exist on the server. For example,\
+            \ a path parameter had an incorrect value."
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: the processes being added is already deployed (i.e. duplicate)
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: replace a process.
+      tags:
+      - DRU
+  /processes/{processId}/execution:
+    post:
+      callbacks:
+        jobCompleted:
+          '{$request.body#/subscriber/successUri}':
+            post:
+              operationId: jobCompleted_Post
+              requestBody:
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/results_1'
+              responses:
+                "200":
+                  description: Results received successfully
+              x-callback-request: true
+      description: |
+        Executes a process (this may result in the creation of a job resource e.g., for _asynchronous execution_).
+
+        For more information, see [Section 7.9](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_create_job).
+      operationId: execute
+      parameters:
+      - in: path
+        name: processId
+        required: true
+        schema:
+          $ref: '#/components/schemas/processes-list'
+      - description: |-
+          For executing the process using the _Collection Output_ mechanism, where the client is redirected (_303_ status) to either
+          an OGC API landing page or collection resource, from which one or more OGC API data access mechanism is available.
+          Data access requests may trigger processing on-demand for a given area, time and resolution of interest.
+        in: query
+        name: response
+        required: false
+        schema:
+          enum:
+          - collection
+          - landingPage
+          type: string
+      - description: |-
+          Indicates client preferences, including whether the client is capable of asynchronous processing.
+          A `respond-async` preference indicates a preference for asynchronous processing.
+          A `wait: <x>s` preference indicates that the client prefers to wait up to x seconds to receive a reponse synchronously before the server falls back to asynchronous processing.
+        in: header
+        name: Prefer
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/execute-workflows'
+        description: "An execution request specifying any inputs for the process to\
+          \ execute, and optionally to select specific outputs."
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/execute_200_response'
+            image/png:
+              schema:
+                format: binary
+                type: string
+            image/jpeg:
+              schema:
+                format: binary
+                type: string
+            image/tiff; application=geotiff:
+              schema:
+                format: binary
+                type: string
+            application/geo+json:
+              schema:
+                $ref: '#/components/schemas/execute_200_response_1'
+          description: Result of synchronous execution
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/statusInfo'
+          description: Started asynchronous execution. Created job.
+          headers:
+            Location:
+              description: URL to check the status of the execution/job.
+              schema:
+                type: string
+            Preference-Applied:
+              description: The preference applied to execute the process asynchronously
+                (see. RFC 2740).
+              schema:
+                type: string
+        "303":
+          description: "For _Collection Output_ execution, redirection to an OGC API\
+            \ landing page or collection."
+          headers:
+            Location:
+              description: |-
+                Location for redirection to an  [OGC API landing page](https://schemas.opengis.net/ogcapi/tiles/part1/1.0/openapi/schemas/common-core/landingPage.yaml) (for `response=landingPage`) as described in
+                [OGC API - Common - Part 1: Core](http://docs.ogc.org/DRAFTS/19-072.html#_landing_page_requirements_class) or
+                an [OGC API collection description](https://schemas.opengis.net/ogcapi/tiles/part1/1.0/openapi/schemas/common-geodata/collectionInfo.yaml) (for `response=landingPage`) as described in
+                [OGC API - Common - Part 2: Geospatial data](http://docs.ogc.org/DRAFTS/20-024.html#collection-description).
+                The collection redirected to or the collections linked from the landing page redirected to
+                must contain links to at least one data access mechanism (such as [_OGC API - Tiles_](https://opengeospatial.github.io/ogcna-auto-review/20-057.html),
+                [_DGGS_](https://opengeospatial.github.io/ogcna-auto-review/21-038.html),
+                [_Coverages_](http://docs.ogc.org/DRAFTS/19-087.html),
+                [_Features_](https://docs.opengeospatial.org/is/17-069r4/17-069r4.html),
+                [_EDR_](https://docs.ogc.org/is/19-086r5/19-086r5.html), or
+                [_Maps_](http://docs.ogc.org/DRAFTS/20-058.html)...) to retrieve output results, which may
+                trigger on-demand processing.
+              schema:
+                type: string
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "The requested resource does not exist on the server. For example,\
+            \ a path parameter had an incorrect value."
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: execute a process.
+      tags:
+      - Processes
+  /jobs:
+    get:
+      description: |
+        Lists available jobs.
+
+        For more information, see [Section 12](https://docs.ogc.org/is/18-062r2/18-062r2.html#Job_list).
+      operationId: getJobs
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jobList'
+          description: A list of jobs for this process.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "The requested resource does not exist on the server. For example,\
+            \ a path parameter had an incorrect value."
+      summary: retrieve the list of jobs.
+      tags:
+      - Jobs
+  /jobs/{jobId}:
+    delete:
+      description: |
+        Cancel a job execution and remove it from the jobs list.
+
+        For more information, see [Section 14]https://docs.ogc.org/is/18-062r2/18-062r2.html#Dismiss).
+      operationId: dismiss
+      parameters:
+      - description: local identifier of a job
+        in: path
+        name: jobId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/statusInfo'
+          description: The status of a job.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "The requested resource does not exist on the server. For example,\
+            \ a path parameter had an incorrect value."
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: "cancel a job execution, remove a finished job"
+      tags:
+      - Jobs
+    get:
+      description: |
+        Shows the status of a job.
+
+         For more information, see [Section 7.10](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_status_info).
+      operationId: getStatus
+      parameters:
+      - description: local identifier of a job
+        in: path
+        name: jobId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/statusInfo'
+          description: The status of a job.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "The requested resource does not exist on the server. For example,\
+            \ a path parameter had an incorrect value."
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: retrieve the status of a job
+      tags:
+      - Jobs
+  /jobs/{jobId}/results:
+    get:
+      description: |
+        Lists available results of a job. In case of a failure, lists exceptions instead.
+
+        For more information, see [Section 7.11](https://docs.ogc.org/is/18-062r2/18-062r2.html#sc_retrieve_job_results).
+      operationId: getResult
+      parameters:
+      - description: local identifier of a job
+        in: path
+        name: jobId
+        required: true
+        schema:
+          type: string
+      - description: |-
+          Indicates client preferences, such as whether the client wishes a self-contained or minimal response.
+          A `return=minimal` preference indicates that the client would prefer that links be returned to larger object to minimize the response payload.
+          A `return=representation` indicates that the client would prefer if the server can return a self-contained response.
+        in: header
+        name: Prefer
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/results'
+          description: The processing results of a job.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: "The requested resource does not exist on the server. For example,\
+            \ a path parameter had an incorrect value."
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+          description: A server error occurred.
+      summary: retrieve the result(s) of a job
+      tags:
+      - Jobs
+components:
+  parameters:
+    f-metadata:
+      description: "The format of the response. If no value is provided, the accept\
+        \ header is used to determine the format. Accepted values are 'json' or 'html'."
+      explode: false
+      in: query
+      name: f
+      required: false
+      schema:
+        enum:
+        - json
+        - html
+        type: string
+      style: form
+    datetime:
+      description: |-
+        Either a date-time or an interval, half-bounded or bounded. Date and time expressions
+        adhere to RFC 3339. Half-bounded intervals are expressed using double-dots.
+
+        Examples:
+
+        * A date-time: "2018-02-12T23:20:50Z"
+        * A bounded interval: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z"
+        * Half-bounded intervals: "2018-02-12T00:00:00Z/.." or "../2018-03-18T12:31:12Z"
+
+        Only features that have a temporal property that intersects the value of
+        `datetime` are selected.
+
+        If a feature has multiple temporal properties, it is the decision of the
+        server whether only a single temporal property is used to determine
+        the extent or all relevant temporal properties.
+      explode: false
+      in: query
+      name: datetime
+      required: false
+      schema:
+        type: string
+      style: form
+    crs:
+      description: reproject the output to the given crs
+      explode: true
+      in: query
+      name: crs
+      required: false
+      schema:
+        type: string
+      style: form
+    subset-crs:
+      description: crs for the specified subset
+      explode: true
+      in: query
+      name: subset-crs
+      required: false
+      schema:
+        type: string
+      style: form
+    processId-path:
+      in: path
+      name: processId
+      required: true
+      schema:
+        $ref: '#/components/schemas/processes-list'
+    outputId:
+      description: identifier of an output
+      in: path
+      name: outputID
+      required: true
+      schema:
+        type: string
+    jobId:
+      description: local identifier of a job
+      in: path
+      name: jobId
+      required: true
+      schema:
+        type: string
+    processId-query:
+      in: query
+      name: processID
+      required: false
+      schema:
+        items:
+          type: string
+        type: array
+    output:
+      explode: false
+      in: query
+      name: output
+      required: false
+      schema:
+        properties:
+          output:
+            type: string
+          mediaType:
+            type: string
+          encoding:
+            type: string
+          schema:
+            oneOf:
+            - format: url
+              type: string
+            - type: object
+        required:
+        - output
+        type: object
+    limit:
+      in: query
+      name: limit
+      required: false
+      schema:
+        default: 10
+        maximum: 1000
+        minimum: 1
+        type: integer
+    type:
+      in: query
+      name: type
+      required: false
+      schema:
+        items:
+          enum:
+          - process
+          type: string
+        type: array
+    status:
+      in: query
+      name: status
+      required: false
+      schema:
+        items:
+          $ref: ./schemas/processes-core/statusCode.yaml
+        type: array
+    minDuration:
+      in: query
+      name: minDuration
+      required: false
+      schema:
+        type: integer
+    maxDuration:
+      in: query
+      name: maxDuration
+      required: false
+      schema:
+        type: integer
+    w:
+      $ref: '#/components/parameters/w-param'
+    w-param:
+      description: Point to the workflow identifier for deploying a CWL containing
+        multiple workflow definitions
+      in: query
+      name: w
+      required: false
+      schema:
+        type: string
+    response:
+      description: |-
+        For executing the process using the _Collection Output_ mechanism, where the client is redirected (_303_ status) to either
+        an OGC API landing page or collection resource, from which one or more OGC API data access mechanism is available.
+        Data access requests may trigger processing on-demand for a given area, time and resolution of interest.
+      in: query
+      name: response
+      required: false
+      schema:
+        enum:
+        - collection
+        - landingPage
+        type: string
+    prefer-header-execution:
+      description: |-
+        Indicates client preferences, including whether the client is capable of asynchronous processing.
+        A `respond-async` preference indicates a preference for asynchronous processing.
+        A `wait: <x>s` preference indicates that the client prefers to wait up to x seconds to receive a reponse synchronously before the server falls back to asynchronous processing.
+      in: header
+      name: Prefer
+      schema:
+        type: string
+    prefer-header-results:
+      description: |-
+        Indicates client preferences, such as whether the client wishes a self-contained or minimal response.
+        A `return=minimal` preference indicates that the client would prefer that links be returned to larger object to minimize the response payload.
+        A `return=representation` indicates that the client would prefer if the server can return a self-contained response.
+      in: header
+      name: Prefer
+      schema:
+        type: string
+  responses:
+    NotFound:
+      $ref: '#/components/responses/rNotFound'
+    NotAcceptable:
+      $ref: '#/components/responses/rNotAcceptable'
+    ServerError:
+      $ref: '#/components/responses/rServerError'
+    InvalidParameter:
+      $ref: '#/components/responses/rInvalidParameter'
+    NotAllowed:
+      $ref: '#/components/responses/rNotAllowed'
+    Exception:
+      $ref: '#/components/responses/rException'
+    LandingPage:
+      $ref: '#/components/responses/rLandingPage'
+    Conformance:
+      $ref: '#/components/responses/rConformance'
+    API:
+      $ref: '#/components/responses/rAPI'
+    Enumeration:
+      $ref: '#/components/responses/rEnumeration'
+    ProcessList:
+      $ref: '#/components/responses/rProcessList'
+    ProcessDescription:
+      $ref: '#/components/responses/rProcessDescription'
+    Results:
+      $ref: '#/components/responses/rResults'
+    Status:
+      $ref: '#/components/responses/rStatus'
+    JobList:
+      $ref: '#/components/responses/rJobList'
+    ExecuteAsync:
+      $ref: '#/components/responses/rExecuteAsync'
+    ExecuteSync:
+      $ref: '#/components/responses/rExecuteSync'
+    ExecuteSyncRawRef:
+      $ref: '#/components/responses/rExecuteSyncRawRef'
+    EmptyResponse:
+      $ref: '#/components/responses/rEmpty'
+    DeployProcess:
+      $ref: '#/components/responses/rDeployProcess'
+    DuplicateProcess:
+      $ref: '#/components/responses/rDuplicateProcess'
+    ImmutableProcess:
+      $ref: '#/components/responses/rImmutableProcess'
+    rLandingPage:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/landingPage'
+        text/html:
+          schema:
+            type: string
+      description: |-
+        The landing page provides links to the API definition (link relation `service-desc`, in this case path `/api`),
+        to the Conformance declaration (path `/conformance`, link relation `http://www.opengis.net/def/rel/ogc/1.0/conformance`), and to other resources.
+    rNotAcceptable:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exception'
+        text/html:
+          schema:
+            type: string
+      description: "Content negotiation failed. For example, the `Accept` header submitted\
+        \ in the request did not support any of the media types supported by the server\
+        \ for the requested resource."
+    rServerError:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exception'
+        text/html:
+          schema:
+            type: string
+      description: A server error occurred.
+    rConformance:
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/confClasses'
+            example:
+              conformsTo:
+              - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/core
+              - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/json
+              - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/html
+              - http://www.opengis.net/spec/ogcapi-common-1/1.0/conf/oas30
+              - http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/collections
+              - http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/core
+              - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/nested-processes
+              - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/remote-core-processes
+              - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/collection-input
+              - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/remote-collections
+              - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/input-fields-modifiers
+              - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/output-fields-modifiers
+              - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/deployable-workflows
+              - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/collection-output
+              - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/cwl-workflows
+              - http://www.opengis.net/spec/ogcapi-processes-3/0.0/conf/openeo-workflows
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/core
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/tileset
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/tilesets-list
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/geodata-tilesets
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/dataset-tilesets
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/geodata-selection
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/jpeg
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/png
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/mvt
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/geojson
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/tiff
+              - http://www.opengis.net/spec/ogcapi-tiles-1/1.0/conf/netcdf
+      description: |-
+        The URIs of all conformance classes supported by the server
+
+        To support "generic" clients that want to access multiple
+        OGC API - Processes implementations - and not "just" a specific
+        API / server, the server declares the conformance
+        classes it implements and conforms to.
+    rAPI:
+      content:
+        application/vnd.oai.openapi+json;version=3.0:
+          schema:
+            type: object
+        text/html:
+          schema:
+            type: string
+      description: The OpenAPI definition of the API.
+    rEnumeration:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/enumeration'
+        text/html:
+          schema:
+            type: string
+      description: An enumerated list of valid string values for API parameters.
+    rNotFound:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exception'
+        text/html:
+          schema:
+            type: string
+      description: "The requested resource does not exist on the server. For example,\
+        \ a path parameter had an incorrect value."
+    rProcessList:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/processList'
+      description: Information about the available processes
+    processSummary: {}
+    rImmutableProcess:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exception'
+        text/html:
+          schema:
+            type: string
+      description: the processes is not mutable
+    rDuplicateProcess:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exception'
+        text/html:
+          schema:
+            type: string
+      description: the processes being added is already deployed (i.e. duplicate)
+    rProcessDescription:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/process'
+      description: A process description.
+    rEmpty:
+      description: successful operation (no response body)
+    rExecuteSync:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/execute_200_response'
+        image/png:
+          schema:
+            format: binary
+            type: string
+        image/jpeg:
+          schema:
+            format: binary
+            type: string
+        image/tiff; application=geotiff:
+          schema:
+            format: binary
+            type: string
+        application/geo+json:
+          schema:
+            $ref: '#/components/schemas/execute_200_response_1'
+      description: Result of synchronous execution
+    rExecuteAsync:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/statusInfo'
+      description: Started asynchronous execution. Created job.
+      headers:
+        Location:
+          description: URL to check the status of the execution/job.
+          schema:
+            type: string
+        Preference-Applied:
+          description: The preference applied to execute the process asynchronously
+            (see. RFC 2740).
+          schema:
+            type: string
+    rExecuteCollectionRedirect:
+      description: "For _Collection Output_ execution, redirection to an OGC API landing\
+        \ page or collection."
+      headers:
+        Location:
+          description: |-
+            Location for redirection to an  [OGC API landing page](https://schemas.opengis.net/ogcapi/tiles/part1/1.0/openapi/schemas/common-core/landingPage.yaml) (for `response=landingPage`) as described in
+            [OGC API - Common - Part 1: Core](http://docs.ogc.org/DRAFTS/19-072.html#_landing_page_requirements_class) or
+            an [OGC API collection description](https://schemas.opengis.net/ogcapi/tiles/part1/1.0/openapi/schemas/common-geodata/collectionInfo.yaml) (for `response=landingPage`) as described in
+            [OGC API - Common - Part 2: Geospatial data](http://docs.ogc.org/DRAFTS/20-024.html#collection-description).
+            The collection redirected to or the collections linked from the landing page redirected to
+            must contain links to at least one data access mechanism (such as [_OGC API - Tiles_](https://opengeospatial.github.io/ogcna-auto-review/20-057.html),
+            [_DGGS_](https://opengeospatial.github.io/ogcna-auto-review/21-038.html),
+            [_Coverages_](http://docs.ogc.org/DRAFTS/19-087.html),
+            [_Features_](https://docs.opengeospatial.org/is/17-069r4/17-069r4.html),
+            [_EDR_](https://docs.ogc.org/is/19-086r5/19-086r5.html), or
+            [_Maps_](http://docs.ogc.org/DRAFTS/20-058.html)...) to retrieve output results, which may
+            trigger on-demand processing.
+          schema:
+            type: string
+    rJobList:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/jobList'
+      description: A list of jobs for this process.
+    rStatus:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/statusInfo'
+      description: The status of a job.
+    rResults:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/results'
+      description: The processing results of a job.
+    rInvalidParameter:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exception'
+        text/html:
+          schema:
+            type: string
+      description: A query parameter has an invalid value.
+    rNotAllowed:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exception'
+        text/html:
+          schema:
+            type: string
+      description: The method is not allowed at the path.
+    rException:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/exception'
+        text/html:
+          schema:
+            type: string
+      description: An error occured.
+    rExecuteSyncRawRef:
+      description: Synchronous execution response.
+      headers:
+        Link:
+          description: One or more Link headers pointing to each raw output.
+          schema:
+            type: string
+    rDeployProcess:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/staticIndicator'
+      description: the process is deployed
+      headers:
+        Location:
+          description: URL to fetch the processDescription of the deployed process
+          schema:
+            type: string
+  schemas:
+    confClasses:
+      properties:
+        conformsTo:
+          items:
+            example: http://www.opengis.net/spec/ogcapi-processes-1/1.0/conf/core
+            type: string
+          title: conformsTo
+          type: array
+      required:
+      - conformsTo
+      title: confClasses
+      type: object
+    link:
+      example:
+        hreflang: en
+        rel: service
+        href: href
+        type: application/json
+        title: title
+      properties:
+        href:
+          title: href
+          type: string
+        rel:
+          example: service
+          title: rel
+          type: string
+        type:
+          example: application/json
+          title: type
+          type: string
+        hreflang:
+          example: en
+          title: hreflang
+          type: string
+        title:
+          title: title
+          type: string
+      required:
+      - href
+      title: link
+      type: object
+    landingPage:
+      example:
+        attribution: attribution
+        description: Example server implementing the OGC API - Processes 1.0 Standard
+        links:
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        title: Example processing server
+      properties:
+        title:
+          example: Example processing server
+          title: title
+          type: string
+        description:
+          example: Example server implementing the OGC API - Processes 1.0 Standard
+          title: description
+          type: string
+        attribution:
+          description: "The `attribution` should be short and intended for presentation\
+            \ to a user, for example, in a corner of a map. Parts of the text can\
+            \ be links to other resources if additional information is needed. The\
+            \ string can include HTML markup."
+          title: attribution for the Processes API
+          type: string
+        links:
+          items:
+            $ref: '#/components/schemas/link'
+          title: links
+          type: array
+      required:
+      - links
+      title: landingPage
+      type: object
+    exception:
+      additionalProperties: true
+      description: JSON schema for exceptions based on RFC 7807
+      example:
+        instance: instance
+        detail: detail
+        type: type
+        title: title
+        status: 0
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+      required:
+      - type
+      title: Exception Schema
+      type: object
+    collections:
+      properties:
+        links:
+          items:
+            $ref: '#/components/schemas/link'
+          type: array
+        timeStamp:
+          format: date-time
+          type: string
+        numberMatched:
+          example: 1
+          minimum: 0
+          type: integer
+        numberReturned:
+          example: 1
+          minimum: 0
+          type: integer
+        collections:
+          items:
+            $ref: '#/components/schemas/collectionInfo'
+          type: array
+      required:
+      - collections
+      - links
+      type: object
+    collectionInfo:
+      properties:
+        id:
+          description: "identifier of the collection used, for example, in URIs"
+          example: dem
+          title: id
+          type: string
+        title:
+          description: human readable title of the collection
+          example: Digital Elevation Model
+          title: title
+          type: string
+        description:
+          description: a description of the data in the collection
+          example: A Digital Elevation Model.
+          title: description
+          type: string
+        links:
+          example:
+          - href: http://data.example.org/collections/dem?f=json
+            rel: self
+            type: application/json
+            title: Digital Elevation Model
+          - href: http://data.example.org/collections/dem?f=html
+            rel: alternate
+            type: application/json
+            title: Digital Elevation Model
+          - href: http://data.example.org/collections/dem/coverage
+            rel: coverage
+            type: image/tiff; application=geotiff
+            title: Digital Elevation Model
+          - href: http://data.example.org/collections/dem/coverage/domainset
+            rel: domainset
+            type: application/json
+            title: Digital Elevation Model
+          - href: http://data.example.org/collections/dem/coverage/rangetype
+            rel: rangetype
+            type: application/json
+            title: Digital Elevation Model
+          - href: http://data.example.org/collections/dem/coverage/metadata
+            rel: metadata
+            type: application/json
+            title: Digital Elevation Model
+          items:
+            $ref: '#/components/schemas/link'
+          title: links
+          type: array
+        extent:
+          $ref: '#/components/schemas/extent-uad'
+        itemType:
+          default: unknown
+          description: "indicator about the type of the items in the collection if\
+            \ the collection has an accessible /collections/{collectionId}/items endpoint"
+          title: itemType
+          type: string
+        crs:
+          default:
+          - http://www.opengis.net/def/crs/OGC/1.3/CRS84
+          description: the list of coordinate reference systems supported by the API;
+            the first item is the default coordinate reference system
+          example:
+          - http://www.opengis.net/def/crs/OGC/1.3/CRS84
+          - http://www.opengis.net/def/crs/EPSG/0/4326
+          items:
+            type: string
+          title: crs
+          type: array
+        dataType:
+          $ref: '#/components/schemas/collectionInfo_dataType'
+        geometryDimension:
+          description: "The geometry dimension of the features shown in this layer\
+            \ (0: points, 1: curves, 2: surfaces, 3: solids), unspecified: mixed or\
+            \ unknown"
+          maximum: 3
+          minimum: 0
+          title: geometryDimension
+          type: integer
+        minScaleDenominator:
+          description: Minimum scale denominator for usage of the collection
+          title: minScaleDenominator
+          type: number
+        maxScaleDenominator:
+          description: Maximum scale denominator for usage of the collection
+          title: maxScaleDenominator
+          type: number
+        minCellSize:
+          description: Minimum cell size for usage of the collection
+          title: minCellSize
+          type: number
+        maxCellSize:
+          description: Maximum cell size for usage of the collection
+          title: maxCellSize
+          type: number
+      required:
+      - id
+      - links
+      title: collectionInfo
+      type: object
+    extent:
+      description: |-
+        The extent of the data in the collection. In the Core only spatial and temporal
+        extents are specified. Extensions may add additional members to represent other
+        extents, for example, thermal or pressure ranges.
+
+        The first item in the array describes the overall extent of
+        the data. All subsequent items describe more precise extents,
+        e.g., to identify clusters of data.
+        Clients only interested in the overall extent will only need to
+        access the first item in each array.
+      properties:
+        spatial:
+          $ref: '#/components/schemas/extent_spatial'
+        temporal:
+          $ref: '#/components/schemas/extent_temporal'
+      title: extent
+      type: object
+    extent-uad:
+      allOf:
+      - $ref: '#/components/schemas/extent'
+      - additionalProperties:
+          description: The domain intervals for any additional dimensions of the extent
+            (envelope) beyond those described in temporal and spatial.
+          oneOf:
+          - required:
+            - crs
+            - interval
+            type: object
+          - required:
+            - interval
+            - trs
+            type: object
+          - required:
+            - interval
+            - vrs
+            type: object
+          properties:
+            interval:
+              description: |-
+                One or more intervals that describe the extent for this dimension of the dataset.
+                The value `null` is supported and indicates an unbounded or half-bounded interval.
+                The first interval describes the overall extent of the data for this dimension.
+                All subsequent intervals describe more precise intervals, e.g., to identify clusters of data.
+                Clients only interested in the overall extent will only need
+                to access the first item (a pair of lower and upper bound values).
+              items:
+                description: |-
+                  Lower and upper bound values of the interval. The values
+                  are in the coordinate reference system specified in `crs`, `trs` or `vrs`.
+                example:
+                - 2011-11-11T12:22:11Z
+                - 32.5
+                - null
+                items:
+                  oneOf:
+                  - nullable: true
+                    type: string
+                  - type: number
+                maxItems: 2
+                minItems: 2
+                type: array
+              minItems: 1
+              type: array
+            crs:
+              description: generic coordinate reference system suitable for any type
+                of dimensions
+              type: string
+            trs:
+              description: temporal coordinate reference system (e.g. as defined by
+                Features for 'temporal')
+              type: string
+            vrs:
+              description: vertical coordinate reference system (e.g. as defined in
+                EDR for 'vertical')
+              type: string
+            grid:
+              description: Provides information about the limited availability of
+                data within the collection organized as a grid (regular or irregular)
+                along the dimension.
+              properties:
+                coordinates:
+                  description: |-
+                    List of coordinates along the temporal dimension for which data organized as an irregular grid in the collection is available
+                    (e.g., 2, 10, 80, 100).
+                  example:
+                  - 2
+                  - 10
+                  - 80
+                  - 100
+                  items:
+                    oneOf:
+                    - nullable: true
+                      type: string
+                    - type: number
+                  minItems: 1
+                  type: array
+                cellsCount:
+                  description: |-
+                    Number of samples available along the dimension for data organized as a regular grid.
+                    For values representing the whole area of contiguous cells spanning _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_.
+                    For values representing infinitely small point cells spaced by _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_ + 1.
+                  example: 50
+                  type: integer
+                resolution:
+                  description: Resolution of regularly gridded data along the dimension
+                    in the collection
+                  example:
+                  - PT1H
+                  - 6.866455078E-4
+                  oneOf:
+                  - nullable: true
+                    type: string
+                  - type: number
+              type: object
+          type: object
+        type: object
+      description: |-
+        The extent module only addresses spatial and temporal extents. This module extends extent by specifying how
+        intervals and crs properties can be used to specify additional geometries.
+      title: Extent with Uniform Additional Dimensions Schema
+    crs:
+      oneOf:
+      - description: Simplification of the object into a url if the other properties
+          are not present
+        type: string
+      - $ref: '#/components/schemas/crs_oneOf'
+      title: CRS
+    dataType:
+      oneOf:
+      - type: string
+      - enum:
+        - map
+        - vector
+        - coverage
+        type: string
+      title: dataType
+    timeStamp:
+      description: This property indicates the time and date when the response was
+        generated using RFC 3339 notation.
+      example: 2017-08-17T08:05:32Z
+      format: date-time
+      type: string
+    numberReturned:
+      description: |-
+        The number of features in the feature collection.
+        A server may omit this information in a response, if the information
+        about the number of features is not known or difficult to compute.
+        If the value is provided, the value shall be identical to the number
+        of items in the "features" array.
+      example: 10
+      minimum: 0
+      type: integer
+    numberMatched:
+      description: |-
+        The number of features of the feature type that match the selection
+        parameters like `bbox`.
+      example: 127
+      minimum: 0
+      type: integer
+    enumeration:
+      example:
+        type: enum
+        enum:
+        - enum
+        - enum
+      properties:
+        type:
+          enum:
+          - enum
+          title: type
+          type: string
+        enum:
+          items:
+            type: string
+          title: enum
+          type: array
+      required:
+      - enum
+      - type
+      title: enumeration
+      type: object
+    processes-list:
+      enum:
+      - RenderMap
+      - ElevationContours
+      - OSMERE
+      title: processes-list
+      type: string
+    processSummary:
+      allOf:
+      - $ref: '#/components/schemas/descriptionType'
+      - properties:
+          id:
+            type: string
+          version:
+            type: string
+          jobControlOptions:
+            items:
+              $ref: '#/components/schemas/jobControlOptions'
+            type: array
+          links:
+            items:
+              $ref: '#/components/schemas/link'
+            type: array
+        required:
+        - id
+        - version
+        type: object
+      example:
+        metadata:
+        - hreflang: en
+          role: role
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        - hreflang: en
+          role: role
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        keywords:
+        - keywords
+        - keywords
+        description: description
+        links:
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        id: id
+        title: title
+        version: version
+        jobControlOptions:
+        - sync-execute
+        - sync-execute
+      title: processSummary
+    process:
+      allOf:
+      - $ref: '#/components/schemas/processSummary'
+      - properties:
+          inputs:
+            additionalProperties:
+              $ref: '#/components/schemas/inputDescription'
+            type: object
+          outputs:
+            additionalProperties:
+              $ref: '#/components/schemas/outputDescription'
+            type: object
+        type: object
+      example:
+        outputs:
+          key:
+            schema: null
+            metadata:
+            - null
+            - null
+            keywords:
+            - keywords
+            - keywords
+            description: description
+            title: title
+        metadata:
+        - hreflang: en
+          role: role
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        - hreflang: en
+          role: role
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        keywords:
+        - keywords
+        - keywords
+        inputs:
+          key:
+            schema:
+              $ref: $ref
+            metadata:
+            - null
+            - null
+            keywords:
+            - keywords
+            - keywords
+            minOccurs: 0
+            valuePassing:
+            - byValue
+            - byValue
+            description: description
+            maxOccurs: 6
+            title: title
+        description: description
+        links:
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        id: id
+        title: title
+        version: version
+        jobControlOptions:
+        - sync-execute
+        - sync-execute
+      title: process
+    processList:
+      example:
+        processes:
+        - metadata:
+          - hreflang: en
+            role: role
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          - hreflang: en
+            role: role
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          keywords:
+          - keywords
+          - keywords
+          description: description
+          links:
+          - hreflang: en
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          - hreflang: en
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          id: id
+          title: title
+          version: version
+          jobControlOptions:
+          - sync-execute
+          - sync-execute
+        - metadata:
+          - hreflang: en
+            role: role
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          - hreflang: en
+            role: role
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          keywords:
+          - keywords
+          - keywords
+          description: description
+          links:
+          - hreflang: en
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          - hreflang: en
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          id: id
+          title: title
+          version: version
+          jobControlOptions:
+          - sync-execute
+          - sync-execute
+        links:
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+      properties:
+        processes:
+          items:
+            $ref: '#/components/schemas/processSummary'
+          title: processes
+          type: array
+        links:
+          items:
+            $ref: '#/components/schemas/link'
+          title: links
+          type: array
+      required:
+      - links
+      - processes
+      title: processList
+      type: object
+    jobList:
+      example:
+        jobs:
+        - exception:
+            instance: instance
+            detail: detail
+            type: type
+            title: title
+            status: 0
+          jobID: jobID
+          processID: processID
+          created: 2000-01-23T04:56:07.000+00:00
+          progress: 8
+          started: 2000-01-23T04:56:07.000+00:00
+          finished: 2000-01-23T04:56:07.000+00:00
+          links:
+          - hreflang: en
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          - hreflang: en
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          type: process
+          message: message
+          updated: 2000-01-23T04:56:07.000+00:00
+          status: accepted
+        - exception:
+            instance: instance
+            detail: detail
+            type: type
+            title: title
+            status: 0
+          jobID: jobID
+          processID: processID
+          created: 2000-01-23T04:56:07.000+00:00
+          progress: 8
+          started: 2000-01-23T04:56:07.000+00:00
+          finished: 2000-01-23T04:56:07.000+00:00
+          links:
+          - hreflang: en
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          - hreflang: en
+            rel: service
+            href: href
+            type: application/json
+            title: title
+          type: process
+          message: message
+          updated: 2000-01-23T04:56:07.000+00:00
+          status: accepted
+        links:
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+      properties:
+        jobs:
+          items:
+            $ref: '#/components/schemas/statusInfo'
+          title: jobs
+          type: array
+        links:
+          items:
+            $ref: '#/components/schemas/link'
+          title: links
+          type: array
+      required:
+      - jobs
+      - links
+      title: jobList
+      type: object
+    bbox-processes:
+      properties:
+        bbox:
+          items:
+            type: number
+          oneOf:
+          - maxItems: 4
+            minItems: 4
+            type: object
+          - maxItems: 6
+            minItems: 6
+            type: object
+          title: bbox
+          type: array
+        crs:
+          $ref: '#/components/schemas/bbox-def-crs'
+      required:
+      - bbox
+      title: bbox
+      type: object
+    descriptionType:
+      properties:
+        title:
+          title: title
+          type: string
+        description:
+          title: description
+          type: string
+        keywords:
+          items:
+            type: string
+          title: keywords
+          type: array
+        metadata:
+          items:
+            $ref: '#/components/schemas/metadata'
+          title: metadata
+          type: array
+      title: descriptionType
+      type: object
+    binaryInputValue:
+      format: byte
+      type: string
+    execute:
+      properties:
+        inputs:
+          additionalProperties:
+            $ref: '#/components/schemas/input'
+          type: object
+        outputs:
+          additionalProperties:
+            $ref: '#/components/schemas/output'
+          type: object
+        subscriber:
+          $ref: '#/components/schemas/subscriber'
+      type: object
+    format:
+      properties:
+        mediaType:
+          title: mediaType
+          type: string
+        encoding:
+          title: encoding
+          type: string
+        schema:
+          $ref: '#/components/schemas/format_schema'
+      title: format
+      type: object
+    inputDescription:
+      allOf:
+      - $ref: '#/components/schemas/descriptionType'
+      - properties:
+          schema:
+            $ref: '#/components/schemas/schema'
+          minOccurs:
+            default: 1
+            type: integer
+          maxOccurs:
+            $ref: '#/components/schemas/inputDescription_allOf_maxOccurs'
+          valuePassing:
+            default:
+            - byValue
+            - byReference
+            items:
+              enum:
+              - byValue
+              - byReference
+              type: string
+            type: array
+        required:
+        - schema
+        type: object
+      example:
+        schema:
+          $ref: $ref
+        metadata:
+        - null
+        - null
+        keywords:
+        - keywords
+        - keywords
+        minOccurs: 0
+        valuePassing:
+        - byValue
+        - byValue
+        description: description
+        maxOccurs: 6
+        title: title
+      title: inputDescription
+    inputValue:
+      anyOf:
+      - $ref: '#/components/schemas/inputValueNoObject'
+      - type: object
+      title: inputValue
+    inputValueNoObject:
+      oneOf:
+      - type: string
+      - type: number
+      - type: integer
+      - type: boolean
+      - items:
+          type: object
+        type: array
+      - $ref: '#/components/schemas/binaryInputValue'
+      - $ref: '#/components/schemas/bbox'
+      title: inputValueNoObject
+    jobControlOptions:
+      enum:
+      - sync-execute
+      - async-execute
+      - dismiss
+      title: jobControlOptions
+      type: string
+    metadata:
+      oneOf:
+      - $ref: '#/components/schemas/metadata_oneOf'
+      - $ref: '#/components/schemas/metadata_oneOf_1'
+      title: metadata
+    output:
+      properties:
+        format:
+          $ref: '#/components/schemas/format'
+      title: output
+      type: object
+    outputDescription:
+      allOf:
+      - $ref: '#/components/schemas/descriptionType'
+      - properties:
+          schema:
+            $ref: '#/components/schemas/schema'
+        required:
+        - schema
+        type: object
+      example:
+        schema: null
+        metadata:
+        - null
+        - null
+        keywords:
+        - keywords
+        - keywords
+        description: description
+        title: title
+      title: outputDescription
+    qualifiedInputValue:
+      allOf:
+      - $ref: '#/components/schemas/format'
+      - properties:
+          value:
+            $ref: '#/components/schemas/inputValue'
+        required:
+        - value
+        type: object
+      title: qualifiedInputValue
+    reference:
+      additionalProperties: false
+      example:
+        $ref: $ref
+      properties:
+        $ref:
+          format: uri-reference
+          title: $ref
+          type: string
+      required:
+      - $ref
+      title: reference
+      type: object
+    results:
+      additionalProperties:
+        $ref: '#/components/schemas/inlineOrRefData'
+      type: object
+    schema:
+      oneOf:
+      - $ref: '#/components/schemas/reference'
+      - $ref: '#/components/schemas/schema_oneOf'
+      title: schema
+    statusCode:
+      enum:
+      - accepted
+      - running
+      - successful
+      - failed
+      - dismissed
+      nullable: false
+      title: statusCode
+      type: string
+    subscriber:
+      description: |-
+        Optional URIs for callbacks for this job.
+
+        Support for this parameter is not required and the parameter may be
+        removed from the API definition, if conformance class **'callback'**
+        is not listed in the conformance declaration under `/conformance`.
+      properties:
+        successUri:
+          format: uri
+          title: successUri
+          type: string
+        inProgressUri:
+          format: uri
+          title: inProgressUri
+          type: string
+        failedUri:
+          format: uri
+          title: failedUri
+          type: string
+      required:
+      - successUri
+      title: subscriber
+      type: object
+    inlineOrRefData:
+      oneOf:
+      - $ref: '#/components/schemas/inputValueNoObject'
+      - $ref: '#/components/schemas/qualifiedInputValue'
+      - $ref: '#/components/schemas/link'
+      title: inlineOrRefData
+    statusInfo:
+      example:
+        exception:
+          instance: instance
+          detail: detail
+          type: type
+          title: title
+          status: 0
+        jobID: jobID
+        processID: processID
+        created: 2000-01-23T04:56:07.000+00:00
+        progress: 8
+        started: 2000-01-23T04:56:07.000+00:00
+        finished: 2000-01-23T04:56:07.000+00:00
+        links:
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        - hreflang: en
+          rel: service
+          href: href
+          type: application/json
+          title: title
+        type: process
+        message: message
+        updated: 2000-01-23T04:56:07.000+00:00
+        status: accepted
+      properties:
+        processID:
+          title: processID
+          type: string
+        type:
+          enum:
+          - process
+          title: type
+          type: string
+        jobID:
+          title: jobID
+          type: string
+        status:
+          $ref: '#/components/schemas/statusCode'
+        message:
+          title: message
+          type: string
+        exception:
+          $ref: '#/components/schemas/exception'
+        created:
+          format: date-time
+          title: created
+          type: string
+        started:
+          format: date-time
+          title: started
+          type: string
+        finished:
+          format: date-time
+          title: finished
+          type: string
+        updated:
+          format: date-time
+          title: updated
+          type: string
+        progress:
+          maximum: 100
+          minimum: 0
+          title: progress
+          type: integer
+        links:
+          items:
+            $ref: '#/components/schemas/link'
+          title: links
+          type: array
+      required:
+      - jobID
+      - status
+      - type
+      title: statusInfo
+      type: object
+    ogcapppkg:
+      properties:
+        processDescription:
+          $ref: '#/components/schemas/process'
+        executionUnit:
+          $ref: '#/components/schemas/ogcapppkg_executionUnit'
+      required:
+      - executionUnit
+      title: ogcapppkg
+      type: object
+    staticIndicator:
+      allOf:
+      - $ref: '#/components/schemas/processSummary'
+      - properties:
+          mutable:
+            default: true
+            type: boolean
+        type: object
+    cwl:
+      type: object
+    execute-workflows:
+      allOf:
+      - properties:
+          process:
+            description: "URI to the process execution end point (i.e., `.../processes/{processId}/execution`)"
+            format: uri-reference
+            type: string
+          inputs:
+            additionalProperties:
+              $ref: '#/components/schemas/input-workflows'
+            type: object
+          outputs:
+            additionalProperties:
+              $ref: '#/components/schemas/output-workflows'
+            type: object
+          subscriber:
+            $ref: '#/components/schemas/subscriber'
+        type: object
+      - $ref: '#/components/schemas/fieldsModifiers'
+      title: execute-workflows
+    FeatureCollection:
+      properties:
+        type:
+          enum:
+          - FeatureCollection
+          title: type
+          type: string
+        features:
+          items:
+            $ref: '#/components/schemas/GeoJSON_Feature'
+          title: features
+          type: array
+        bbox:
+          items:
+            type: number
+          minItems: 4
+          title: bbox
+          type: array
+      required:
+      - features
+      - type
+      title: GeoJSON FeatureCollection
+      type: object
+    results_1:
+      additionalProperties:
+        $ref: '#/components/schemas/inlineOrRefData'
+      type: object
+    bbox:
+      properties:
+        bbox:
+          items:
+            type: number
+          oneOf:
+          - maxItems: 4
+            minItems: 4
+            type: object
+          - maxItems: 6
+            minItems: 6
+            type: object
+          title: bbox
+          type: array
+        crs:
+          $ref: '#/components/schemas/bbox-def-crs'
+      required:
+      - bbox
+      title: bbox
+      type: object
+    schema_1:
+      oneOf:
+      - $ref: '#/components/schemas/reference'
+      - $ref: '#/components/schemas/schema_oneOf'
+      title: schema_1
+    executionUnit:
+      additionalProperties: true
+      description: Resource containing an executable or runtime information for executing
+        the process.
+      example:
+        type: docker
+        image: mydocker/ndvi:latest
+        deployment: local
+        config:
+          cpuMin: 2
+          cpuMax: 5
+          memoryMin: 1
+          memoryMax: 3
+      properties:
+        type:
+          description: Type of execution unit.
+          enum:
+          - docker
+          - oci
+          type: string
+        image:
+          description: Container image reference for the execution unit.
+          type: string
+        deployment:
+          description: Deployment information for the execution unit.
+          enum:
+          - local
+          - remote
+          - hpc
+          - cloud
+          type: string
+        config:
+          $ref: '#/components/schemas/executionUnit_config'
+      required:
+      - image
+      - type
+      title: executionUnit
+      type: object
+    ogcapppkg-array:
+      items:
+        $ref: '#/components/schemas/ogcapppkg_array_inner'
+      type: array
+    input-workflows:
+      oneOf:
+      - $ref: '#/components/schemas/inlineOrRefData-workflows'
+      - items:
+          $ref: '#/components/schemas/inlineOrRefData-workflows'
+        type: array
+      title: input-workflows
+    output-workflows:
+      properties:
+        format:
+          $ref: '#/components/schemas/format'
+        $output:
+          title: $output
+          type: string
+      title: output-workflows
+      type: object
+    fieldsModifiers:
+      properties:
+        filter:
+          title: filter
+          type: string
+        properties:
+          $ref: '#/components/schemas/fieldsModifiers_properties'
+        sortBy:
+          items:
+            type: string
+          title: sortBy
+          type: array
+      title: fieldsModifiers
+      type: object
+    bbox-def-crs:
+      anyOf:
+      - default: http://www.opengis.net/def/crs/OGC/1.3/CRS84
+        enum:
+        - http://www.opengis.net/def/crs/OGC/1.3/CRS84
+        - http://www.opengis.net/def/crs/OGC/0/CRS84h
+        format: uri
+        type: string
+      - default: http://www.opengis.net/def/crs/OGC/1.3/CRS84
+        format: uri
+        type: string
+      title: bbox-def-crs
+    input:
+      oneOf:
+      - $ref: '#/components/schemas/inlineOrRefData_1'
+      - items:
+          $ref: '#/components/schemas/inlineOrRefData_1'
+        type: array
+      title: input
+    inlineOrRefData-workflows:
+      oneOf:
+      - $ref: '#/components/schemas/inputValueNoObject-workflows'
+      - $ref: '#/components/schemas/qualifiedInputValue-workflows'
+      - $ref: '#/components/schemas/link'
+      title: inlineOrRefData-workflows
+    inlineOrRefData_1:
+      oneOf:
+      - $ref: '#/components/schemas/inputValueNoObject_1'
+      - $ref: '#/components/schemas/qualifiedInputValue_1'
+      - $ref: '#/components/schemas/link'
+      title: inlineOrRefData_1
+    inputValueNoObject-workflows:
+      oneOf:
+      - type: string
+      - type: number
+      - type: integer
+      - type: boolean
+      - items:
+          type: object
+        type: array
+      - $ref: '#/components/schemas/binaryInputValue'
+      - $ref: '#/components/schemas/bbox_1'
+      - $ref: '#/components/schemas/inputCollection'
+      - $ref: '#/components/schemas/inputProcess'
+      - $ref: '#/components/schemas/inputParameterized'
+      title: inputValueNoObject-workflows
+    qualifiedInputValue-workflows:
+      allOf:
+      - $ref: '#/components/schemas/format'
+      - $ref: '#/components/schemas/fieldsModifiers'
+      - properties:
+          value:
+            $ref: '#/components/schemas/inputValue-workflows'
+        required:
+        - value
+        type: object
+      title: qualifiedInputValue-workflows
+    inputValueNoObject_1:
+      oneOf:
+      - type: string
+      - type: number
+      - type: integer
+      - type: boolean
+      - items:
+          type: object
+        type: array
+      - $ref: '#/components/schemas/binaryInputValue'
+      - $ref: '#/components/schemas/bbox_1'
+      title: inputValueNoObject_1
+    qualifiedInputValue_1:
+      allOf:
+      - $ref: '#/components/schemas/format'
+      - properties:
+          value:
+            $ref: '#/components/schemas/inputValue_1'
+        required:
+        - value
+        type: object
+      title: qualifiedInputValue_1
+    bbox_1:
+      properties:
+        bbox:
+          items:
+            type: number
+          oneOf:
+          - maxItems: 4
+            minItems: 4
+            type: object
+          - maxItems: 6
+            minItems: 6
+            type: object
+          title: bbox
+          type: array
+        crs:
+          $ref: '#/components/schemas/bbox-def-crs'
+      required:
+      - bbox
+      title: bbox_1
+      type: object
+    inputCollection:
+      allOf:
+      - properties:
+          collection:
+            format: uri-reference
+            type: string
+        required:
+        - collection
+        type: object
+      - $ref: '#/components/schemas/fieldsModifiers'
+      title: inputCollection
+    inputProcess:
+      allOf:
+      - required:
+        - process
+        type: object
+      - $ref: '#/components/schemas/execute-workflows_1'
+      title: inputProcess
+    inputParameterized:
+      allOf:
+      - properties:
+          $input:
+            type: string
+        required:
+        - $input
+        type: object
+      - $ref: '#/components/schemas/fieldsModifiers'
+      title: inputParameterized
+    inputValue-workflows:
+      oneOf:
+      - $ref: '#/components/schemas/inputValueNoObject-workflows'
+      - type: object
+      title: inputValue-workflows
+    inputValue_1:
+      anyOf:
+      - $ref: '#/components/schemas/inputValueNoObject_1'
+      - type: object
+      title: inputValue_1
+    execute-workflows_1:
+      allOf:
+      - properties:
+          process:
+            description: "URI to the process execution end point (i.e., `.../processes/{processId}/execution`)"
+            format: uri-reference
+            type: string
+          inputs:
+            additionalProperties:
+              $ref: '#/components/schemas/input-workflows_1'
+            type: object
+          outputs:
+            additionalProperties:
+              $ref: '#/components/schemas/output-workflows_1'
+            type: object
+          subscriber:
+            $ref: '#/components/schemas/subscriber'
+        type: object
+      - $ref: '#/components/schemas/fieldsModifiers'
+      title: execute-workflows_1
+    input-workflows_1:
+      oneOf:
+      - $ref: '#/components/schemas/inlineOrRefData-workflows'
+      - items:
+          $ref: '#/components/schemas/inlineOrRefData-workflows'
+        type: array
+      title: input-workflows_1
+    output-workflows_1:
+      properties:
+        format:
+          $ref: '#/components/schemas/format'
+        $output:
+          title: $output
+          type: string
+      title: output-workflows_1
+      type: object
+    execute_200_response:
+      oneOf:
+      - type: string
+      - type: number
+      - type: integer
+      - nullable: true
+        type: object
+      - items:
+          type: object
+        type: array
+      - type: boolean
+      - format: binary
+        type: string
+      - $ref: '#/components/schemas/results'
+      title: execute_200_response
+    execute_200_response_1:
+      allOf:
+      - format: geojson-feature-collection
+        type: object
+      - $ref: '#/components/schemas/FeatureCollection'
+      title: execute_200_response_1
+    collectionInfo_dataType:
+      allOf:
+      - description: Type of data represented in the collection
+        type: object
+      - $ref: '#/components/schemas/dataType'
+      title: collectionInfo_dataType
+    extent_spatial_bbox_inner:
+      description: |-
+        Each bounding box is provided as four or six numbers, depending on
+        whether the coordinate reference system includes a vertical axis
+        (height or depth):
+
+        * Lower left corner, coordinate axis 1
+        * Lower left corner, coordinate axis 2
+        * Minimum value, coordinate axis 3 (optional)
+        * Upper right corner, coordinate axis 1
+        * Upper right corner, coordinate axis 2
+        * Maximum value, coordinate axis 3 (optional)
+
+        If the value consists of four numbers, the coordinate reference system is
+        WGS 84 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84)
+        unless a different coordinate reference system is specified in a parameter `bbox-crs`.
+
+        If the value consists of six numbers, the coordinate reference system is WGS 84
+        longitude/latitude/ellipsoidal height (http://www.opengis.net/def/crs/OGC/0/CRS84h)
+        unless a different coordinate reference system is specified in a parameter `bbox-crs`.
+
+        For WGS 84 longitude/latitude the values are in most cases the sequence of
+        minimum longitude, minimum latitude, maximum longitude and maximum latitude.
+        However, in cases where the box spans the antimeridian the first value
+        (west-most box edge) is larger than the third value (east-most box edge).
+
+        If the vertical axis is included, the third and the sixth number are
+        the bottom and the top of the 3-dimensional bounding box.
+
+        If a feature has multiple spatial geometry properties, it is the decision of the
+        server whether only a single spatial geometry property is used to determine
+        the extent or all relevant geometries.
+      example:
+      - -180
+      - -90
+      - 180
+      - 90
+      items:
+        type: number
+      oneOf:
+      - maxItems: 4
+        minItems: 4
+        type: object
+      - maxItems: 6
+        minItems: 6
+        type: object
+      title: extent_spatial_bbox_inner
+      type: array
+    extent_spatial_grid_inner_coordinates_inner:
+      oneOf:
+      - nullable: true
+        type: string
+      - type: number
+      title: extent_spatial_grid_inner_coordinates_inner
+    extent_spatial_grid_inner_resolution:
+      description: Resolution of regularly gridded data along the dimension in the
+        collection
+      example: 6.866455078E-4
+      oneOf:
+      - nullable: true
+        type: string
+      - type: number
+      title: extent_spatial_grid_inner_resolution
+    extent_spatial_grid_inner:
+      properties:
+        coordinates:
+          description: |-
+            List of coordinates along the dimension for which data organized as an irregular grid in the collection is available
+            (e.g., 2, 10, 80, 100).
+          example:
+          - 2
+          - 10
+          - 80
+          - 100
+          items:
+            $ref: '#/components/schemas/extent_spatial_grid_inner_coordinates_inner'
+          minItems: 1
+          title: coordinates
+          type: array
+        cellsCount:
+          description: |-
+            Number of samples available along the dimension for data organized as a regular grid.
+            For values representing the whole area of contiguous cells spanning _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_.
+            For values representing infinitely small point cells spaced by _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_ + 1.
+          example: 50
+          title: cellsCount
+          type: integer
+        resolution:
+          $ref: '#/components/schemas/extent_spatial_grid_inner_resolution'
+      title: extent_spatial_grid_inner
+      type: object
+    extent_spatial:
+      description: The spatial extent of the data in the collection.
+      properties:
+        bbox:
+          description: |-
+            One or more bounding boxes that describe the spatial extent of the dataset.
+            In the Core only a single bounding box is supported.
+
+            Extensions may support additional areas.
+            The first bounding box describes the overall spatial
+            extent of the data. All subsequent bounding boxes describe
+            more precise bounding boxes, e.g., to identify clusters of data.
+            Clients only interested in the overall spatial extent will
+            only need to access the first item in each array.
+          items:
+            $ref: '#/components/schemas/extent_spatial_bbox_inner'
+          minItems: 1
+          title: bbox
+          type: array
+        crs:
+          default: http://www.opengis.net/def/crs/OGC/1.3/CRS84
+          description: |-
+            Coordinate reference system of the coordinates in the spatial extent
+            (property `bbox`). The default reference system is WGS 84 longitude/latitude.
+            In the Core the only other supported coordinate reference system is
+            WGS 84 longitude/latitude/ellipsoidal height for coordinates with height.
+            Extensions may support additional coordinate reference systems and add
+            additional enum values.
+          enum:
+          - http://www.opengis.net/def/crs/OGC/1.3/CRS84
+          - http://www.opengis.net/def/crs/OGC/0/CRS84h
+          title: crs
+          type: string
+        grid:
+          description: |-
+            Provides information about the limited availability of data within the collection organized
+            as a grid (regular or irregular) along each spatial dimension.
+          items:
+            $ref: '#/components/schemas/extent_spatial_grid_inner'
+          maxItems: 3
+          minItems: 2
+          title: grid
+          type: array
+      title: extent_spatial
+      type: object
+    extent_temporal_grid_resolution:
+      description: Resolution of regularly gridded data along the temporal dimension
+        in the collection
+      example: PT1H
+      oneOf:
+      - nullable: true
+        type: string
+      - type: number
+      title: extent_temporal_grid_resolution
+    extent_temporal_grid:
+      description: Provides information about the limited availability of data within
+        the collection organized as a grid (regular or irregular) along the temporal
+        dimension.
+      properties:
+        coordinates:
+          description: |-
+            List of coordinates along the temporal dimension for which data organized as an irregular grid in the collection is available
+            (e.g., "2017-11-14T09:00Z","2017-11-14T12:00Z","2017-11-14T15:00Z","2017-11-14T18:00Z","2017-11-14T21:00Z").
+          example:
+          - - 2020-11-12T12:15Z
+            - 2020-11-12T12:30Z
+            - 2020-11-12T12:45Z
+          items:
+            nullable: true
+            type: string
+          minItems: 1
+          title: coordinates
+          type: array
+        cellsCount:
+          description: |-
+            Number of samples available along the temporal dimension for data organized as a regular grid.
+            For values representing the whole area of contiguous cells spanning _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_.
+            For values representing infinitely small point cells spaced by _resolution_ units along the dimension, this will be (_upperBound_ - _lowerBound_) / _resolution_ + 1.
+          example: 50
+          title: cellsCount
+          type: integer
+        resolution:
+          $ref: '#/components/schemas/extent_temporal_grid_resolution'
+      title: extent_temporal_grid
+      type: object
+    extent_temporal:
+      description: The temporal extent of the features in the collection.
+      properties:
+        interval:
+          description: |-
+            One or more time intervals that describe the temporal extent of the dataset.
+            In the Core only a single time interval is supported.
+
+            Extensions may support multiple intervals.
+            The first time interval describes the overall
+            temporal extent of the data. All subsequent time intervals describe
+            more precise time intervals, e.g., to identify clusters of data.
+            Clients only interested in the overall extent will only need
+            to access the first item in each array.
+          items:
+            description: |-
+              Begin and end times of the time interval. The timestamps are in the
+              temporal coordinate reference system specified in `trs`. By default
+              this is the Gregorian calendar.
+
+              The value `null` for start or end time is supported and indicates a half-bounded time interval.
+            example:
+            - 2011-11-11T12:22:11Z
+            - null
+            items:
+              format: date-time
+              nullable: true
+              type: string
+            maxItems: 2
+            minItems: 2
+            type: array
+          minItems: 1
+          title: interval
+          type: array
+        trs:
+          default: http://www.opengis.net/def/uom/ISO-8601/0/Gregorian
+          description: |-
+            Coordinate reference system of the coordinates in the temporal extent
+            (property `interval`). The default reference system is the Gregorian calendar.
+            In the Core this is the only supported temporal coordinate reference system.
+            Extensions may support additional temporal coordinate reference systems and add
+            additional enum values.
+          enum:
+          - http://www.opengis.net/def/uom/ISO-8601/0/Gregorian
+          title: trs
+          type: string
+        grid:
+          $ref: '#/components/schemas/extent_temporal_grid'
+      title: extent_temporal
+      type: object
+    crs_oneOf_oneOf:
+      properties:
+        uri:
+          description: Reference to one coordinate reference system (CRS)
+          format: uri
+          title: uri
+          type: string
+      required:
+      - uri
+      title: crs_oneOf_oneOf
+      type: object
+    crs_oneOf_oneOf_1:
+      properties:
+        wkt:
+          allOf:
+          - description: An object defining the CRS using the JSON encoding for Well-known
+              text representation of coordinate reference systems 2.0
+            type: object
+          - type: object
+          title: wkt
+      required:
+      - wkt
+      title: crs_oneOf_oneOf_1
+      type: object
+    crs_oneOf_oneOf_2:
+      properties:
+        referenceSystem:
+          description: A reference system data structure as defined in the MD_ReferenceSystem
+            of the ISO 19115
+          title: referenceSystem
+          type: object
+      required:
+      - referenceSystem
+      title: crs_oneOf_oneOf_2
+      type: object
+    crs_oneOf:
+      oneOf:
+      - $ref: '#/components/schemas/crs_oneOf_oneOf'
+      - $ref: '#/components/schemas/crs_oneOf_oneOf_1'
+      - $ref: '#/components/schemas/crs_oneOf_oneOf_2'
+      title: crs_oneOf
+      type: object
+    bbox_processes_bbox:
+      items:
+        type: number
+      oneOf:
+      - maxItems: 4
+        minItems: 4
+        type: object
+      - maxItems: 6
+        minItems: 6
+        type: object
+      title: bbox
+      type: array
+    format_schema:
+      oneOf:
+      - format: url
+        type: string
+      - type: object
+      title: format_schema
+    inputDescription_allOf_maxOccurs:
+      oneOf:
+      - default: 1
+        type: integer
+      - enum:
+        - unbounded
+        type: string
+      title: inputDescription_allOf_maxOccurs
+    metadata_oneOf:
+      allOf:
+      - $ref: '#/components/schemas/link'
+      - properties:
+          role:
+            type: string
+        type: object
+      example:
+        hreflang: en
+        role: role
+        rel: service
+        href: href
+        type: application/json
+        title: title
+      title: metadata_oneOf
+    metadata_oneOf_1_value:
+      oneOf:
+      - type: string
+      - type: object
+      title: metadata_oneOf_1_value
+    metadata_oneOf_1:
+      properties:
+        role:
+          title: role
+          type: string
+        title:
+          title: title
+          type: string
+        lang:
+          title: lang
+          type: string
+        value:
+          $ref: '#/components/schemas/metadata_oneOf_1_value'
+      title: metadata_oneOf_1
+      type: object
+    schema_oneOf_additionalProperties:
+      default: true
+      oneOf:
+      - $ref: '#/components/schemas/schema_1'
+      - type: boolean
+      title: schema_oneOf_additionalProperties
+    schema_oneOf:
+      additionalProperties: false
+      properties:
+        title:
+          title: title
+          type: string
+        multipleOf:
+          exclusiveMinimum: true
+          minimum: 0
+          title: multipleOf
+          type: number
+        maximum:
+          title: maximum
+          type: number
+        exclusiveMaximum:
+          default: false
+          title: exclusiveMaximum
+          type: boolean
+        minimum:
+          title: minimum
+          type: number
+        exclusiveMinimum:
+          default: false
+          title: exclusiveMinimum
+          type: boolean
+        maxLength:
+          minimum: 0
+          title: maxLength
+          type: integer
+        minLength:
+          default: 0
+          minimum: 0
+          title: minLength
+          type: integer
+        pattern:
+          format: regex
+          title: pattern
+          type: string
+        maxItems:
+          minimum: 0
+          title: maxItems
+          type: integer
+        minItems:
+          default: 0
+          minimum: 0
+          title: minItems
+          type: integer
+        uniqueItems:
+          default: false
+          title: uniqueItems
+          type: boolean
+        maxProperties:
+          minimum: 0
+          title: maxProperties
+          type: integer
+        minProperties:
+          default: 0
+          minimum: 0
+          title: minProperties
+          type: integer
+        required:
+          items:
+            type: string
+          minItems: 1
+          title: required
+          type: array
+          uniqueItems: true
+        enum:
+          items:
+            type: object
+          minItems: 1
+          title: enum
+          type: array
+          uniqueItems: false
+        type:
+          enum:
+          - array
+          - boolean
+          - integer
+          - number
+          - object
+          - string
+          title: type
+          type: string
+        not:
+          $ref: '#/components/schemas/schema_1'
+        allOf:
+          items:
+            $ref: '#/components/schemas/schema_1'
+          title: allOf
+          type: array
+        oneOf:
+          items:
+            $ref: '#/components/schemas/schema_1'
+          title: oneOf
+          type: array
+        anyOf:
+          items:
+            $ref: '#/components/schemas/schema_1'
+          title: anyOf
+          type: array
+        items:
+          $ref: '#/components/schemas/schema_1'
+        properties:
+          additionalProperties:
+            $ref: '#/components/schemas/schema_1'
+          properties: {}
+          title: properties
+          type: object
+        additionalProperties:
+          $ref: '#/components/schemas/schema_oneOf_additionalProperties'
+        description:
+          title: description
+          type: string
+        format:
+          title: format
+          type: string
+        default:
+          title: default
+          type: object
+        nullable:
+          default: false
+          title: nullable
+          type: boolean
+        readOnly:
+          default: false
+          title: readOnly
+          type: boolean
+        writeOnly:
+          default: false
+          title: writeOnly
+          type: boolean
+        example:
+          title: example
+          type: object
+        deprecated:
+          default: false
+          title: deprecated
+          type: boolean
+        contentMediaType:
+          title: contentMediaType
+          type: string
+        contentEncoding:
+          title: contentEncoding
+          type: string
+        contentSchema:
+          title: contentSchema
+          type: string
+      title: schema_oneOf
+      type: object
+    ogcapppkg_executionUnit:
+      oneOf:
+      - $ref: '#/components/schemas/executionUnit'
+      - $ref: '#/components/schemas/link'
+      - $ref: '#/components/schemas/qualifiedInputValue'
+      - $ref: '#/components/schemas/ogcapppkg-array'
+      title: ogcapppkg_executionUnit
+    GeoJSON_Feature_id:
+      oneOf:
+      - type: number
+      - type: string
+      title: GeoJSON_Feature_id
+    GeoJSON_Point:
+      nullable: true
+      properties:
+        type:
+          enum:
+          - Point
+          title: type
+          type: string
+        coordinates:
+          items:
+            type: number
+          minItems: 2
+          title: coordinates
+          type: array
+        bbox:
+          items:
+            type: number
+          minItems: 4
+          title: bbox
+          type: array
+      required:
+      - coordinates
+      - type
+      title: GeoJSON Point
+      type: object
+    GeoJSON_LineString:
+      properties:
+        type:
+          enum:
+          - LineString
+          title: type
+          type: string
+        coordinates:
+          items:
+            items:
+              type: number
+            minItems: 2
+            type: array
+          minItems: 2
+          title: coordinates
+          type: array
+        bbox:
+          items:
+            type: number
+          minItems: 4
+          title: bbox
+          type: array
+      required:
+      - coordinates
+      - type
+      title: GeoJSON LineString
+      type: object
+    GeoJSON_Polygon:
+      properties:
+        type:
+          enum:
+          - Polygon
+          title: type
+          type: string
+        coordinates:
+          items:
+            items:
+              items:
+                type: number
+              minItems: 2
+              type: array
+            minItems: 4
+            type: array
+          title: coordinates
+          type: array
+        bbox:
+          items:
+            type: number
+          minItems: 4
+          title: bbox
+          type: array
+      required:
+      - coordinates
+      - type
+      title: GeoJSON Polygon
+      type: object
+    GeoJSON_MultiPoint:
+      properties:
+        type:
+          enum:
+          - MultiPoint
+          title: type
+          type: string
+        coordinates:
+          items:
+            items:
+              type: number
+            minItems: 2
+            type: array
+          title: coordinates
+          type: array
+        bbox:
+          items:
+            type: number
+          minItems: 4
+          title: bbox
+          type: array
+      required:
+      - coordinates
+      - type
+      title: GeoJSON MultiPoint
+      type: object
+    GeoJSON_MultiLineString:
+      properties:
+        type:
+          enum:
+          - MultiLineString
+          title: type
+          type: string
+        coordinates:
+          items:
+            items:
+              items:
+                type: number
+              minItems: 2
+              type: array
+            minItems: 2
+            type: array
+          title: coordinates
+          type: array
+        bbox:
+          items:
+            type: number
+          minItems: 4
+          title: bbox
+          type: array
+      required:
+      - coordinates
+      - type
+      title: GeoJSON MultiLineString
+      type: object
+    GeoJSON_MultiPolygon:
+      properties:
+        type:
+          enum:
+          - MultiPolygon
+          title: type
+          type: string
+        coordinates:
+          items:
+            items:
+              items:
+                items:
+                  type: number
+                minItems: 2
+                type: array
+              minItems: 4
+              type: array
+            type: array
+          title: coordinates
+          type: array
+        bbox:
+          items:
+            type: number
+          minItems: 4
+          title: bbox
+          type: array
+      required:
+      - coordinates
+      - type
+      title: GeoJSON MultiPolygon
+      type: object
+    GeoJSON_Feature_geometry:
+      oneOf:
+      - $ref: '#/components/schemas/GeoJSON_Point'
+      - $ref: '#/components/schemas/GeoJSON_LineString'
+      - $ref: '#/components/schemas/GeoJSON_Polygon'
+      - $ref: '#/components/schemas/GeoJSON_MultiPoint'
+      - $ref: '#/components/schemas/GeoJSON_MultiLineString'
+      - $ref: '#/components/schemas/GeoJSON_MultiPolygon'
+      title: GeoJSON_Feature_geometry
+    GeoJSON_Feature:
+      properties:
+        type:
+          enum:
+          - Feature
+          title: type
+          type: string
+        id:
+          $ref: '#/components/schemas/GeoJSON_Feature_id'
+        properties:
+          nullable: true
+          title: properties
+          type: object
+        geometry:
+          $ref: '#/components/schemas/GeoJSON_Feature_geometry'
+        bbox:
+          items:
+            type: number
+          minItems: 4
+          title: bbox
+          type: array
+      required:
+      - geometry
+      - properties
+      - type
+      title: GeoJSON Feature
+      type: object
+    executionUnit_config:
+      additionalProperties: true
+      description: Hardware requirements and configuration properties for executing
+        the process.
+      properties:
+        cpuMin:
+          description: Minimum number of CPUs required to run the process (unit is
+            CPU core).
+          minimum: 1
+          type: number
+        cpuMax:
+          description: Maximum number of CPU dedicated to the process (unit is CPU
+            core)
+          type: number
+        memoryMin:
+          description: Minimum RAM memory required to run the application (unit is
+            GB)
+          type: number
+        memoryMax:
+          description: Maximum RAM memory dedicated to the application (unit is GB)
+          type: number
+        storageTempMin:
+          description: Minimum required temporary storage size (unit is GB)
+          type: number
+        storageOutputsMin:
+          description: Minimum required output storage size (unit is GB)
+          type: number
+        jobTimeout:
+          description: Timeout delay for a job execution (in seconds)
+          type: number
+      title: executionUnit_config
+      type: object
+    ogcapppkg_array_inner:
+      oneOf:
+      - $ref: '#/components/schemas/executionUnit'
+      - $ref: '#/components/schemas/link'
+      - $ref: '#/components/schemas/qualifiedInputValue'
+      title: ogcapppkg_array_inner
+    fieldsModifiers_properties:
+      oneOf:
+      - additionalProperties:
+          type: string
+        type: object
+      - items:
+          type: string
+        type: array
+      title: fieldsModifiers_properties
