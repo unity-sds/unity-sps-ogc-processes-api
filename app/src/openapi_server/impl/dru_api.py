@@ -170,22 +170,29 @@ class DRUApiImpl(BaseDRUApi):
                         detail=f"DAG file for process {processId} not found in the catalog",
                     )
 
-                # Optionally, you might want to refresh the DAG in Airflow
+                # Update the DAG in Airflow
                 ems_api_auth = HTTPBasicAuth(
                     self.settings.EMS_API_AUTH_USERNAME,
                     self.settings.EMS_API_AUTH_PASSWORD.get_secret_value(),
                 )
-                response = requests.post(
-                    f"{self.settings.EMS_API_URL}/dags/{processId}/dagRuns",
+
+                # Determine if DAG is paused and retain state
+                response = requests.get(
+                    f"{self.settings.EMS_API_URL}/dags/{ogcapppkg.process_description.id}",
                     auth=ems_api_auth,
-                    json={"is_paused": False},  # Unpause the DAG if it was paused
+                )
+                data = response.json()
+                is_paused = data.get("is_paused", False)
+
+                # Request to replace the DAG in Airflow
+                response = requests.patch(
+                    f"{self.settings.EMS_API_URL}/dags/{processId}",
+                    auth=ems_api_auth,
+                    json={"is_paused": is_paused},  # Unpause the DAG if it was paused
                 )
                 response.raise_for_status()
 
-            return Response(
-                status_code=status.HTTP_204_NO_CONTENT,
-                content=f"Process {processId} replaced successfully",
-            )
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except LockError:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

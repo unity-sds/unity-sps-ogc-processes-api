@@ -16,7 +16,8 @@ To run the server, please execute the following from the root directory:
 
 ```bash
 pip3 install -r requirements.txt
-PYTHONPATH=src uvicorn openapi_server.main:app --host 0.0.0.0 --port 8080
+cd unity-sps-ogc-processes-api/app
+PYTHONPATH=src uvicorn unity_sps_ogc_processes_api.main:app --host 0.0.0.0 --port 8008
 ```
 
 and open your browser at `http://localhost:8080/docs/` to see the docs.
